@@ -52,9 +52,16 @@ typedef struct {
                         //of a single atom at all times for all trajectories.
 } Atom;
 
-//Ensemble of atoms
+//Cavity field
+typedef struct {
+  VectorXd q;        //q = a^dagger + a. Dim: nTrajectory
+  VectorXd p;        //p = - I (a^dagger - a). Dim: nTrajectory
+} Cavity;
+
+//Ensemble of the system
 typedef struct {
   std::vector<Atom> atoms;
+  Cavity cavity;
 } Ensemble;
 
 //Configuration setup; copied from Murray's old codes
@@ -88,7 +95,8 @@ typedef struct Param {
   double transitTime;     //the transit time tau1>0, unit 1/gammaC.
   Vector3d sigmaP;  //standard deviation of momentum
   int density;   //the mean number of atoms per unit time;
-  double gammac;    //collective decay rate
+  double rabi;    //single-atom rabi frequency
+  double kappa;   //caivty decay rate. Condition of bad cavity: dt>>1/kappa.
 
   //Other parameters
   std::string name; //name of the directory to store results
@@ -96,7 +104,7 @@ typedef struct Param {
   //Set up initial values of the parameters
   Param() : dt(0.01), tmax(10), nstore(10), nTrajectory(1), yWall(5.0e0), 
     sigmaX(0.0e0,0.0e0), transitTime(1.0e0),
-    sigmaP(0.0e0,0.0e0,0.0e0), density(100), gammac(0.1e0), name("abracadabra")  {}
+    sigmaP(0.0e0,0.0e0,0.0e0), density(100), rabi(10), kappa(1000), name("abracadabra")  {}
 } Param;
 
 std::ostream& operator<< (std::ostream& o, const Param& s)
@@ -110,42 +118,37 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
   o << s.transitTime << std::endl;
   o << s.sigmaP << std::endl;
   o << s.density << std::endl;
-  o << s.gammac << std::endl;
+  o << s.rabi << std::endl;
+  o << s.kappa << std::endl; 
   return o;
 }
 
 //Observables; n is the nTimeStep
 typedef struct Observables {
   Observables(const int n/*,const int m*/) : nAtom(n), 
-                                          intensity(n), intensityUnCor(n),
-                                          inversion(n), 
-                                          spinSpinCor(n)
+                                          intensity(n), 
+                                          inversion(n)
                                           //,g1(m)
   {}
   Matrix <unsigned long int, 1, Dynamic> nAtom; 
   VectorXd intensity;
-  VectorXd intensityUnCor;
   VectorXd inversion;
-  VectorXd spinSpinCor;
   //VectorXd g1;
 } Observables;
 
 typedef struct ObservableFiles {
   ObservableFiles() : nAtom("nAtom.dat"), 
-                      intensity("intensity.dat"), intensityUnCor("intensityUnCor.dat"), 
-                      inversion("inversion.dat"), 
-                      spinSpinCor("spinSpinCor.dat")
+                      intensity("intensity.dat"), 
+                      inversion("inversion.dat") 
                       //,g1("g1.dat")
   {}
   ~ObservableFiles() {
     nAtom.close();
     intensity.close();
-    intensityUnCor.close();
     inversion.close();
-    spinSpinCor.close();
     //g1.close();
   }
-  std::ofstream nAtom, intensity, intensityUnCor, inversion, spinSpinCor;//, g1;
+  std::ofstream nAtom, intensity, inversion;//, g1;
 } ObservableFiles;
 
 #endif
