@@ -1,0 +1,14 @@
+dt 0.001
+tmax 10
+nTrajectory 100
+nstore 100
+yWall 10
+sigmaXX 0
+sigmaXZ 0
+transitTime 1
+sigmaPX 0
+sigmaPY 0
+sigmaPZ 0
+density 10
+gammac 0.1
+name test
