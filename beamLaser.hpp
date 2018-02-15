@@ -125,30 +125,32 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
 
 //Observables; n is the nTimeStep
 typedef struct Observables {
-  Observables(const int n/*,const int m*/) : nAtom(n), 
+  Observables(const int n, const int m) : nAtom(n), 
                                           intensity(n), 
-                                          inversion(n)
-                                          //,g1(m)
+                                          inversion(n),
+                                          g1Real(m),g1Imag(m)
   {}
   Matrix <unsigned long int, 1, Dynamic> nAtom; 
   VectorXd intensity;
   VectorXd inversion;
-  //VectorXd g1;
+  VectorXd g1Real;
+  VectorXd g1Imag;
 } Observables;
 
 typedef struct ObservableFiles {
   ObservableFiles() : nAtom("nAtom.dat"), 
                       intensity("intensity.dat"), 
-                      inversion("inversion.dat") 
-                      //,g1("g1.dat")
+                      inversion("inversion.dat"), 
+                      g1Real("g1Real.dat"), g1Imag("g1Imag.dat")
   {}
   ~ObservableFiles() {
     nAtom.close();
     intensity.close();
     inversion.close();
-    //g1.close();
+    g1Real.close();
+    g1Imag.close();
   }
-  std::ofstream nAtom, intensity, inversion;//, g1;
+  std::ofstream nAtom, intensity, inversion, g1Real, g1Imag;
 } ObservableFiles;
 
 #endif

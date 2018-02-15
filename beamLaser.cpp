@@ -147,7 +147,7 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
 /////////////////////////////////////
 // Beam Noise. N0 is const.
   const double dN = param.density*param.dt;
-  nAtom = rng.get_poissonian_int(dN);      
+  nAtom = dN;//rng.get_poissonian_int(dN);      
 
   for (unsigned long int n = 0; n < nAtom; n++) {
     Atom newAtom; //Create a new atom
@@ -178,8 +178,8 @@ void getDriftVector(const VectorXd& sAtoms, VectorXd& drift, const Param& param)
   const double rabi = param.rabi;  
   const double kappa = param.kappa;
   const int size = sAtoms.size();
-  const int nAtom = size/NVAR;
-  
+  const int nAtom = (size-2)/NVAR;
+
   //Definition of Jx and Jy
   double jx = 0, jy = 0;
   for (int j = 0; j < nAtom; j++) {
@@ -190,8 +190,8 @@ void getDriftVector(const VectorXd& sAtoms, VectorXd& drift, const Param& param)
   //Drift vector terms. Dimension 3*nAtom, structure {D1+,D1-,D1z, D2+, D2-, D2z,...., q, p}
   drift = VectorXd::Zero(size);
   for (int j = 0; j < nAtom; j++) {
-    drift[NVAR*j] = rabi/2*sAtoms[NVAR*nAtom]*sAtoms[NVAR*j+2];
-    drift[NVAR*j+1] = -rabi/2*sAtoms[NVAR*nAtom+1]*sAtoms[NVAR*j+2];
+    drift[NVAR*j] = rabi/2*sAtoms[NVAR*nAtom+1]*sAtoms[NVAR*j+2];
+    drift[NVAR*j+1] = -rabi/2*sAtoms[NVAR*nAtom]*sAtoms[NVAR*j+2];
     drift[NVAR*j+2] = rabi/2*(sAtoms[NVAR*nAtom]*sAtoms[NVAR*j+1]
                       -sAtoms[NVAR*nAtom+1]*sAtoms[NVAR*j]);
   }
@@ -221,6 +221,10 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param)
     }
     sAtoms[NVAR*nAtom] = ensemble.cavity.q[n];
     sAtoms[NVAR*nAtom+1] = ensemble.cavity.p[n];
+    
+    //debug
+    //std::cout << "here" << std::endl << sAtoms << std::endl << std::endl;
+    //debug
 
     //drift as a function of sAtoms
     VectorXd drift = VectorXd::Zero(size);
@@ -377,4 +381,5 @@ int main(int argc, char *argv[])
 
 //debug
 //std::cout << ensemble.cov << std::endl << std::endl;
+//exit(-1);
 //debug
