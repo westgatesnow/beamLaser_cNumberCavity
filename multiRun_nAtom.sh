@@ -1,5 +1,5 @@
 #This bash file is to run multiple simulations with respect to nAtom
-#for the superradiant laser using cumulant theory.
+#for the beam laser using cNumberCavity theory.
 
 iFile=input.txt
 nMax=1
@@ -15,11 +15,19 @@ nAtom=$(($init+$i*$interval))
 
 printf "dt 0.01
 tmax 20
+nTrajectory 1000
 nstore 100
-nAtom $nAtom
-gammac 0.1
-repumping 10
-name N${nAtom}_repumping10" > $iFile
+yWall 10
+sigmaXX 0
+sigmaXZ 0
+transitTime 1
+sigmaPX 0
+sigmaPY 0
+sigmaPZ 0
+density $nAtom
+rabi 1.6
+kappa 25
+name N${density}_transitTime1" > $iFile
 
 ./superradiantLaser -f $iFile
 

@@ -1,5 +1,5 @@
 %Should input the name of the data folder as a variable. Change later.
-cd test;
+cd dens5_tau10_k25;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Initialization
@@ -11,26 +11,27 @@ inversion = load('inversion.dat');
 qMatrix = load('qMatrix.dat');
 pMatrix = load('pMatrix.dat');
 
+%Should load input.dat here. DO LATER
+dt = 0.01;
+tmax = (size(qMatrix,2)-1)*dt;
+nstore = size(intensity,1);
+transitTime = 10;
+nTrajectory = size(qMatrix,1);
+
+nTimeStep = tmax/dt;
 %Plot I and Sz. Can add labels later.
 figure(1);
 subplot(2,1,1);
-plot(intensity);
+plot(linspace(0,tmax,nstore)/transitTime,intensity);
 subplot(2,1,2);
-plot(inversion);
-
+plot(linspace(0,tmax,nstore)/transitTime,inversion);
+pause;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %g(1)function.
 
-%Take 10*transitTime as the steady state time for now. DO LATER.
-%Should load input.dat here. DO LATER
-dt = 0.01;
-tmax = 20;
-transitTime = 1;
-nTrajectory = 1000;
-nTimeStep = tmax/dt;
-
-steadyMultiplier = 10;
+%Take steadyMultiplier*transitTime as the steady state time for now. DO LATER.
+steadyMultiplier = 6;
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/dt);
 
@@ -45,9 +46,9 @@ imagG1Pos = (p(:,1)'*q-q(:,1)'*p)/nTrajectory/4;
 
 figure(2);
 subplot(2,1,1);
-plot(realG1Pos);
+plot(linspace(0,tmax-t0,size(realG1Pos,2)),realG1Pos);
 subplot(2,1,2);
-plot(imagG1Pos);
+plot(linspace(0,tmax-t0,size(realG1Pos,2)),imagG1Pos);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %spectrum
 
@@ -55,27 +56,30 @@ plot(imagG1Pos);
 realG1 = [fliplr(realG1Pos),realG1Pos(2:end)];
 imagG1 = [-fliplr(imagG1Pos),imagG1Pos(2:end)];
 G1 = realG1+1i*imagG1;
-figure(3);
-subplot(2,1,1);
-plot(realG1);
-subplot(2,1,2);
-plot(imagG1);
+%figure(3);
+%subplot(2,1,1);
+%plot(realG1);
+%subplot(2,1,2);
+%plot(imagG1);
 
 S = fft(ifftshift(G1));
-figure(4);
-subplot(2,1,1);
-plot(real(S));
-subplot(2,1,2);
-plot(imag(S));
+% figure(4);
+% subplot(2,1,1);
+% plot(real(S));
+% subplot(2,1,2);
+% plot(imag(S));
 
+df = 1/dt;
 s = real(S);
-fSamp = 1/dt;
 L = size(s,2);
-f = fSamp*(-L/2+1:L/2)/L;
+f = df*(-L/2+1:L/2)/L;
 figure(5);
-plot(f,fftshift(s));
+plot(f*transitTime,fftshift(s));
+set(gca,'FontSize',20);
+title('Spectrum of the Beam Laser','FontSize',20);
+xlabel('Frequency/T^{-1}','FontSize', 16);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %fit
-axis = linspace(0,20,length(s));
+%axis = linspace(0,20,length(s));
 
 cd ..;

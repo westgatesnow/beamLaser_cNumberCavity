@@ -77,7 +77,7 @@ typedef struct Param {
                     //taken care of by the Poisson distribution.
   double transitTime;     //the transit time tau1>0, unit 1/gammaC.
   Vector3d sigmaP;  //standard deviation of momentum
-  int density;   //the mean number of atoms per unit time;
+  double density;   //the mean number of atoms per unit time;
   double rabi;    //single-atom rabi frequency
   double kappa;   //caivty decay rate. Condition of bad cavity: dt>>1/kappa.
 
@@ -87,7 +87,7 @@ typedef struct Param {
   //Set up initial values of the parameters
   Param() : dt(0.01), tmax(10), nstore(10), nTrajectory(1), yWall(5.0e0), 
     sigmaX(0.0e0,0.0e0), transitTime(1.0e0),
-    sigmaP(0.0e0,0.0e0,0.0e0), density(100), rabi(10), kappa(1000), name("abracadabra")  {}
+    sigmaP(0.0e0,0.0e0,0.0e0), density(1.0), rabi(10), kappa(1000), name("abracadabra")  {}
 } Param;
 
 std::ostream& operator<< (std::ostream& o, const Param& s)
