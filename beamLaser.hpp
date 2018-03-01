@@ -1,7 +1,7 @@
 #ifndef __BEAMLASER__HPP__
 #define __BEAMLASER__HPP__
-//This program is used to simulate the beam laser using the cNumber Langevin method without eliminating
-//the cavity mode.
+//This program is used to simulate the beam laser using the cNumber Langevin method 
+//without eliminating the cavity mode.
 
 //Include Eigen package
 //Work in Eigen namespace
@@ -24,13 +24,8 @@ using namespace Eigen;
 #include "RNG.hpp"
 RNG rng(time(NULL));
 
-//Define the complex I and ONE
-static const std::complex<double> I = std::complex<double>(0.0,1.0);
-static const std::complex<double> ONE = std::complex<double>(1.0,0.0);
 
-#define NVAR 3 // 3 variables for each atom for this code;
-
-//Define data structures
+//Define data structure
 
 //Atom external states
 typedef struct {
@@ -45,6 +40,9 @@ typedef struct {
   VectorXd sz;       //sigma_z. Dim: nTrajectory
 } Internal;
 
+//Normally there are NVAR dims of the internal state.
+#define NVAR 3 // 3 variables for each atom for this code;
+
 //Atom total states
 typedef struct {
   External external;  //The position and velocity of an atom.
@@ -54,8 +52,8 @@ typedef struct {
 
 //Cavity field
 typedef struct {
-  VectorXd q;        //q = a^dagger + a. Dim: nTrajectory
-  VectorXd p;        //p = - I (a^dagger - a). Dim: nTrajectory
+  MatrixXd q;        //q = a^dagger + a. Dim: nTrajectory*(nTimeStep+1)
+  MatrixXd p;        //p = - I (a^dagger - a). Dim: nTrajectory*(nTimeStep+1)
 } Cavity;
 
 //Ensemble of the system
@@ -63,21 +61,6 @@ typedef struct {
   std::vector<Atom> atoms;
   Cavity cavity;
 } Ensemble;
-
-//Configuration setup; copied from Murray's old codes
-typedef struct {
-  const char* configFile;
-} CmdLineArgs;
-const char* usageHeader = "\nBeam Laser Simulation.\n";
-const char* usageMessage =
-  "\n"
-  "Usage:         "
-  "beamLaser "
-  "--file"
-  "\n"
-  "--file, -f     : Configuration file to setup the simulation\n"
-  "--help, -h     : Print this usage message\n"
-  "\n\n";
 
 //Simulation parameters
 typedef struct Param {
@@ -125,32 +108,31 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
 
 //Observables; n is the nTimeStep
 typedef struct Observables {
-  Observables(const int n, const int m) : nAtom(n), 
-                                          intensity(n), 
-                                          inversion(n),
-                                          g1Real(m),g1Imag(m)
+  Observables(const int n) : nAtom(n), 
+                             intensity(n), 
+                             inversion(n)
+                                          
   {}
   Matrix <unsigned long int, 1, Dynamic> nAtom; 
   VectorXd intensity;
   VectorXd inversion;
-  VectorXd g1Real;
-  VectorXd g1Imag;
 } Observables;
 
 typedef struct ObservableFiles {
   ObservableFiles() : nAtom("nAtom.dat"), 
                       intensity("intensity.dat"), 
-                      inversion("inversion.dat"), 
-                      g1Real("g1Real.dat"), g1Imag("g1Imag.dat")
+                      inversion("inversion.dat"),
+                      qMatrix("qMatrix.dat"),
+                      pMatrix("pMatrix.dat")
   {}
   ~ObservableFiles() {
     nAtom.close();
     intensity.close();
     inversion.close();
-    g1Real.close();
-    g1Imag.close();
+    qMatrix.close();
+    pMatrix.close();
   }
-  std::ofstream nAtom, intensity, inversion, g1Real, g1Imag;
+  std::ofstream nAtom, intensity, inversion, qMatrix, pMatrix;
 } ObservableFiles;
 
 #endif

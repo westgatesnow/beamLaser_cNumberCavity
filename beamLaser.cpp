@@ -1,37 +1,7 @@
-//This program is used to simulate the beam laser using the cNumber Langevin method without eliminating
-//the cavity mode.
+//This program is used to simulate the beam laser using the cNumber Langevin method 
+//without eliminating the cavity mode.
 #include "beamLaser.hpp"
-
-//Routine
-void getOptions(int argc, char** argv, CmdLineArgs* cmdLineArgs)
-{
-  cmdLineArgs->configFile="sampleSimulation.txt";
-  while (1) {
-    int c;
-    static struct option long_options[] = {
-      {"help", no_argument, 0, 'h'},
-      {"file", required_argument, 0, 'f'},
-      {0, 0, 0, 0}
-    };
-    int option_index = 0;
-    c = getopt_long(argc, argv, "hf:", long_options, &option_index);
-    if (c == -1) break;
-    switch (c) {
-      case 'h': std::cout << usageHeader << usageMessage;
-        exit(0);
-      case 'f': cmdLineArgs->configFile = optarg;
-        break;
-      default: exit(-1);
-    }
-  }
-  if (optind < argc) {
-    std::cout << "Error: non-option arguments: ";
-    while (optind < argc) std::cout << argv[optind++] << " ";
-    std::cout << std::endl;
-    exit(-1);
-  }
-  std::cout << "Using parameters file " << cmdLineArgs->configFile << std::endl;
-}
+#include "config.hpp"
 
 //Changes required subject to the definition of Param 
 void getParam(const char* filename, Param *param) 
@@ -187,7 +157,7 @@ void getDriftVector(const VectorXd& sAtoms, VectorXd& drift, const Param& param)
     jy += sAtoms[NVAR*j+1];
   }
 
-  //Drift vector terms. Dimension 3*nAtom, structure {D1+,D1-,D1z, D2+, D2-, D2z,...., q, p}
+  //Drift vector terms. Dimension 3*nAtom, structure {D1x,D1y,D1z, D2x, D2y, D2z,...., q, p}
   drift = VectorXd::Zero(size);
   for (int j = 0; j < nAtom; j++) {
     drift[NVAR*j] = rabi/2*sAtoms[NVAR*nAtom+1]*sAtoms[NVAR*j+2];
@@ -199,7 +169,7 @@ void getDriftVector(const VectorXd& sAtoms, VectorXd& drift, const Param& param)
   drift[NVAR*nAtom+1] = rabi/2*jx-kappa/2*sAtoms[NVAR*nAtom+1];
 }
 
-void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param)
+void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, const int nStep)
 {
   //For convenience
   const double dt = param.dt;
@@ -219,13 +189,9 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param)
       sAtoms[NVAR*i+1] = ensemble.atoms[i].internal.sy[n];
       sAtoms[NVAR*i+2] = ensemble.atoms[i].internal.sz[n];
     }
-    sAtoms[NVAR*nAtom] = ensemble.cavity.q[n];
-    sAtoms[NVAR*nAtom+1] = ensemble.cavity.p[n];
-    
-    //debug
-    //std::cout << "here" << std::endl << sAtoms << std::endl << std::endl;
-    //debug
-
+    sAtoms[NVAR*nAtom] = ensemble.cavity.q(n,nStep);
+    sAtoms[NVAR*nAtom+1] = ensemble.cavity.p(n,nStep);
+ 
     //drift as a function of sAtoms
     VectorXd drift = VectorXd::Zero(size);
     getDriftVector(sAtoms, drift, param);
@@ -254,32 +220,33 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param)
       ensemble.atoms[i].internal.sy[n] = sAtoms[NVAR*i+1];
       ensemble.atoms[i].internal.sz[n] = sAtoms[NVAR*i+2];
     }
-    ensemble.cavity.q[n] = sAtoms[NVAR*nAtom];
-    ensemble.cavity.p[n] = sAtoms[NVAR*nAtom+1];
+    ensemble.cavity.q(n,nStep+1) = sAtoms[NVAR*nAtom];
+    ensemble.cavity.p(n,nStep+1) = sAtoms[NVAR*nAtom+1];
   }
 }
 
-void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param)
+void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param, const int nStep)
 {
   advanceExternalStateOneTimeStep(ensemble, param);
-  advanceInternalStateOneTimeStep(ensemble, param); //Including both atoms and cavity
+  advanceInternalStateOneTimeStep(ensemble, param, nStep); //Including both atoms and cavity
 }
 
 void advanceInterval(Ensemble& ensemble, const Param& param, 
-                  const double meanP)
+                  const double meanP, const int nStep)
 {
   addAtomsFromSource(ensemble, param, meanP);
   removeAtomsAtWalls(ensemble, param);
-  advanceAtomsOneTimeStep(ensemble, param);
+  advanceAtomsOneTimeStep(ensemble, param, nStep);
 }
 
 void storeObservables(Observables& observables, int s, Ensemble& ensemble, 
-    const Param& param)
+    const Param& param, int nStep)
 {
   //For convenience
   const double kappa = param.kappa;
   const int nTrajectory = param.nTrajectory;
   const int nAtom = ensemble.atoms.size();
+  const int nTimeStep = param.tmax/param.dt+0.5;
   
   //nAtom
   observables.nAtom(s) = ensemble.atoms.size();
@@ -292,8 +259,8 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   observables.inversion(s) = inversion/nAtom/nTrajectory;
 
   //intensity
-  observables.intensity(s) = kappa/4*(ensemble.cavity.q.array().square().sum()/nTrajectory                  
-                                      +ensemble.cavity.p.array().square().sum()/nTrajectory
+  observables.intensity(s) = kappa/4*(ensemble.cavity.q.col(nStep).array().square().sum()/nTrajectory                  
+                                      +ensemble.cavity.p.col(nStep).array().square().sum()/nTrajectory
                                       -2);
 }
 
@@ -301,44 +268,33 @@ void evolve(Ensemble& ensemble, const Param& param, Observables& observables)
 {
   //meanP
   double meanP = param.yWall*2/param.transitTime; //vy = deltay/tau
-
-  //Integration conditions
-  double dt = param.dt;//dt = dN/N0*tau
-  double tmax = param.tmax;
   
   //evolve
-  int nTimeStep = tmax/dt+0.5;
-  double tstep = dt, t=0;
-
+  int nTimeStep = param.tmax/param.dt+0.5;
+  double tstep = param.dt, t=0;
+  
+  //For "nTimeStep" number of data, keep "nstore" of them. 
   for (int n = 0, s = 0; n <= nTimeStep; n++, t += tstep) {
     if ((long)(n+1)*param.nstore/(nTimeStep+1) > s) {
-      storeObservables(observables, s++, ensemble, param);
+      storeObservables(observables, s++, ensemble, param, n);
       //debug
       std::cout << "This is timestep " << n << "/" << nTimeStep << std::endl << std::endl;
       //debug
     }
     if (n != nTimeStep)
-      advanceInterval(ensemble, param, meanP);
+      advanceInterval(ensemble, param, meanP, n);
   }
 }
 
 void writeObservables(ObservableFiles& observableFiles, 
-    Observables& observables)
+    Observables& observables, Ensemble& ensemble)
 {
   observableFiles.nAtom << observables.nAtom << std::endl;
   observableFiles.intensity << observables.intensity << std::endl;
   observableFiles.inversion << observables.inversion << std::endl;
+  observableFiles.qMatrix << ensemble.cavity.q << std::endl;
+  observableFiles.pMatrix << ensemble.cavity.p << std::endl;
 }
-
-void mkdir(Param& param) {
-  std::string mkdir = "mkdir "+param.name; //make a new directory to store data
-  system(mkdir.c_str());
-  std::string cpInput = "cp input.txt "+param.name;
-  system(cpInput.c_str());  
-  std::string moveparam = "mv *.dat "+param.name;
-  system(moveparam.c_str());
-};
-
 
 int main(int argc, char *argv[])
 {
@@ -346,18 +302,19 @@ int main(int argc, char *argv[])
   clock_t t1,t2;
   t1=clock();
 
-  //Configuration
+  //Configuration. Calling functions from "config.hpp".
   CmdLineArgs config;
   getOptions(argc, argv, &config);
 
   //Set up parameters
   Param param;
   getParam (config.configFile, &param);
+  int nTimeStep = param.tmax/param.dt+0.5;
 	
   //Set up initial conditions
   Ensemble ensemble;
-  ensemble.cavity.q = VectorXd::Zero(param.nTrajectory);
-  ensemble.cavity.p = VectorXd::Zero(param.nTrajectory);
+  ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
+  ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
   Observables observables(param.nstore);
 
   //Start simulation
@@ -365,9 +322,9 @@ int main(int argc, char *argv[])
 
   //Write Observables
   ObservableFiles observableFiles;
-  writeObservables(observableFiles, observables);
+  writeObservables(observableFiles, observables, ensemble);
   
-  //Move .dat files into the directory named "name"
+  //Move .dat files into the directory named "name". Calling from "config.hpp".
   mkdir(param);
   
   //Count time
