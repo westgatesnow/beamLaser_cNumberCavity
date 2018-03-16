@@ -1,7 +1,9 @@
 #ifndef __BEAMLASER__HPP__
 #define __BEAMLASER__HPP__
-//This program is used to simulate the beam laser using the cNumber Langevin method 
-//without eliminating the cavity mode.
+//This program is used to simulate the beam laser 
+//  --using the cNumber method 
+//  --with the cavity variables
+//  --using the individual variables.
 
 //Include Eigen package
 //Work in Eigen namespace
@@ -110,29 +112,33 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
 typedef struct Observables {
   Observables(const int n) : nAtom(n), 
                              intensity(n), 
-                             inversion(n)
+                             inversionAve(n),
+                             inversionFinal(n)
                                           
   {}
   Matrix <unsigned long int, 1, Dynamic> nAtom; 
   VectorXd intensity;
-  VectorXd inversion;
+  VectorXd inversionAve;
+  VectorXd inversionFinal;
 } Observables;
 
 typedef struct ObservableFiles {
   ObservableFiles() : nAtom("nAtom.dat"), 
                       intensity("intensity.dat"), 
-                      inversion("inversion.dat"),
+                      inversionAve("inversionAve.dat"),
+                      inversionFinal("inversionFinal.dat"),
                       qMatrix("qMatrix.dat"),
                       pMatrix("pMatrix.dat")
   {}
   ~ObservableFiles() {
     nAtom.close();
     intensity.close();
-    inversion.close();
+    inversionAve.close();
+    inversionFinal.close();
     qMatrix.close();
     pMatrix.close();
   }
-  std::ofstream nAtom, intensity, inversion, qMatrix, pMatrix;
+  std::ofstream nAtom, intensity, inversionAve, inversionFinal, qMatrix, pMatrix;
 } ObservableFiles;
 
 #endif

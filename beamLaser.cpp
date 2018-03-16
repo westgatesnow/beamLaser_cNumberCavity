@@ -1,5 +1,7 @@
-//This program is used to simulate the beam laser using the cNumber Langevin method 
-//without eliminating the cavity mode.
+//This program is used to simulate the beam laser 
+//  --using the cNumber method 
+//  --with the cavity variables
+//  --using the individual variables.
 #include "beamLaser.hpp"
 #include "config.hpp"
 
@@ -52,6 +54,12 @@ void getParam(const char* filename, Param *param)
       exit(-1);
     }
   }
+}
+
+void generateInitialField(Ensemble& ensemble, const Param& param) {
+  int nTimeStep = param.tmax/param.dt+0.5;
+  ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
+  ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
 }
 
 void generateExternalState(Atom& newAtom, const Param& param, const double meanP)
@@ -265,7 +273,7 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   for (int i = 0; i < nAtom; i++) {
     inversion += ensemble.atoms[i].internal.sz.sum();
   }
-  observables.inversion(s) = inversion/nAtom/nTrajectory;
+  observables.inversionAve(s) = inversion/nAtom/nTrajectory;
 
   //intensity
   observables.intensity(s) = kappa/4*(ensemble.cavity.q.col(nStep).array().square().sum()/nTrajectory                  
@@ -301,7 +309,7 @@ void writeObservables(ObservableFiles& observableFiles,
 {
   observableFiles.nAtom << observables.nAtom << std::endl;
   observableFiles.intensity << observables.intensity << std::endl;
-  observableFiles.inversion << observables.inversion << std::endl;
+  observableFiles.inversionAve << observables.inversionAve << std::endl;
   observableFiles.qMatrix << ensemble.cavity.q << std::endl;
   observableFiles.pMatrix << ensemble.cavity.p << std::endl;
 }
@@ -311,6 +319,7 @@ int main(int argc, char *argv[])
   //Count time
   clock_t t1,t2;
   t1=clock();
+/////////////////////////////////////////////////////////////////////////////
 
   //Configuration. Calling functions from "config.hpp".
   CmdLineArgs config;
@@ -319,12 +328,10 @@ int main(int argc, char *argv[])
   //Set up parameters
   Param param;
   getParam (config.configFile, &param);
-  int nTimeStep = param.tmax/param.dt+0.5;
 	
   //Set up initial conditions
   Ensemble ensemble;
-  ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
-  ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
+  generateInitialField(ensemble, param);
   Observables observables(param.nstore);
 
   //Start simulation
@@ -337,6 +344,7 @@ int main(int argc, char *argv[])
   //Move .dat files into the directory named "name". Calling from "config.hpp".
   mkdir(param);
   
+///////////////////////////////////////////////////////////////////////////////
   //Count time
   t2=clock();
   float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
@@ -344,9 +352,3 @@ int main(int argc, char *argv[])
 
   return 0;
 }
-
-
-//debug
-//std::cout << ensemble.cov << std::endl << std::endl;
-//exit(-1);
-//debug
