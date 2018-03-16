@@ -1,30 +1,22 @@
-%Should input the name of the data folder as a variable. Change later.
-cd dens5_tau10_k25;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Initialization
-clear; close all; clc;
-
-%load data.
-intensity = load('intensity.dat');
-inversion = load('inversion.dat');
-qMatrix = load('qMatrix.dat');
-pMatrix = load('pMatrix.dat');
-
-%Should load input.dat here. DO LATER
-dt = 0.01;
-tmax = (size(qMatrix,2)-1)*dt;
-nstore = size(intensity,1);
-transitTime = 10;
-nTrajectory = size(qMatrix,1);
-
-nTimeStep = tmax/dt;
 %Plot I and Sz. Can add labels later.
 figure(1);
-subplot(2,1,1);
+set(gca,'FontSize',20);
+subplot(3,1,1);
 plot(linspace(0,tmax,nstore)/transitTime,intensity);
-subplot(2,1,2);
-plot(linspace(0,tmax,nstore)/transitTime,inversion);
+xlabel('t/T','FontSize', 20);
+ylabel('\kappa \langle a^+(t) a(t) \rangle');
+
+subplot(3,1,2);
+plot(linspace(0,tmax,nstore)/transitTime,inversionAve);
+xlabel('t/T','FontSize', 20);
+ylabel('\langle j^z(t) \rangle');
+
+subplot(3,1,3);
+plot(linspace(0,tmax,nstore)/transitTime,inversionFinal);
+xlabel('t/T','FontSize', 20);
+ylabel('\langle j^z(t) \rangle');
+
+fprintf('Program paused. Press enter to continue.\n');
 pause;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,9 +38,16 @@ imagG1Pos = (p(:,1)'*q-q(:,1)'*p)/nTrajectory/4;
 
 figure(2);
 subplot(2,1,1);
-plot(linspace(0,tmax-t0,size(realG1Pos,2)),realG1Pos);
+plot(linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2)),realG1Pos);
+xlabel('t/T','FontSize', 20);
+ylabel('Re[g^{(1)}(t)]');
 subplot(2,1,2);
-plot(linspace(0,tmax-t0,size(realG1Pos,2)),imagG1Pos);
+plot(linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2)),imagG1Pos);
+xlabel('t/T','FontSize', 20);
+ylabel('Im[g^{(1)}(t)]');
+
+fprintf('Program paused. Press enter to continue.\n');
+pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %spectrum
 

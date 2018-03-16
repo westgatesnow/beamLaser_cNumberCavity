@@ -144,13 +144,20 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
 }
   
  
-void removeAtomsAtWalls(Ensemble& ensemble, const Param& param) 
+void removeAtomsAtWalls(Ensemble& ensemble, const Param& param, double& invFinal) 
 {
   std::vector<Atom> newAtoms;
-  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++)
-    if (a->external.X[1] < param.yWall)   
+  int nLeaving = 0;
+  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
+    if (a->external.X[1] < param.yWall) {
       newAtoms.push_back(*a);
+    } else {
+      nLeaving += 1;
+      invFinal += a->internal.sz.sum();
+    }
+  }
   ensemble.atoms = newAtoms;
+  invFinal = invFinal/param.nTrajectory/nLeaving;
 }
 
 void advanceExternalStateOneTimeStep(Ensemble& ensemble, const Param& param) 
@@ -159,31 +166,54 @@ void advanceExternalStateOneTimeStep(Ensemble& ensemble, const Param& param)
     a->external.X += param.dt * a->external.P;
 }
 
-void getDriftVector(const VectorXd& sAtoms, VectorXd& drift, const Param& param) 
+void getDiffusionVector(VectorXd& dW, const Param& param) {
+  //For convenience
+  const double dt = param.dt;
+  const double kappa = param.kappa;
+  const int nAtom = (dW.size()-2)/NVAR;
+  //Diffusion for the field
+  dW[NVAR*nAtom] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
+  dW[NVAR*nAtom+1] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
+}
+
+void getDriftVector(const VectorXd& sVar, VectorXd& drift, const Param& param) 
 {
   //For convenience
   const double rabi = param.rabi;  
   const double kappa = param.kappa;
-  const int size = sAtoms.size();
+  const int size = sVar.size();
   const int nAtom = (size-2)/NVAR;
 
   //Definition of Jx and Jy
   double jx = 0, jy = 0;
   for (int j = 0; j < nAtom; j++) {
-    jx += sAtoms[NVAR*j];
-    jy += sAtoms[NVAR*j+1];
+    jx += sVar[NVAR*j];
+    jy += sVar[NVAR*j+1];
   }
 
   //Drift vector terms. Dimension 3*nAtom, structure {D1x,D1y,D1z, D2x, D2y, D2z,...., q, p}
   drift = VectorXd::Zero(size);
   for (int j = 0; j < nAtom; j++) {
-    drift[NVAR*j] = rabi/2*sAtoms[NVAR*nAtom+1]*sAtoms[NVAR*j+2];
-    drift[NVAR*j+1] = -rabi/2*sAtoms[NVAR*nAtom]*sAtoms[NVAR*j+2];
-    drift[NVAR*j+2] = rabi/2*(sAtoms[NVAR*nAtom]*sAtoms[NVAR*j+1]
-                      -sAtoms[NVAR*nAtom+1]*sAtoms[NVAR*j]);
+    drift[NVAR*j] = rabi/2*sVar[NVAR*nAtom+1]*sVar[NVAR*j+2];
+    drift[NVAR*j+1] = -rabi/2*sVar[NVAR*nAtom]*sVar[NVAR*j+2];
+    drift[NVAR*j+2] = rabi/2*(sVar[NVAR*nAtom]*sVar[NVAR*j+1]
+                      -sVar[NVAR*nAtom+1]*sVar[NVAR*j]);
   }
-  drift[NVAR*nAtom] = -rabi/2*jy-kappa/2*sAtoms[NVAR*nAtom];
-  drift[NVAR*nAtom+1] = rabi/2*jx-kappa/2*sAtoms[NVAR*nAtom+1];
+  drift[NVAR*nAtom] = -rabi/2*jy-kappa/2*sVar[NVAR*nAtom];
+  drift[NVAR*nAtom+1] = rabi/2*jx-kappa/2*sVar[NVAR*nAtom+1];
+}
+
+void stochasticIntegration(VectorXd& sVar, const VectorXd& drift, const VectorXd& dW, const Param& param) {
+    //For convenience
+    double dt = param.dt;
+    int dim = drift.size();
+    //Y'. Notations see "Beam laser/11.1" on ipad pro.
+    VectorXd sVarTemp = sVar+drift*dt+dW;//Temporary value for sVar
+    //driftTemp as a function of sVarTemp
+    VectorXd driftTemp = VectorXd::Zero(dim);
+    getDriftVector(sVarTemp, driftTemp, param);
+    //Y_{n+1}
+    sVar += (driftTemp+drift)*dt/2+dW;
 }
 
 void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, const int nStep)
@@ -200,45 +230,31 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
   for (int n = 0; n < nTrajectory; n++) {
 
     //Y_n. Notations see "Beam laser/11.1" on ipad pro.
-    VectorXd sAtoms = VectorXd::Zero(size);;//a vector of spins for all the atoms
+    VectorXd sVar = VectorXd::Zero(size);;//a vector of spins for all the atoms
     for (int i = 0; i < nAtom; i++) {
-      sAtoms[NVAR*i] = ensemble.atoms[i].internal.sx[n];
-      sAtoms[NVAR*i+1] = ensemble.atoms[i].internal.sy[n];
-      sAtoms[NVAR*i+2] = ensemble.atoms[i].internal.sz[n];
+      sVar[NVAR*i] = ensemble.atoms[i].internal.sx[n];
+      sVar[NVAR*i+1] = ensemble.atoms[i].internal.sy[n];
+      sVar[NVAR*i+2] = ensemble.atoms[i].internal.sz[n];
     }
-    sAtoms[NVAR*nAtom] = ensemble.cavity.q(n,nStep);
-    sAtoms[NVAR*nAtom+1] = ensemble.cavity.p(n,nStep);
+    sVar[NVAR*nAtom] = ensemble.cavity.q(n,nStep);
+    sVar[NVAR*nAtom+1] = ensemble.cavity.p(n,nStep);
  
-    //drift as a function of sAtoms
+    //drift
     VectorXd drift = VectorXd::Zero(size);
-    getDriftVector(sAtoms, drift, param);
-
-    //dW
-    //double dw = rng.get_gaussian_rn(sqrt(dt));
-    //VectorXd dW = VectorXd::Ones(size)*dw;
+    getDriftVector(sVar, drift, param);
+    //diffusion
     VectorXd dW = VectorXd::Zero(size);
-    dW[NVAR*nAtom] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
-    dW[NVAR*nAtom+1] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
-  
-    //Y'. Notations see "Beam laser/11.1" on ipad pro.
-    VectorXd sAtomsTemp; //Temporary value for sAtoms
-    sAtomsTemp = sAtoms+drift*dt+dW;
-
-    //driftTemp as a function of sAtomsTemp
-    VectorXd driftTemp = VectorXd::Zero(size);
-    getDriftVector(sAtomsTemp, driftTemp, param);
-
-    //Y_{n+1}
-    sAtoms += (driftTemp+drift)*dt/2+dW;
-
+    getDiffusionVector(dW, param);
+    //integration
+    stochasticIntegration(sVar, drift, dW, param);
     //Put back
     for (int i = 0; i < nAtom; i++) {
-      ensemble.atoms[i].internal.sx[n] = sAtoms[NVAR*i];
-      ensemble.atoms[i].internal.sy[n] = sAtoms[NVAR*i+1];
-      ensemble.atoms[i].internal.sz[n] = sAtoms[NVAR*i+2];
+      ensemble.atoms[i].internal.sx[n] = sVar[NVAR*i];
+      ensemble.atoms[i].internal.sy[n] = sVar[NVAR*i+1];
+      ensemble.atoms[i].internal.sz[n] = sVar[NVAR*i+2];
     }
-    ensemble.cavity.q(n,nStep+1) = sAtoms[NVAR*nAtom];
-    ensemble.cavity.p(n,nStep+1) = sAtoms[NVAR*nAtom+1];
+    ensemble.cavity.q(n,nStep+1) = sVar[NVAR*nAtom];
+    ensemble.cavity.p(n,nStep+1) = sVar[NVAR*nAtom+1];
   }
 }
 
@@ -249,15 +265,15 @@ void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param, const int n
 }
 
 void advanceInterval(Ensemble& ensemble, const Param& param, 
-                  const double meanP, const int nStep, int& m)
+                  const double meanP, const int nStep, int& m, double& invFinal)
 {
   addAtomsFromSource(ensemble, param, meanP, m);
-  removeAtomsAtWalls(ensemble, param);
+  removeAtomsAtWalls(ensemble, param, invFinal);
   advanceAtomsOneTimeStep(ensemble, param, nStep);
 }
 
 void storeObservables(Observables& observables, int s, Ensemble& ensemble, 
-    const Param& param, int nStep)
+    const Param& param, int nStep, double invFinal)
 {
   //For convenience
   const double kappa = param.kappa;
@@ -269,11 +285,13 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   observables.nAtom(s) = ensemble.atoms.size();
   
   //inversion
-  double inversion = 0;
+  double inversionAve = 0;
   for (int i = 0; i < nAtom; i++) {
-    inversion += ensemble.atoms[i].internal.sz.sum();
+    //inversionAve
+    inversionAve += ensemble.atoms[i].internal.sz.sum();
   }
-  observables.inversionAve(s) = inversion/nAtom/nTrajectory;
+  observables.inversionAve(s) = inversionAve/nAtom/nTrajectory;
+  observables.inversionFinal(s) = invFinal;
 
   //intensity
   observables.intensity(s) = kappa/4*(ensemble.cavity.q.col(nStep).array().square().sum()/nTrajectory                  
@@ -285,33 +303,47 @@ void evolve(Ensemble& ensemble, const Param& param, Observables& observables)
 {
   //meanP
   double meanP = param.yWall*2/param.transitTime; //vy = deltay/tau
-  
   //evolve
   int nTimeStep = param.tmax/param.dt+0.5;
-  double tstep = param.dt, t=0;
-  int m = 1; // for atom generation
-  
+  double t = 0;
+  //for atom generation
+  int m = 1;       
+  //for inversionFinal
+  double invFinal;
+
   //For "nTimeStep" number of data, keep "nstore" of them. 
-  for (int n = 0, s = 0; n <= nTimeStep; n++, t += tstep) {
+  for (int n = 0, s = 0; n <= nTimeStep; n++, t += param.dt) {
     if ((long)(n+1)*param.nstore/(nTimeStep+1) > s) {
-      storeObservables(observables, s++, ensemble, param, n);
-      //debug
-      std::cout << "This is timestep " << n << "/" << nTimeStep << std::endl << std::endl;
-      //debug
+      storeObservables(observables, s++, ensemble, param, n, invFinal);
+      std::cout << "Data " << s << "/" << param.nstore << " stored." << std::endl << std::endl;
     }
-    if (n != nTimeStep)
-      advanceInterval(ensemble, param, meanP, n, m);
+    if (n != nTimeStep) {
+      //for inversionFinal
+      invFinal = 0;
+      advanceInterval(ensemble, param, meanP, n, m, invFinal);
+    }
   }
 }
 
 void writeObservables(ObservableFiles& observableFiles, 
     Observables& observables, Ensemble& ensemble)
 {
+  std::cout << "Writing data... (This may take several minutes.)" << std::endl << std::endl;
   observableFiles.nAtom << observables.nAtom << std::endl;
   observableFiles.intensity << observables.intensity << std::endl;
   observableFiles.inversionAve << observables.inversionAve << std::endl;
+  observableFiles.inversionFinal << observables.inversionFinal << std::endl;
   observableFiles.qMatrix << ensemble.cavity.q << std::endl;
   observableFiles.pMatrix << ensemble.cavity.p << std::endl;
+}
+
+void mkdir(Param& param) {
+  std::string mkdir = "mkdir "+param.name; //make a new directory to store data
+  system(mkdir.c_str());
+  std::string cpInput = "cp input.txt "+param.name;
+  system(cpInput.c_str());  
+  std::string moveparam = "mv *.dat "+param.name;
+  system(moveparam.c_str());
 }
 
 int main(int argc, char *argv[])
@@ -336,7 +368,7 @@ int main(int argc, char *argv[])
 
   //Start simulation
   evolve(ensemble, param, observables);
-
+  
   //Write Observables
   ObservableFiles observableFiles;
   writeObservables(observableFiles, observables, ensemble);

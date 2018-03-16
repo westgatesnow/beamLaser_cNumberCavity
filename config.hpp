@@ -1,5 +1,4 @@
 //The configuration functions used.
-//Notice that 
 
 typedef struct {
   const char* configFile;
@@ -45,13 +44,3 @@ void getOptions(int argc, char** argv, CmdLineArgs* cmdLineArgs)
   }
   std::cout << "Using parameters file " << cmdLineArgs->configFile << std::endl;
 }
-
-
-void mkdir(Param& param) {
-  std::string mkdir = "mkdir "+param.name; //make a new directory to store data
-  system(mkdir.c_str());
-  std::string cpInput = "cp input.txt "+param.name;
-  system(cpInput.c_str());  
-  std::string moveparam = "mv *.dat "+param.name;
-  system(moveparam.c_str());
-};
