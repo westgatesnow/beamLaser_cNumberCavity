@@ -112,21 +112,33 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
 typedef struct Observables {
   Observables(const int n) : nAtom(n), 
                              intensity(n), 
-                             inversionAve(n),
-                             inversionFinal(n)
+                             inversionAve(n)
                                           
   {}
   Matrix <unsigned long int, 1, Dynamic> nAtom; 
   VectorXd intensity;
   VectorXd inversionAve;
-  VectorXd inversionFinal;
 } Observables;
+
+typedef struct SpinVariables {
+  SpinVariables(const int m) : sxFinal(m),
+                             syFinal(m), 
+                             szFinal(m)
+                                          
+  {}
+  VectorXd sxFinal;
+  VectorXd syFinal;
+  VectorXd szFinal;
+
+} SpinVariables;
 
 typedef struct ObservableFiles {
   ObservableFiles() : nAtom("nAtom.dat"), 
                       intensity("intensity.dat"), 
                       inversionAve("inversionAve.dat"),
-                      inversionFinal("inversionFinal.dat"),
+                      sxFinal("sxFinal.dat"),
+                      syFinal("syFinal.dat"),
+                      szFinal("szFinal.dat"),
                       qMatrix("qMatrix.dat"),
                       pMatrix("pMatrix.dat")
   {}
@@ -134,11 +146,13 @@ typedef struct ObservableFiles {
     nAtom.close();
     intensity.close();
     inversionAve.close();
-    inversionFinal.close();
+    sxFinal.close();
+    syFinal.close();
+    szFinal.close();
     qMatrix.close();
     pMatrix.close();
   }
-  std::ofstream nAtom, intensity, inversionAve, inversionFinal, qMatrix, pMatrix;
+  std::ofstream nAtom, intensity, inversionAve, sxFinal, syFinal, szFinal, qMatrix, pMatrix;
 } ObservableFiles;
 
 #endif

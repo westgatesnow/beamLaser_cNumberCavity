@@ -124,18 +124,17 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
       ensemble.atoms.push_back(newAtom);
     }
   }
+
   else if (dN > 0){
     int rep = 1/dN;
-    if (m == 1) {
+    if (m == rep) {
       Atom newAtom; //Create a new atom
       generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
       generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
       ensemble.atoms.push_back(newAtom);
-    }
-    m += 1;
-    if (m == rep) {
       m = 0;
     }
+    m++;
   }
   else {
     std::cout << "Bad dN in input file" << std::endl;
@@ -144,7 +143,7 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
 }
   
  
-void removeAtomsAtWalls(Ensemble& ensemble, const Param& param, double& invFinal) 
+void removeAtomsAtWalls(Ensemble& ensemble, const Param& param, Vector3d& spinVar) 
 {
   std::vector<Atom> newAtoms;
   int nLeaving = 0;
@@ -153,11 +152,13 @@ void removeAtomsAtWalls(Ensemble& ensemble, const Param& param, double& invFinal
       newAtoms.push_back(*a);
     } else {
       nLeaving += 1;
-      invFinal += a->internal.sz.sum();
+      spinVar(0) += a->internal.sx.sum();
+      spinVar(1) += a->internal.sy.sum();
+      spinVar(2) += a->internal.sz.sum();
     }
   }
   ensemble.atoms = newAtoms;
-  invFinal = invFinal/param.nTrajectory/nLeaving;
+  spinVar = spinVar/param.nTrajectory/nLeaving;
 }
 
 void advanceExternalStateOneTimeStep(Ensemble& ensemble, const Param& param) 
@@ -265,15 +266,15 @@ void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param, const int n
 }
 
 void advanceInterval(Ensemble& ensemble, const Param& param, 
-                  const double meanP, const int nStep, int& m, double& invFinal)
+                  const double meanP, const int nStep, int& m, Vector3d& spinVar)
 {
   addAtomsFromSource(ensemble, param, meanP, m);
-  removeAtomsAtWalls(ensemble, param, invFinal);
   advanceAtomsOneTimeStep(ensemble, param, nStep);
+  removeAtomsAtWalls(ensemble, param, spinVar);
 }
 
 void storeObservables(Observables& observables, int s, Ensemble& ensemble, 
-    const Param& param, int nStep, double invFinal)
+    const Param& param, int nStep)
 {
   //For convenience
   const double kappa = param.kappa;
@@ -291,7 +292,6 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
     inversionAve += ensemble.atoms[i].internal.sz.sum();
   }
   observables.inversionAve(s) = inversionAve/nAtom/nTrajectory;
-  observables.inversionFinal(s) = invFinal;
 
   //intensity
   observables.intensity(s) = kappa/4*(ensemble.cavity.q.col(nStep).array().square().sum()/nTrajectory                  
@@ -299,7 +299,16 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
                                       -2);
 }
 
-void evolve(Ensemble& ensemble, const Param& param, Observables& observables)
+void storeSpinVariables(SpinVariables& spinVariables, const Ensemble& ensemble, 
+  const Param& param, int n, Vector3d& spinVar)
+{
+  spinVariables.sxFinal(n) = spinVar(0);
+  spinVariables.syFinal(n) = spinVar(1);
+  spinVariables.szFinal(n) = spinVar(2);
+}
+
+
+void evolve(Ensemble& ensemble, const Param& param, Observables& observables, SpinVariables& spinVariables)
 {
   //meanP
   double meanP = param.yWall*2/param.transitTime; //vy = deltay/tau
@@ -307,32 +316,35 @@ void evolve(Ensemble& ensemble, const Param& param, Observables& observables)
   int nTimeStep = param.tmax/param.dt+0.5;
   double t = 0;
   //for atom generation
-  int m = 1;       
-  //for inversionFinal
-  double invFinal;
+  int m = 0; 
+  //for spinVariables
+  Vector3d spinVar;    
 
   //For "nTimeStep" number of data, keep "nstore" of them. 
   for (int n = 0, s = 0; n <= nTimeStep; n++, t += param.dt) {
     if ((long)(n+1)*param.nstore/(nTimeStep+1) > s) {
-      storeObservables(observables, s++, ensemble, param, n, invFinal);
+      storeObservables(observables, s++, ensemble, param, n);
       std::cout << "Data " << s << "/" << param.nstore << " stored." << std::endl << std::endl;
     }
     if (n != nTimeStep) {
-      //for inversionFinal
-      invFinal = 0;
-      advanceInterval(ensemble, param, meanP, n, m, invFinal);
+      spinVar << 0, 0, 0;
+      advanceInterval(ensemble, param, meanP, n, m, spinVar);
+      //store all the spinVariables; since when dN < 1, there are many NaN's
+      storeSpinVariables(spinVariables, ensemble, param, n, spinVar);
     }
   }
 }
 
 void writeObservables(ObservableFiles& observableFiles, 
-    Observables& observables, Ensemble& ensemble)
+    Observables& observables, SpinVariables& spinVariables, Ensemble& ensemble)
 {
   std::cout << "Writing data... (This may take several minutes.)" << std::endl << std::endl;
   observableFiles.nAtom << observables.nAtom << std::endl;
   observableFiles.intensity << observables.intensity << std::endl;
   observableFiles.inversionAve << observables.inversionAve << std::endl;
-  observableFiles.inversionFinal << observables.inversionFinal << std::endl;
+  observableFiles.sxFinal << spinVariables.sxFinal << std::endl;
+  observableFiles.syFinal << spinVariables.syFinal << std::endl;
+  observableFiles.szFinal << spinVariables.szFinal << std::endl;  
   observableFiles.qMatrix << ensemble.cavity.q << std::endl;
   observableFiles.pMatrix << ensemble.cavity.p << std::endl;
 }
@@ -360,18 +372,20 @@ int main(int argc, char *argv[])
   //Set up parameters
   Param param;
   getParam (config.configFile, &param);
-	
+  int nTimeStep = param.tmax/param.dt+0.5;
+
   //Set up initial conditions
   Ensemble ensemble;
   generateInitialField(ensemble, param);
   Observables observables(param.nstore);
+  SpinVariables spinVariables(nTimeStep);
 
   //Start simulation
-  evolve(ensemble, param, observables);
-  
+  evolve(ensemble, param, observables, spinVariables);
+
   //Write Observables
   ObservableFiles observableFiles;
-  writeObservables(observableFiles, observables, ensemble);
+  writeObservables(observableFiles, observables, spinVariables, ensemble);
   
   //Move .dat files into the directory named "name". Calling from "config.hpp".
   mkdir(param);

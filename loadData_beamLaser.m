@@ -10,7 +10,9 @@ cd(projectdir);
 fprintf('Loading data... This may take several minutes.\n')
 intensity = load('intensity.dat');
 inversionAve = load('inversionAve.dat');
-inversionFinal = load('inversionFinal.dat');
+sxFinal = load('sxFinal.dat');
+syFinal = load('syFinal.dat');
+szFinal = load('szFinal.dat');
 qMatrix = load('qMatrix.dat');
 pMatrix = load('pMatrix.dat');
 nTimeStep = tmax/dt;

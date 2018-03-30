@@ -3,6 +3,7 @@ dataTable = readtable('input.txt');
 dataVariables = dataTable.Variables;
 %Define all the simulation parameters one by one;
 %   Should change the parameters according to different parameter setups.
+%   CAN rewrite this function with genvarname()????????
 dt = str2double(dataVariables{1,2});
 tmax = str2double(dataVariables{2,2});
 nTrajectory = str2double(dataVariables{3,2});

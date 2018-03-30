@@ -7,7 +7,7 @@ xlabel('t/T','FontSize', 20);
 ylabel('\kappa \langle a^+(t) a(t) \rangle');
 
 subplot(2,1,2);
-scatter(linspace(0,tmax,nTimeStep)/transitTime, szFinal, 5, 'filled');
+plot(linspace(0,tmax,nTimeStep)/transitTime,szFinal);
 xlabel('t/T','FontSize', 20);
 ylabel('\langle j^z(t) \rangle');
 
@@ -15,12 +15,12 @@ ylabel('\langle j^z(t) \rangle');
 figure(2);
 
 subplot(2,1,1);
-scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
+plot(linspace(0,tmax,nTimeStep)/transitTime,sxFinal);
 xlabel('t/T','FontSize', 20);
 ylabel('\langle j^x(t) \rangle');
 
 subplot(2,1,2);
-scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
+plot(linspace(0,tmax,nTimeStep)/transitTime,syFinal);
 xlabel('t/T','FontSize', 20);
 ylabel('\langle j^y(t) \rangle');
 
@@ -66,14 +66,14 @@ pause;
 realG1Plot = [fliplr(realG1Pos),realG1Pos(2:end)];
 imagG1Plot = [-fliplr(imagG1Pos),imagG1Pos(2:end)];
 G1Plot = realG1Plot+1i*imagG1Plot;
-%figure(4);
+%figure(3);
 %subplot(2,1,1);
 %plot(realG1);
 %subplot(2,1,2);
 %plot(imagG1);
 
 S = fft(ifftshift(G1Plot));
-% figure(5);
+% figure(4);
 % subplot(2,1,1);
 % plot(real(S));
 % subplot(2,1,2);
@@ -86,6 +86,7 @@ s = real(S);
 s = fftshift(s)/max(s);
 L = size(s,2);
 f = df*(-L/2+1:L/2)/L;
+figure(5);
 spectra = [f*transitTime; s]';
 
 %Save spectrum up to k transitTime^-1
@@ -95,7 +96,7 @@ effectiveSpectra = spectra(effectivePosition,:);
 save spectra.dat effectiveSpectra -ascii;
 
 %plot the spectrum
-figure(6);
+figure(4);
 plot(effectiveSpectra(:,1),effectiveSpectra(:,2));
 set(gca,'FontSize',20);
 title('Spectrum of the Beam Laser','FontSize',20);
