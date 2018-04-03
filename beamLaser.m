@@ -12,17 +12,17 @@ xlabel('t/T','FontSize', 20);
 ylabel('\langle j^z(t) \rangle');
 
 %Plot sx and sy final.
-figure(2);
-
-subplot(2,1,1);
-scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
-xlabel('t/T','FontSize', 20);
-ylabel('\langle j^x(t) \rangle');
-
-subplot(2,1,2);
-scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
-xlabel('t/T','FontSize', 20);
-ylabel('\langle j^y(t) \rangle');
+% figure(2);
+% 
+% subplot(2,1,1);
+% scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
+% xlabel('t/T','FontSize', 20);
+% ylabel('\langle j^x(t) \rangle');
+% 
+% subplot(2,1,2);
+% scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
+% xlabel('t/T','FontSize', 20);
+% ylabel('\langle j^y(t) \rangle');
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;

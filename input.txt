@@ -5,11 +5,11 @@ nstore 1000
 yWall 10
 sigmaXX 0
 sigmaXZ 0
-transitTime 0.5
+transitTime 10
 sigmaPX 0
 sigmaPY 0
 sigmaPZ 0
-density 100
-rabi 1.4
-kappa 20
-name tau0.5_dens100_g1.4_k20
+density 5
+rabi 2
+kappa 40
+name tau10_dens5_g2_k40
