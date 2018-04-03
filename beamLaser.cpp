@@ -150,7 +150,8 @@ void removeAtomsAtWalls(Ensemble& ensemble, const Param& param, Vector3d& spinVa
   for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
     if (a->external.X[1] < param.yWall) {
       newAtoms.push_back(*a);
-    } else {
+    } 
+    else {
       nLeaving += 1;
       spinVar(0) += a->internal.sx.sum();
       spinVar(1) += a->internal.sy.sum();
@@ -167,7 +168,8 @@ void advanceExternalStateOneTimeStep(Ensemble& ensemble, const Param& param)
     a->external.X += param.dt * a->external.P;
 }
 
-void getDiffusionVector(VectorXd& dW, const Param& param) {
+void getDiffusionVector(VectorXd& dW, const Param& param) 
+{
   //For convenience
   const double dt = param.dt;
   const double kappa = param.kappa;
@@ -193,7 +195,6 @@ void getDriftVector(const VectorXd& sVar, VectorXd& drift, const Param& param)
   }
 
   //Drift vector terms. Dimension 3*nAtom, structure {D1x,D1y,D1z, D2x, D2y, D2z,...., q, p}
-  drift = VectorXd::Zero(size);
   for (int j = 0; j < nAtom; j++) {
     drift[NVAR*j] = rabi/2*sVar[NVAR*nAtom+1]*sVar[NVAR*j+2];
     drift[NVAR*j+1] = -rabi/2*sVar[NVAR*nAtom]*sVar[NVAR*j+2];
@@ -269,8 +270,8 @@ void advanceInterval(Ensemble& ensemble, const Param& param,
                   const double meanP, const int nStep, int& m, Vector3d& spinVar)
 {
   addAtomsFromSource(ensemble, param, meanP, m);
-  advanceAtomsOneTimeStep(ensemble, param, nStep);
   removeAtomsAtWalls(ensemble, param, spinVar);
+  advanceAtomsOneTimeStep(ensemble, param, nStep);
 }
 
 void storeObservables(Observables& observables, int s, Ensemble& ensemble, 
