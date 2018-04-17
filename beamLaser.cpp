@@ -94,14 +94,16 @@ void generateInternalState(Atom& newAtom, const Param& param)
   //Set up empty internal state vectors
   VectorXd newSx, newSy, newSz;
   newSx = VectorXd::Zero(nTrajectory);
-   for (int j = 0; j < nTrajectory; j++) 
-       newSx[j] = double(rng.get_binomial_int(0.5, 1))*2-1; //50percent giving 1 or -1
+  for (int j = 0; j < nTrajectory; j++) 
+    newSx[j] = double(rng.get_binomial_int(0.5, 1))*2-1; //50percent giving 1 or -1
   newSy = VectorXd::Zero(nTrajectory);
-   for (int j = 0; j < nTrajectory; j++) 
-       newSy[j] = double(rng.get_binomial_int(0.5, 1))*2-1; //50percent giving 1 or -1
+  for (int j = 0; j < nTrajectory; j++) 
+    newSy[j] = double(rng.get_binomial_int(0.5, 1))*2-1; //50percent giving 1 or -1
   newSz = VectorXd::Zero(nTrajectory);
 
   //Initial values
+  // newSx.fill(0);
+  // newSy.fill(0);
   newSz.fill(1); 
 
   //Complete initiation
@@ -238,8 +240,8 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
       sVar[NVAR*i+1] = ensemble.atoms[i].internal.sy[n];
       sVar[NVAR*i+2] = ensemble.atoms[i].internal.sz[n];
     }
-    sVar[NVAR*nAtom] = ensemble.cavity.q(n,nStep);
-    sVar[NVAR*nAtom+1] = ensemble.cavity.p(n,nStep);
+    sVar[NVAR*nAtom] = ensemble.cavity.q(n, nStep);
+    sVar[NVAR*nAtom+1] = ensemble.cavity.p(n, nStep);
  
     //drift
     VectorXd drift = VectorXd::Zero(size);
@@ -269,6 +271,8 @@ void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param, const int n
 void advanceInterval(Ensemble& ensemble, const Param& param, 
                   const double meanP, const int nStep, int& m, Vector3d& spinVar)
 {
+  //The way I write the code is such that newly added atoms are in the tail of the "atoms" vector, so
+  // the first atoms in the "atoms" vector will be the first to be removed.
   addAtomsFromSource(ensemble, param, meanP, m);
   removeAtomsAtWalls(ensemble, param, spinVar);
   advanceAtomsOneTimeStep(ensemble, param, nStep);

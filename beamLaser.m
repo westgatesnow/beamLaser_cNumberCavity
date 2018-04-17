@@ -31,7 +31,7 @@ pause;
 %g(1)function.
 
 %Take steadyMultiplier*transitTime as the steady state time for now. DO LATER.
-steadyMultiplier = 5;
+steadyMultiplier = 6;
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/dt);
 

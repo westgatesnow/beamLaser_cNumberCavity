@@ -1,0 +1,949 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{float}
+
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+\linespread{1.1}
+
+\title{Beam Laser}
+\author{Haonan Liu}
+\date{\today}
+
+\usepackage{graphicx}
+\usepackage{biblatex}
+\addbibresource{main.bib}
+
+\newcommand{\gc}{\Gamma_C}
+\newcommand{\omegaa}{\omega_a}
+\newcommand{\omegac}{\omega_c}
+\newcommand{\lindblad}{\mathcal{L}}
+\newcommand{\ope}{\hat{\mathcal{O}}}
+\newcommand{\estate}{|e\rangle}
+\newcommand{\gstate}{|g\rangle}
+
+\begin{document}
+
+\maketitle
+\section{Introduction to Beam Laser}
+The motivation of this project is to build a steady-state light source with ultra-narrow linewidth by passing a beam of atoms continuously through a bad cavity. 
+
+% \footnote{If steady-state superradiance can be realized, according to Minghui's thesis page 20, the linewidth is approximately $\gc$}
+% We would like the light source (which we will call a "beam laser") to work in the manner of steady-state superradiance, i.e., producing an output light field with intensity proportional to intracavity atom number squared ($I\sim N_0^2$) in a bad cavity.
+
+Consider a beam of 2-level atoms (\textit{e.g.}, Strontium) of mass $m$ with levels \{$\estate$, $\gstate$\} and transition frequency $\omega_a$ (in the caivty frame) traveling with momentum $\textbf{p}$ along $y$ direction through an optical cavity of resonance frequency $\omega_c$, photon decay rate $\kappa$, and gaussian beam waist width $d$. %In the bad-cavity limit\footnote{This limit is given by $\kappa \gg NC\gamma$, which is the condition of adiabatically eliminating the field. David's thesis, page 62.}, the atoms decay in a collective manner with rate $\gc=C\gamma$ through the mode of a cavity, where $C=g^2/(\gamma \kappa)$ is the single-atom cooperativity parameter. Here $\gamma$ is the atomic spontaneous emission rate and $g$ is the single-photon Rabi frequency. 
+Before the atoms enter the volume of interest, they have all been prepared in $|e\rangle$. The setup of the experiment is shown in figure 1. 
+\begin{figure}[h]
+\centering
+\includegraphics[width=4in]{Schematic.PNG}
+\caption{A schematic of the beam laser. A Sr atomic beam traveling in $y$ direction passes the cavity along $z$ axis.}
+\label{fig:beamLaser}
+\end{figure}
+
+
+\section{cQED Theory}
+The master equation for a general cavity QED system is
+\begin{equation}
+\label{masterqed}
+\frac{d}{dt}\hat{\rho}=\frac{1}{i\hbar}\left[\hat{H}(t),\hat{\rho}\right]+\kappa\lindblad[\hat{a}]\hat{\rho}+\sum^{N(t)}_{j=1}\left[\gamma \lindblad[\hat{\sigma}^-_j]\hat{\rho}+\frac{1}{2T_2}\lindblad[\hat{\sigma}^z_j]\hat{\rho}+w\lindblad[\hat{\sigma}^+_j]\hat{\rho}\right]
+\end{equation}
+where $\lindblad[\ope]\hat{\rho} = (2\ope\hat{\rho}\ope^\dagger-\ope^\dagger\ope\hat{\rho}-\rho\ope^\dagger\ope)/2$ is the Lindbladian superoperator describing the incoherent processes. $N(t)$ is the total number of intracavity atoms at time $t$. 
+
+\bigskip
+In our case,
+\begin{enumerate}
+    \item For atoms with an ultraweak-dipole transition, $\gamma \tau$ is usually small. Thus we can neglect the free-space spontaneous emission term.
+    \item  The probability of elastic collisions between collimated atoms is low, so the $T_2$ dephasing process can be ignored.\footnote{Inhomogeneous broadening?}
+    \item There is no repumping, $w=0$.
+\end{enumerate} 
+
+This reduces the master equation (\ref{masterqed}) to
+\begin{equation}
+\label{master}
+\frac{d}{dt}\hat{\rho}=\frac{1}{i\hbar}\left[\hat{H}(t),\hat{\rho}\right]+\kappa\lindblad[\hat{a}]\hat{\rho}
+\end{equation}
+
+Now we need to write down the Hamiltonian. We ignore atom recoil\footnote{$\Delta v \approx \frac{\hbar \nu}{c m} \ll v$?} due to radiation and suppose that an atom travels in a constant velocity $\textbf{v}=\textbf{p}/m=(v_x, v_y, v_z)$ through the cavity. Then the position of the $j^{th}$ atom $\textbf{x}_j(t$) is only a linear function of time given its initial position and velocity. Notice that there will be first and second order Doppler shifts on the atomic transition frequency, so $\omega_a$ is function of $\textbf{v}$, i.e., $\omega_a=\omega_a(\textbf{v})$.
+
+
+
+
+The time-dependent Hamiltonian of the system of the atoms and the cavity is 
+\begin{equation}
+\label{hamil}
+\hat{H}(t)=\frac{\hbar}{2}\sum^{N(t)}_{j=1}\omegaa(\textbf{v}_j)\hat{\sigma}^z_j+\hbar \omegac \hat{a}^{\dagger}\hat{a}+\frac{\hbar}{2}\sum^{N(t)}_{j=1}\left[g_j(\textbf{v}_j,t) \hat{\sigma}^-_j\hat{a}^\dagger+h.c.\right] 
+\end{equation}
+where $N(t)$ is the number of intracavity atoms at time $t$ and $g_j(\textbf{v}_j,t)$ is the atom-field coupling strength for the $j^{th}$ atom at time $t$. 
+% We can also write the Hamiltonian as 
+% \begin{equation}
+% \label{hamil2}
+% \hat{H}(t)=\frac{\hbar}{2}\sum^{N}_{j=1}\omegaa(\textbf{v}_j)\hat{\sigma}^z_j+\hbar \omegac \hat{a}^{\dagger}\hat{a}+\frac{\hbar}{2}\sum^{N}_{j=1}\left[g_j(\textbf{v}_j,t,\textbf{x}_j(t)) \hat{\sigma}^-_j\hat{a}^\dagger+h.c.\right]
+% \end{equation}
+% where $N$ is the total number of atoms and $g_j(\textbf{v}_j,t,\textbf{x}_j(t))=0$ for atoms in the cavity. For calculation purpose, we will use equation (\ref{hamil2}) as our Hamiltonian in the later calculations.
+
+
+
+% \section{Dominic and Murray's Model}
+% In \cite{sss} Dominic and Murray described a cavity QED system where the atoms are sitting at the antinodes of a single-mode cavity. Instead of injecting new atoms, they repump the atoms in an effective rate $w$ into $\estate$. Thus all of the atoms in their case are indistinguishable (as a contrast, none of the atoms in our case are indistinguishable). They showed that in their model steady-state superradiance is achievable and both the maximum intensity of steady-state superradiance and minnimum linewidth are achieved when
+
+% \begin{equation}
+% \label{w}
+%     w=\frac{1}{2}N_0\gc
+% \end{equation}
+
+% where $w$ is the pumping rate, $N_0$ is the number of atoms inside the cavity (a constant in their case), and $\gc=g^2/\kappa$ is the collective decay rate of the atoms. 
+
+% In the beam laser problem, the repumping $w$ of the atoms has been replaced by injecting new excited atoms. Therefore the ideal correspondence between Dominic and Murray's model and our beam laser model exists if we can find a counterpart to $w$ in our model. 
+
+% Consider the physical meaning of $w$. For each atom, the timescale of it being repumped is $1/w$. That is to say, without worrying about spontaneous decay (if $\gamma$ is small) , each atom will interact with the field coherently until after time $1/w$ it gets incoherently repumped into the excited state.
+
+% Now consider our beam laser model. Specifically, suppose the atoms are injected in such a way that for each atom coming out, there is another one coming in, replacing the previous one in the density matrix (this prerequisite also limits the number of intracavity atoms to a constant $N_0$). Then this replacing process can be seen as an equivalent repumping process, i.e., all the coherence information between the replaced atom and other atoms (and also itself) are lost, with the state of the atom refreshed into the excited state. The timescale of this process happening is $\tau$, the transit time.
+
+% Therefore, we see naturally that $1/\tau$ plays the similar role in our case as $w$ in Dominic's case. If we can regain Dominic's equations 8 - 9 from our model, that will be a strong evidence of this argument. \footnote{Of course, in our model, the number of intracavity atoms is not fixed. This atom noise might cause some broadening in the spectrum that is not seen in Dominic's model.}
+
+% The conclusion of the discussion in this section is that we do have an independent variable $\tau$ which we take as a parameter to describe an effective repumping process. In the next section we will use a simple model that is compatible with Dominic's model to test this argument.
+
+
+
+
+\section{A Simple Model}
+
+% We carry on with our thought in the previous section, and try to find whether or not our manually control of the transit time $\tau$ can lead to steady-state superradiance.  
+
+We first study a simple model with the following approximations:
+\begin{enumerate}
+    \item We suppose that all the atoms are generated uniformly in time in the $x-z$ plane, travelling with $\textbf{v}=(0, v_y, 0)$. This assumption has two effects: (a) it means that the beam is traveling in a plane-wave manner with velocity $v_y$, so we avoid both orders of Doppler broadening, \textit{i.e.}, $\omegaa$ is a constant\footnote{This also means that the atoms that enter the cavity at the same time are indistinguishable. This might lead to some optimization of the algorithms.}; (b) it means that the number of intracavity atoms after the beam passes the cavity is a constant, and we will call it $N_0$.
+    \item We model the effective cavity volume as a box with boundaries at $y=-d$ and $y=d$, so that we do not need to consider the Gaussian beam properties. We take the cavity-atom coupling as a constant $g$ inside the box\footnote{$g\cos{kz}$ would be a better approximation than this.}. With this approximation, we do not care at all what positions the atoms are in the $x-z$ plane. The motion of the atoms is one-dimensional.
+\end{enumerate}
+
+Then the Hamiltonian in equation (\ref{hamil}) becomes
+% \begin{equation}
+% \hat{H}(t)=\frac{\hbar \omegaa}{2}\sum^{N}_{j=1}\hat{\sigma}^z_j+\hbar \omegac \hat{a}^{\dagger}\hat{a}+\frac{\hbar}{2}\sum^{N}_{j=1}\left[g \hat{\sigma}^-_j\hat{a}^\dagger+h.c.\right]
+% \end{equation}
+% where
+% \begin{equation}
+% g_j(y_j(t))=
+% \begin{cases}
+%     g              &\text{if  } yCreate\leq y_j(t) \leq yDestroy \\
+%     0              & \text{otherwise}
+% \end{cases}
+% \end{equation}
+% Thus, inside the cavity, the above Hamiltonian is time independent and the same as the usual Hamiltonian used in the many-body cavity QED system\footnote{David, 3.120, missing 1/2 in Minghui 2.14. For atoms outside the cavity, there $\sigma_z$ do not interact with the system anymore, so we ignore them in this Hamiltonian.}
+
+\begin{equation}
+\label{hamiltimeind}
+\hat{H}=\frac{\hbar \omegaa}{2}\sum^{N}_{j=1}\hat{\sigma}^z_j+\hbar \omegac \hat{a}^{\dagger}\hat{a}+\frac{\hbar g}{2}\sum^{N}_{j=1}\left( \hat{\sigma}^-_j\hat{a}^\dagger+h.c.\right)
+\end{equation}
+
+Define an interaction picture rotating with frequency $\omegac$. That is
+\begin{equation}
+\hat{H}_0=\hbar \omegac \hat{a}^\dagger\hat{a}+\frac{1}{2}\hbar \omegac \hat{\sigma}_z
+\end{equation}
+
+Then the Hamiltonian in the interaction picture will be
+\begin{equation}
+\label{hamilinter}
+\hat{H}=\frac{\hbar\Delta}{2}\sum_{j=1}^{N}\hat{\sigma}_z+\frac{\hbar g}{2}\sum_{j=1}^{N}\left( \hat{\sigma}^-_j\hat{a}^\dagger+h.c.\right)
+\end{equation}
+where $\Delta\equiv\omegaa-\omegac$ is the detuning.
+
+3. We further set $\Delta=0$. Along with the approximation of no transverse velocity, the Hamiltonian inside the cavity in the reference frame rotating with $\omega=\omegaa=\omegac$ is finally
+\begin{equation}
+\label{hamilfinal}
+\hat{H}=\frac{\hbar g}{2}\sum_{j=1}^{N}\left( \hat{\sigma}^-_j\hat{a}^\dagger+h.c.\right)
+\end{equation}
+
+For convenience, unless otherwise specified, we will use $\sum$ to represent $\sum_{j=1}^N$ from now on.
+
+Now we introduce three simulation methods to study this simple model. Our goal here is to see how the light intensity and linewidth change with respect to the transit time and the density of atoms. We will use some naive parameters to run the simulation first, and go to real parameter space in section \ref{section:real}.
+
+
+\subsection{cNumberCavity}
+\subsubsection{SDE}
+From the master equation (\ref{master}) and the Hamiltonian (\ref{hamilfinal}), we can follow the routines and derive the quantum Langevin equations as follows
+\begin{align}
+\notag 
+    \frac{d \hat{a}}{dt} &= -\frac{ig}{2}\sum\hat{\sigma}_j^--\frac{\kappa}{2}\hat{a}+\hat{F}\\\notag
+    \frac{d \hat{a}^\dagger}{dt} &= \frac{ig}{2}\sum\hat{\sigma}_j^+-\frac{\kappa}{2}\hat{a}^\dagger+\hat{F}^{\dagger}\\
+    \label{langevin;cnc;a}
+    \frac{d \hat{\sigma}_i^+}{dt} &= -\frac{ig}{2}\hat{a}^+\hat{\sigma}^z_i\\\notag
+    \frac{d \hat{\sigma}_i^-}{dt} &= \frac{ig}{2}\hat{a}\hat{\sigma}^z_i\\\notag
+    \frac{d \hat{\sigma}_i^z}{dt} &= ig\left(\hat{a}^+\hat{\sigma}^-_i-\hat{a}\hat{\sigma}_i^+\right)
+\end{align}
+
+where the noise operators in the field equations have the relationship
+\begin{equation}
+\label{diffusion;cnc;a}
+    \langle \hat{F}(t) \hat{F}^{\dagger}(t')\rangle = \kappa \delta (t-t')
+\end{equation}
+The equations (\ref{langevin;cnc;a}) mean that the only noise source of the simple model of the beam laser is the $\kappa$ channel, which corresponds to the simple diffusion relation (\ref{diffusion;cnc;a}).
+
+Ideally, at this step we can directly turn to a $c$-number theory which is accurate up to the second order moments of the operators. We can replace all the operators by $c$-numbers and carefully choose a symmetric ordering for operator pairs. In David Tieri's thesis (p92) it has been pointed out that this formulation of a set of $c$-number stochastic differential equations is equivalent to a set of Fokker-Planck equations for the Wigner quasi-probability distribution.
+
+However, in practice, equations (\ref{langevin;cnc;a}) have operators like $\hat{a}^{\pm}$ and $\hat{\sigma}_i^\pm$ that are not hermitian, which means that we have to assign both real and imaginary parts for them in the $c$-number theory. For convenience, we define the following hermitian operators
+\begin{align}
+    \notag \hat{q} &= \hat{a}^\dagger+\hat{a}\\
+    \notag \hat{p} &= -i(\hat{a}^\dagger-\hat{a})\\
+           \hat{\sigma}^x &= \hat{\sigma}^++\hat{\sigma}^-\\
+    \notag \hat{\sigma}^y &= -i(\hat{\sigma}^+-\hat{\sigma}^-)
+\end{align}
+with the reverse relations
+\begin{align}
+    \notag \hat{a} &= \frac{1}{2}(\hat{q}-i\hat{p})\\
+    \notag \hat{a}^\dagger &= \frac{1}{2}(\hat{q}+i\hat{p})\\
+           \hat{\sigma}^- &= \frac{1}{2}(\hat{\sigma}^x-i\hat{\sigma}^y)\\
+    \notag \hat{\sigma}^+ &= \frac{1}{2}(\hat{\sigma}^x+i\hat{\sigma}^y)
+\end{align}
+
+With such definitions, we write down the same stochastic differential equations as (\ref{langevin;cnc;a}) but for the new hermitian operators
+\begin{align}
+    \notag \frac{d \hat{q}}{dt} &= -\frac{g}{2}\sum\hat{\sigma}_j^y-\frac{\kappa}{2}\hat{q}+\hat{F^q}\\
+    \notag \frac{d \hat{p}}{dt} &= \frac{g}{2}\sum\hat{\sigma}_j^x-\frac{\kappa}{2}\hat{p}+\hat{F^p}\\
+    \label{langevin;cnc;q}
+    \frac{d \hat{\sigma}_i^x}{dt} &= \frac{g}{2}\hat{p}\hat{\sigma}^z_i\\
+    \notag \frac{d \hat{\sigma}_i^y}{dt} &= -\frac{g}{2}\hat{q}\hat{\sigma}^z_i\\
+    \notag \frac{d \hat{\sigma}_i^z}{dt} &= \frac{g}{2}\left(\hat{q}\hat{\sigma}^y_i-\hat{p}\hat{\sigma}_i^x\right)
+\end{align}
+with diffusion relations
+\begin{equation}
+\label{diffusion;cnc;q}
+    \langle \hat{F^k}(t) \hat{F^k}(t')\rangle = \kappa \delta (t-t)\ \ \ \ \ \ \  k=q,p
+\end{equation}
+
+Since all the operators in equations (\ref{langevin;cnc;q}) are now hermitian, we can replace them with real numbers in the $c$-number theory, i.e., 
+\begin{equation}
+    \{ \hat{q}, \hat{p}, \hat{\sigma}^x, \hat{\sigma}^y, \hat{\sigma}^z, \hat{F}^k\} \longrightarrow \{q, p, s^x, s^y, s^z, f^k\}\ \ \ \ \ \ \  k=q,p
+\end{equation}
+Also, since the operator pairs that appear in equations (\ref{langevin;cnc;a}) are all pairs between field operators and spin operators which by themselves already commute, taking the symmetric ordering is trivial.
+
+For the noise operators, we choose without loss of generality
+\begin{equation}
+    f^k(t) = \sqrt{\kappa} \xi(t)\ \ \ \ \ \ \  k=q,p
+\end{equation}
+
+Finally, we arrive at the set of $c$-number (or more specifically, real-number) stochastic differential equations for a simple model of a beam laser
+\begin{align}
+    \notag \frac{dq}{dt} &= -\frac{g}{2}\sum s_j^y-\frac{\kappa}{2}q+\sqrt{\kappa}\xi_1\\
+    \notag \frac{dp}{dt} &= \frac{g}{2}\sum s_j^x-\frac{\kappa}{2}p+\sqrt{\kappa}\xi_2\\
+    \label{langevin;cnc}
+    \frac{d s_i^x}{dt} &= \frac{g}{2} p s^z_i\\
+    \notag \frac{d s_i^y}{dt} &= -\frac{g}{2}q s^z_i\\
+    \notag \frac{d s_i^z}{dt} &= \frac{g}{2}\left(q s^y_i-p s_i^x\right)
+\end{align}
+
+\subsubsection{Observables}
+We keep track of the following observables $v.s.$ time for the "cNumberCavity" method:
+\begin{enumerate}
+    \item  $I$\---- photon emission rate (field intensity)
+        \begin{align}
+            \notag I &= \kappa \langle \hat{a}^\dagger \hat{a} \rangle\\
+            \notag   &= \frac{\kappa}{4} \langle ( \hat{q}+i\hat{p})(\hat{q}-i\hat{p} \rangle\\
+            \notag   &= \frac{\kappa}{4} \langle \hat{q}^2+\hat{p}^2+i\left[\hat{p}\hat{q}-\hat{q}\hat{p}\right] \rangle\\
+            \notag   &= \frac{\kappa}{4}\left[\langle \hat{q}^2\rangle+\langle\hat{p}^2\rangle-2\right]\\
+                     &= \frac{\kappa}{4}\left[\langle q^2 \rangle_e+\langle p^2 \rangle_e-2\right]
+        \end{align}
+        where $\langle q^2 \rangle_e$ means the ensemble average of the real number $q(t)^2$ over all the trajectories.
+    \item $j^z$\---- average population inversion of all the intracavity atoms 
+        \begin{align}
+            \notag j^z &= \frac{1}{N}\sum \langle \hat{\sigma}^z _i\rangle\\
+                       &= \frac{1}{N}\sum \langle s_i^z\rangle_e
+        \end{align}
+        
+    \item $j^z_{out}$\---- average population inversion of the atoms that are leaving the cavity 
+        \begin{equation}
+            j^z_{out} = \frac{1}{N_{out}} \sum_{j=1}^{N_{out}}\langle s_i^z\rangle_e
+        \end{equation}
+    \item The $g^{(1)}$ function of the steady-state field
+        \begin{align}
+            \notag g^{(1)}(\tau) &= \langle \hat{a}^\dagger(\tau) \hat{a}(0) \rangle\\
+            \notag   &= \frac{1}{4} \langle \left( \hat{q}(\tau)+i\hat{p}(\tau)\right)\left(\hat{q}(0)-i\hat{p}(0) \right)\rangle\\
+            \notag   &= \frac{1}{4} \left[\langle\hat{q}(\tau)\hat{q}(0)\rangle+\langle\hat{p}(\tau)\hat{p}(0)\rangle\right]+\frac{i}{4}\left[\langle\hat{p}(\tau)\hat{q}(0)\rangle-\langle\hat{q}(\tau)\hat{p}(0)\rangle\right]\\
+                     &= \frac{1}{4} \left[\langle q(\tau)q(0)\rangle_e+\langle p(\tau)p(0)\rangle_e\right]+\frac{i}{4}\left[\langle p(\tau)q(0)\rangle_e-\langle q(\tau)p(0)\rangle_e\right]
+        \end{align}
+        where we have chose $\tau = 0$ as some time after the system has reached its steady state.
+        
+    \item $S(\omega)$ \--- the power spectra of the field. 
+    
+    From David's Thesis (p18), following the Wiener-Khinchin Theorem, we have
+    \begin{equation}
+            S(\omega) =
+        \end{equation}
+    \item The $g^{(2)}$ function of the field.
+\end{enumerate}
+\subsubsection{Numerical procedures}
+initial conditions x,y
+
+change h each time interval
+
+numerical conditions
+
+discussion on poisson
+\subsubsection{Results}
+
+
+
+
+
+\subsection{cNumber}
+\subsubsection{Bad Cavity Limit SDE}
+We are interested in the limit that $\kappa$ is large, which corresponds to a ``bad cavity''. However, if $\kappa$ gets large, it becomes difficult practically to run the "cNumberCavity" simulations, since for such simulations to give convergent results, each timestep $dt$ should be to the order of $1/\kappa$, which is extremely small. Small timesteps will not only make the program too heavy to run, but also cause noisy data, which can be annoying. 
+
+One way to avoid such problems is to adiabatically eliminate the field variables, \textit{i.e.}, to solve for the fields variables in terms of spin variables. To illustrate this method, we turn to equations (\ref{langevin;cnc;q}). The first two SDEs in equations (\ref{langevin;cnc;q}) are for hermitian field operators $\hat{q}$ and $\hat{p}$. Noticing that both equations are in similar forms, we will thus focus on the $\hat{q}$ equation
+\begin{equation}
+     \label{qEqn}
+     \frac{d \hat{q}}{dt} = -\frac{g}{2}\sum\hat{\sigma}_j^y-\frac{\kappa}{2}\hat{q}+\hat{F^q}
+\end{equation}
+Since equation (\ref{qEqn}) is linear, we can solve for it exactly from time $t$ to $t+\Delta t$. Let $\hat{J}^y=\sum \hat{\sigma}_j^y$, then
+\begin{equation}
+\label{qEqn2}
+    \hat{q}(t+\Delta t) = e^{-\frac{1}{2}\kappa \Delta t}\hat{q}(t)-\frac{g}{2}\int_0^{\Delta t} ds e^{-\frac{1}{2}\kappa s}\hat{J}^y(t+\Delta t-s)+\int_0^{\Delta t} ds e^{-\frac{1}{2}\kappa s} \hat{F}^q(t+\Delta t-s)
+\end{equation}
+We now analyze each term in the above equation.
+
+First term. For large $\kappa$, $\kappa \Delta t \gg 1$, so $e^{-\frac{1}{2}\kappa \Delta t}\rightarrow 0$. We can thus ignore the first term.
+
+Second term. Taylor expand $\hat{J}^y$ and arrange terms in powers of $\frac{2}{\kappa}$
+\begin{align}
+    \notag &\int_0^{\Delta t} ds e^{-\frac{1}{2}\kappa s}\hat{J}^y(t+\Delta t-s)\\
+    \notag=&\int_0^{\Delta t} ds e^{-\frac{1}{2}\kappa s}\left(\hat{J}^y(t+\Delta t)-\hat{J}^{y'}(t+\Delta t)s+\frac{1}{2}\hat{J}^{y''}(t+\Delta t)s^2-...\right)\\
+    \notag=&\frac{2}{\kappa}\hat{J}^y(t+\Delta t)-\left(\frac{2}{\kappa}\right)^2\hat{J}^{y'}(t+\Delta t)+O\left(\left(\frac{2}{\kappa}\right)^3\right)\\
+          \approx&\frac{2}{\kappa}\hat{J}^y(t+\Delta t)
+\end{align}
+where we have used $e^{-\frac{1}{2}\kappa \Delta t}\rightarrow 0$, and kept only to the first order in $\frac{2}{\kappa}$.
+
+Third term. As what we did for the $c$-number case, from the operator diffusion relation (\ref{diffusion;cnc;q}) we can choose without loss of generality $\hat{F}^q(t) = \sqrt{\kappa}\hat{\xi}(t)$. Then by Minghui's Theis (p90) we see that the third term can be approximated to
+\begin{align}
+    \notag &\int_0^{\Delta t} ds e^{-\frac{1}{2}\kappa s} \hat{F}^q(t+\Delta t-s)\\
+    \notag=&\sqrt{\kappa}\int_0^{\Delta t} ds e^{-\frac{1}{2}\kappa s} \hat{\xi}(t+\Delta t-s)\\
+          \approx&-\frac{2}{\sqrt{\kappa}}\hat{\xi}(t+\Delta t)
+\end{align}
+for $\kappa \Delta t \gg 1$.
+
+Thus, equation (\ref{qEqn2}) becomes
+\begin{equation}
+    \notag\hat{q}(t+\Delta t) = -\frac{g}{\kappa}\hat{J}^y(t+\Delta t)-\frac{2}{\sqrt{\kappa}}\hat{\xi}(t+\Delta t)
+\end{equation}
+which is equivalent to 
+\begin{equation}
+    \label{qEqnFinal}
+    \hat{q}(t) = -\frac{g}{\kappa}\hat{J}^y(t)-\frac{2}{\sqrt{\kappa}}\hat{\xi}(t)
+\end{equation}
+
+Equation (\ref{qEqnFinal}) means that field operators at time $t$ in the bad cavity limit is entirely dependent on the spin operators at the same time $t$, without any memory of their previous values. 
+
+Similarly, we can get the equation for $\hat{p}$
+\begin{equation}
+    \label{pEqnFinal}
+    \hat{p}(t) = \frac{g}{\kappa}\hat{J}^x(t)+\frac{2}{\sqrt{\kappa}}\hat{\xi}(t)
+\end{equation}
+
+Now we would like to substitute equations (\ref{qEqnFinal}) and (\ref{pEqnFinal}) into equations (\ref{langevin;cnc;q}). There are two subtleties here. First, when we replace field operators by a collective spin operator, the order of the operators after the replacement matters (because the method is an approximation anyway). It turns out that we need to write the operators in symmetric ordering in order to make the $c$-number method work. Second, for each atom, the field it sees is a field after coarse-graining. Thus each atom will be assigned with a pair of noise terms uncorrelated from the noise terms from others. Keeping these in mind, we have the following equations
+\begin{align}
+    \label{xyz}
+    \notag \frac{d \hat{\sigma}_i^x}{dt} &= \frac{g}{2}\frac{1}{2}[\hat{p},\hat{\sigma}^z_i]_+\\
+    \notag &=\frac{g}{4}\left[\frac{g}{\kappa}\hat{J}^x(t)+\frac{2}{\sqrt{\kappa}}\hat{\xi}(t),\hat{\sigma}^z_i\right]_+\\
+           &=\frac{\gc}{2}\sum_{j\neq i}\hat{\sigma}_j^x\hat{\sigma}^z_i+\sqrt{\gc}\hat{\sigma}^z_i\hat{\xi}_{i,1}(t)\\
+    \notag \frac{d \hat{\sigma}_i^y}{dt} &= -\frac{g}{2}\frac{1}{2}[\hat{q},\hat{\sigma}^z_i]_+\\
+           &=\frac{\gc}{2}\sum_{j\neq i}\hat{\sigma}_j^y\hat{\sigma}^z_i+\sqrt{\gc}\hat{\sigma}^z_i\hat{\xi}_{i,2}(t)\\
+     \frac{d \hat{\sigma}_i^z}{dt} &=
+    \notag\frac{g}{2}\frac{1}{2}\left(\left[\hat{q},\hat{\sigma}^y_i\right]_+-\left[\hat{p},\hat{\sigma}_i^x\right]_+\right)\\
+           &=-\frac{\gc}{2}\left[\sum_{j\neq i}\left(\hat{\sigma}_j^y\hat{\sigma}^y_i+\hat{\sigma}_j^x\hat{\sigma}^x_i\right)+2\right]-\sqrt{\gc}\hat{\sigma}^x_i\hat{\xi}_{i,1}(t)-\sqrt{\gc}\hat{\sigma}^y_i\hat{\xi}_{i,2}(t)
+\end{align}
+where we have defined 
+\begin{equation}
+    \gc = \frac{g^2}{\kappa}
+\end{equation}
+
+Keep in mind that for the adiabatic elimination to be valid, we need $\kappa dt \gg 1$.
+
+\subsubsection{Observables}
+\subsubsection{Numerical procedures}
+need to consider atoms that were in the cavity and new atoms
+initial conditions
+change h each time interval (longer than cNUmberCavity)
+numerical conditions
+discussion on poisson
+\subsubsection{Results}
+
+\subsection{Cumulant}
+\subsubsection{Bad Cavity Limit Master Equation}
+The quantum Langevin equation for the cavity field corresponding to the quantum master equation (equation \ref{master}) and the Hamiltonian (equation \ref{hamilfinal}) is\footnote{Minghui 2.15}
+\begin{equation}
+\frac{d}{dt}\hat{a}=-\frac{\kappa}{2}\hat{a}-\frac{ig}{2}\hat{J}^-+\sqrt{\kappa}\hat{\xi}(t)
+\end{equation}
+where 
+\begin{equation}
+\hat{J}^-\equiv\sum_{j=1}^{N_0}\hat{\sigma}_j^-
+\end{equation}
+and $\hat{\xi}(t)$ is the quantum white noise that we use to describe the coupling of the system to the reservoir
+\begin{equation}
+    \langle\hat{\xi}(t)\hat{\xi}^\dagger(t')\rangle = \delta(t-t')
+\end{equation}
+
+In the bad cavity limit $\kappa \gg N_0 \gc$\footnote{David's Thesis, Chapter 4}, we can adiabatically eliminate the cavity and get\footnote{Minghui's thesis page 15 or supplement for the supercooling paper.}
+\begin{equation}
+\label{aelim}
+\hat{a}(t)=-i\frac{\gc}{g}\hat{J}^-+\hat{F}(t)
+\end{equation}
+where the noise operator $\hat{F}(t)$ due to the reservoir is approximated by 
+\begin{equation}
+\hat{F}(t)=-i\frac{\sqrt{\gc}}{g/2}\hat{\xi}(t)
+\end{equation}
+with relations
+\begin{equation}
+\label{ff+}
+    \langle \hat{F}^\dagger(t)\hat{F}(t)\rangle = 0
+\end{equation}
+since the reservoir is assumed to be at $0$ degree.
+
+Explanation of adiabatic elimination NEEDED!!!!!!!!!!!!!!
+
+Then the elimination of the cavity leads to the superradiance quantum master equation\footnote{Minghui 2.46 with $\delta=0$.}
+\begin{equation}
+\frac{d}{dt}\hat{\rho}=\gc\lindblad[\hat{J}^-]\hat{\rho}
+\end{equation}
+
+Note that in the bad cavity limit, 
+\begin{equation}
+    \langle \hat{\sigma^\pm} \rangle=0
+\end{equation}
+
+due to U(1) symmetry. The direct result of this is 
+\begin{equation}
+    \langle \hat{a} \rangle=0
+\end{equation}
+
+\subsubsection{Cumulant Expansion Theory}
+To avoid exponential scaling of the atom numbers during the simulation, we utilize a semiclassical approximation\textemdash the cumulant expansion method, meaning that we only keep up to pairwise cumulants between spins of different atoms. This reduces the scaling of the system from $O(2^N)$ to $O(N^2)$. Furthermore, due to $U(1)$ symmetry of the effective master equation, we know $\langle\hat{\sigma}^\pm_j\rangle=0$. This further reduces the number of free variables.
+
+%Therefore all the nonzero observables are functions of the second order moments $\langle\hat{\sigma}^+_j\hat{\sigma}^-_j\rangle$, %\langle\hat{\sigma}^-_j\hat{\sigma}^+_j\rangle$, and $\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle$ for $j\neq l$.
+
+Notice that all the observables require $\langle\hat{\sigma}^+_j\hat{\sigma}^-_j\rangle$, and further notice that the calculation of $\langle\hat{\sigma}^+_j\hat{\sigma}^-_j\rangle$ requires $\langle\hat{\sigma}^z_j\rangle$. This gives us confidence that a closed set of DE should include both these variables. 
+
+We write down the differential equations for $\langle\hat{\sigma}^z_j\rangle$ and $\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle$. 
+\begin{align}
+\label{de01}
+\frac{d}{dt}\langle\hat{\sigma}^z_j\rangle&=-\gc\langle\hat{J}^+\hat{\sigma}^-_j\rangle-\gc\langle\hat{\sigma}_j^+\hat{J}^-\rangle\\
+\label{de02}
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_j\rangle&=\frac{1}{2}\frac{d}{dt}\langle\hat{\sigma}^z_j\rangle=-\frac{\gc}{2}\langle\hat{J}^+\hat{\sigma}^-_j\rangle-\frac{\gc}{2}\langle\hat{\sigma}_j^+\hat{J}^-\rangle\\
+\label{de03}
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle&=\frac{\gc}{2}\langle \hat{J}^+\hat{\sigma}^-_l\hat{\sigma}^z_j\rangle+ \frac{\gc}{2}\langle \hat{\sigma}^z_l\hat{\sigma}^+_j\hat{J}^-\rangle\ \ \ \ (j\neq l)
+\end{align}
+
+Now we cut off all the third-order cumulants between spin operators of different atoms in equation \ref{de03}. 
+
+Mathematically, the third-order cumulant $\langle \hat{X},\hat{Y},\hat{Z} \rangle_c$ of 3 independent operators $\hat{X}$, $\hat{Y}$, and $\hat{Z}$ is defined as
+\begin{equation}
+    \langle \hat{X},\hat{Y},\hat{Z}\rangle_c = \langle \hat{X} \hat{Y} \hat{Z} \rangle-\langle \hat{X} \hat{Y} \rangle \langle \hat{Z}\rangle-\langle \hat{X} \hat{Z} \rangle \langle \hat{Y}\rangle-\langle \hat{Y} \hat{Z} \rangle \langle \hat{X}\rangle
+    +2\langle \hat{X} \rangle \langle \hat{Y}\rangle \langle  \hat{Z} \rangle
+\end{equation}
+
+Thus if we set $\langle \hat{X},\hat{Y},\hat{Z}\rangle_c=0$, then we end up with an expression for the multivariate moment
+\begin{equation}
+\label{moment}
+    \langle \hat{X} \hat{Y} \hat{Z} \rangle=\langle \hat{X} \hat{Y} \rangle \langle \hat{Z}\rangle+\langle \hat{X} \hat{Z} \rangle \langle \hat{Y}\rangle+\langle \hat{Y} \hat{Z} \rangle \langle \hat{X}\rangle
+    -2\langle \hat{X} \rangle \langle \hat{Y}\rangle \langle  \hat{Z} \rangle
+\end{equation}
+
+In equation \ref{de03}, such moments appear in the form of $\langle \hat{\sigma}_k^+\hat{\sigma}_l^-\hat{\sigma}_j^z\rangle$ and $\langle \hat{\sigma}^z_l\hat{\sigma}^+_j\hat{\sigma}_k^-\rangle$, where $k\neq j, l$ and $j\neq l$.
+
+For the moment $\langle \hat{\sigma}_k^+\hat{\sigma}_l^-\hat{\sigma}_j^z\rangle$, we use equation \ref{moment}
+\begin{equation}
+    \langle \hat{\sigma}_k^+\hat{\sigma}_l^-\hat{\sigma}_j^z\rangle = \langle \hat{\sigma}_k^+ \hat{\sigma}_l^- \rangle \langle \hat{\sigma}_j^z\rangle+\langle \hat{\sigma}_k^+ \hat{\sigma}_j^z \rangle \langle \hat{\sigma}_l^-\rangle+\langle\hat{\sigma}_l^-\hat{\sigma}_j^z \rangle \langle \hat{\sigma}_k^+\rangle
+    -2\langle \hat{\sigma}_k^+ \rangle \langle \hat{\sigma}_l^-\rangle \langle  \hat{\sigma}_j^z \rangle
+\end{equation}
+
+Due to $U(1)$ symmetry, $\langle\hat{\sigma}^\pm_j\rangle=0$ for any $j$. Thus the final form of the approximation with cumulant cut-off method is
+\begin{equation}
+    \langle \hat{\sigma}_k^+\hat{\sigma}_l^-\hat{\sigma}_j^z\rangle \approx \langle \hat{\sigma}_k^+ \hat{\sigma}_l^- \rangle \langle \hat{\sigma}_j^z\rangle
+\end{equation}
+
+Similarly, for $\langle \hat{\sigma}^z_l\hat{\sigma}^+_j\hat{\sigma}_k^-\rangle$, we have
+\begin{equation}
+    \langle \hat{\sigma}^z_l\hat{\sigma}^+_j\hat{\sigma}_k^-\rangle \approx \langle \hat{\sigma}_l^z\rangle \langle\hat{\sigma}_l^+ \hat{\sigma}_k^-\rangle
+\end{equation}
+
+Then equation \ref{de03} becomes
+\begin{align}
+\notag
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle&=\frac{\gc}{2}\big[\langle\hat{J}^+\hat{\sigma}_l^-\rangle \langle \hat{\sigma}_j^z\rangle+\langle\hat{\sigma}^+_j\hat{J}^-\rangle \langle \hat{\sigma}_l^z\rangle-\langle\hat{\sigma}_l^z\rangle \langle \hat{\sigma}_j^z\rangle+\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle\\
+&-\langle\hat{\sigma}_j^+ \hat{\sigma}_l^-\rangle\left(\langle\hat{\sigma}_l^z\rangle +\langle \hat{\sigma}_j^z\rangle+2\right)\big]
+\end{align}
+
+At this point, we still need the differential equation for $\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle$ to close the set. By direct calculation
+\begin{align}
+\notag
+\frac{d}{dt}\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle&=-\gc\left[\langle \hat{J}^+\hat{\sigma}^-_l\hat{\sigma}^z_j\rangle+\langle \hat{\sigma}_l^z\hat{\sigma}^+_j\hat{J}^-\rangle+\langle \hat{\sigma}_l^z\hat{J}^+\hat{\sigma}^-_j\rangle+\langle \hat{\sigma}_l^+\hat{J}^-\hat{\sigma}^z_j\rangle\right]\\
+\label{de04}
+&+4\gc\langle \hat{\sigma}_l^+\hat{\sigma}^-_j\rangle
+\end{align}
+
+Again, cut off the third-order cumulants, we arrive at
+\begin{align}
+\notag
+\frac{d}{dt}\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle&=2\gc\left[\langle\hat{\sigma}_l^z\rangle \langle \hat{\sigma}_j^z\rangle-\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle\right]\\\notag
+&+\gc\left[\langle\hat{\sigma}_l^+\hat{\sigma}_j^-\rangle+\langle\hat{\sigma}_l^-\hat{\sigma}_j^+\rangle\right]\left[\langle\hat{\sigma}_l^z\rangle+\langle \hat{\sigma}_j^z\rangle+2\right]\\
+&-\gc\langle\hat{\sigma}_l^z\rangle\left[\langle\hat{\sigma}_j^+\hat{J}^-\rangle+\langle\hat{J}^+\hat{\sigma}_j^-\rangle\right]-\gc\langle\hat{\sigma}_j^z\rangle\left[\langle\hat{\sigma}_l^+\hat{J}^-\rangle+\langle\hat{J}^+\hat{\sigma}_l^-\rangle\right]
+\end{align}
+
+We write down the closed set of the equations below.
+\begin{align}
+\label{de1}
+\frac{d}{dt}\langle\hat{\sigma}^z_j\rangle&=-\gc\langle\hat{J}^+\hat{\sigma}^-_j\rangle-\gc\langle\hat{\sigma}_j^+\hat{J}^-\rangle\\
+\label{de2}
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_j\rangle&=-\frac{\gc}{2}\langle\hat{J}^+\hat{\sigma}^-_j\rangle-\frac{\gc}{2}\langle\hat{\sigma}_j^+\hat{J}^-\rangle\\\notag
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle&=\frac{\gc}{2}\big[\langle\hat{J}^+\hat{\sigma}_l^-\rangle \langle \hat{\sigma}_j^z\rangle+\langle\hat{\sigma}^+_j\hat{J}^-\rangle \langle \hat{\sigma}_l^z\rangle-\langle\hat{\sigma}_l^z\rangle \langle \hat{\sigma}_j^z\rangle+\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle\\
+\label{de3}
+&-\langle\hat{\sigma}_j^+ \hat{\sigma}_l^-\rangle\left(\langle\hat{\sigma}_l^z\rangle +\langle \hat{\sigma}_j^z\rangle+2\right)\big]\\\notag
+\frac{d}{dt}\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle&=2\gc\left[\langle\hat{\sigma}_l^z\rangle \langle \hat{\sigma}_j^z\rangle-\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle\right]\\\notag
+&+\gc\left[\langle\hat{\sigma}_l^+\hat{\sigma}_j^-\rangle+\langle\hat{\sigma}_l^-\hat{\sigma}_j^+\rangle\right]\left[\langle\hat{\sigma}_l^z\rangle+\langle \hat{\sigma}_j^z\rangle+2\right]\\
+\label{de4}
+&-\gc\langle\hat{\sigma}_l^z\rangle\left[\langle\hat{\sigma}_j^+\hat{J}^-\rangle+\langle\hat{J}^+\hat{\sigma}_j^-\rangle\right]-\gc\langle\hat{\sigma}_j^z\rangle\left[\langle\hat{\sigma}_l^+\hat{J}^-\rangle+\langle\hat{J}^+\hat{\sigma}_l^-\rangle\right]
+\end{align}
+
+%In deriving \ref{de3} we have used the approximation
+%\begin{equation}
+%\langle \hat{\sigma}^z_j\hat{\sigma}^z_l\rangle \approx \langle\hat{\sigma}^z_j\rangle\langle\hat{\sigma}^z_l\rangle
+%\end{equation}
+%to close the differential equation set. This approximation has been numerically checked for large $N_0$.\footnote{CHECK!! or calculate}
+
+For convenience of simulation, we rewrite the collective operators in equations \ref{de1}-\ref{de4} as summations
+\begin{align}
+\label{de1.1}
+\frac{d}{dt}\langle\hat{\sigma}^z_j\rangle&=-\gc\sum_{k=1}^{N_0}\left[\langle\hat{\sigma}_k^+\hat{\sigma}^-_j\rangle+\langle\hat{\sigma}_j^+\hat{\sigma}_k^-\rangle\right]\\
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_j\rangle&=-\frac{\gc}{2}\sum_{k=1}^{N_0}\left[\langle\hat{\sigma}_k^+\hat{\sigma}^-_j\rangle+\langle\hat{\sigma}_j^+\hat{\sigma}_k^-\rangle\right]\\\notag
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle&=\frac{\gc}{2}\sum_{k=1}^{N_0}\left[\langle\hat{\sigma}_k^+\hat{\sigma}_l^-\rangle \langle \hat{\sigma}_j^z\rangle+\langle\hat{\sigma}^+_j\hat{\sigma}_k^-\rangle \langle \hat{\sigma}_l^z\rangle\right]\\
+&-\frac{\gc}{2}\left[\langle\hat{\sigma}_l^z\rangle \langle \hat{\sigma}_j^z\rangle-\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle
++\langle\hat{\sigma}_j^+ \hat{\sigma}_l^-\rangle\left(\langle\hat{\sigma}_l^z\rangle +\langle \hat{\sigma}_j^z\rangle+2\right)\right]\ \ \ \ (j\neq l)\\\notag
+\frac{d}{dt}\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle&=2\gc\left[\langle\hat{\sigma}_l^z\rangle \langle \hat{\sigma}_j^z\rangle-\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle\right]\\\notag
+&+\gc\left[\langle\hat{\sigma}_l^+\hat{\sigma}_j^-\rangle+\langle\hat{\sigma}_l^-\hat{\sigma}_j^+\rangle\right]\left[\langle\hat{\sigma}_l^z\rangle+\langle \hat{\sigma}_j^z\rangle+2\right]\\
+\label{de4.1}
+&-\gc\sum_{k=1}^{N_0}\left[\langle\hat{\sigma}_l^z\rangle\left[\langle\hat{\sigma}_j^+\hat{\sigma}_k^-\rangle+\langle\hat{\sigma}_k^+\hat{\sigma}_j^-\rangle\right]+\langle\hat{\sigma}_j^z\rangle\left[\langle\hat{\sigma}_l^+\hat{\sigma}_k^-\rangle+\langle\hat{\sigma}_k^+\hat{\sigma}_l^-\rangle\right]\right]\ \ \ \ (j\neq l)
+\end{align}
+
+Consider the covariance matrix $\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle$, where $j$ and $l$ both take positive integers up to $N_0$. It is obvious that this matrix is Hermitian because
+\begin{equation}
+    \langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle^\ast = \langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle^\dagger =\langle\left[\hat{\sigma}^+_j\hat{\sigma}^-_l\right]^\dagger\rangle=\langle\hat{\sigma}^+_l\hat{\sigma}^-_j\rangle
+\end{equation}
+
+Since our initial condition for this covariance matrix is $diag(1,1,...,1,1)$, and our differential equation is purely real, all the elements of the covariance matrix will be real. Thus it is symmetric, i.e., 
+\begin{equation}
+    \langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle = \langle\hat{\sigma}^+_l\hat{\sigma}^-_j\rangle
+\end{equation}
+
+Therefore we can further simplify the differential equations \ref{de1.1}-\ref{de4.1} and get
+\begin{align}
+\frac{d}{dt}\langle\hat{\sigma}^z_j\rangle&=-2\gc\sum_{k=1}^{N_0}\langle\hat{\sigma}_k^+\hat{\sigma}^-_j\rangle\\
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_j\rangle&=-\gc\sum_{k=1}^{N_0}\langle\hat{\sigma}_k^+\hat{\sigma}^-_j\rangle\\\notag
+\frac{d}{dt}\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle&=\frac{\gc}{2}\sum_{k=1}^{N_0}\left[\langle\hat{\sigma}_k^+\hat{\sigma}_l^-\rangle \langle \hat{\sigma}_j^z\rangle+\langle\hat{\sigma}^+_j\hat{\sigma}_k^-\rangle \langle \hat{\sigma}_l^z\rangle\right]\\
+&-\frac{\gc}{2}\left[\langle\hat{\sigma}_l^z\rangle \langle \hat{\sigma}_j^z\rangle-\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle
++\langle\hat{\sigma}_j^+ \hat{\sigma}_l^-\rangle\left(\langle\hat{\sigma}_l^z\rangle +\langle \hat{\sigma}_j^z\rangle+2\right)\right]\ \ \ \ (j\neq l)\\\notag
+\frac{d}{dt}\langle\hat{\sigma}_j^z \hat{\sigma}_l^z\rangle&=2\gc\left[\langle\hat{\sigma}_l^z\rangle \langle \hat{\sigma}_j^z\rangle-\langle\hat{\sigma}_l^z \hat{\sigma}_j^z\rangle\right]\\\notag
+&+2\gc\langle\hat{\sigma}_j^+\hat{\sigma}_l^-\rangle\left[\langle\hat{\sigma}_l^z\rangle+\langle \hat{\sigma}_j^z\rangle+2\right]\\
+&-2\gc\sum_{k=1}^{N_0}\left[\langle\hat{\sigma}_l^z\rangle\langle\hat{\sigma}_j^+\hat{\sigma}_k^-\rangle+\langle\hat{\sigma}_j^z\rangle\langle\hat{\sigma}_l^+\hat{\sigma}_k^-\rangle\right]\ \ \ \ (j\neq l)
+\end{align}
+
+\subsubsection{Observables}
+\label{section:obsevables}
+% \subsubsection{The intracavity atom number}
+We have defined $N(t)$ as the number of intracavity atom number at time $t$. For the simple model, the atomic beam moves through the cavity as a lattice structure. Once the beam has passed the cavity length, $N(t)$ will be a constant. Thus we can easily define $N_0$ as 
+\begin{equation}
+    N_0 = N(t>\tau)\equiv \Phi \tau 
+\end{equation}
+where $\Phi$ is the number of atoms moving towards $y$ direction per second and $\tau$ is the transit time. Recalling the definitions of $\Phi$ and $\tau$, we can also write 
+\begin{equation}
+\label{n0simple}
+    N_0 =\Phi\tau=\frac{dN}{dt}\frac{2d}{v_y} 
+\end{equation}
+
+Notice that the internal steady state of the system cannot happen before the beam first passes the cavity, thus we can also refer to $N_0$ as the "steady-state intracavity atom number".
+
+When we are in the real case in section \ref{section:real}, we have to involve the poissonian distribution of atom generation and the gaussian distribution of atom velocities in all directions. Then the definition of $N_0$ will be the following
+\begin{equation}
+    N_0=\langle N(t>\tau) \rangle_t
+\end{equation}
+
+% \subsubsection{The mean photon emission rate}
+
+The mean photon emission rate $I$ (also referred to as the intensity in this paper) is usually defined as
+\begin{equation}
+    I = \kappa\langle \hat{a}^\dagger\hat{a}\rangle
+\end{equation}
+
+Using equations \ref{aelim} - \ref{ff+}, we get
+\begin{equation}
+    I = \kappa\frac{\gc^2}{g^2}\langle \hat{J}^+\hat{J}^-\rangle = \gc\langle \hat{J}^+\hat{J}^-\rangle
+\end{equation}
+
+For code-writing purposes, we rewrite the equation above as
+\begin{equation}
+\label{icumulant}
+    I = \gc\sum_{j=1}^{N_0}\sum_{l=1}^{N_0}\langle \hat{\sigma}_j^+\hat{\sigma}_l^-\rangle
+\end{equation}
+
+Theoretically, we can introduce another quantity that represents the intensity without all the contributions due to spin-spin correlations between different atoms, i.e., the "uncorrelated intensity"
+\begin{equation}
+\label{iuncorcumulant}
+    I'=\gc\sum_{j=1}^{N_0}\langle \hat{\sigma}_j^+\hat{\sigma}_j^-\rangle
+\end{equation}
+
+This nonphysical quantity $I'$ will be used to compare to the physical intensity $I$ in order to examine the contributions of spin-spin correlations to the output intensity.
+
+% \subsubsection{The mean population inversion}
+The mean population inversion $\langle \hat{j}^z\rangle$ is defined as the average population inversion of all the intracavity atoms
+\begin{equation}
+\label{jzcumulant}
+      \langle\hat{j}^z\rangle\equiv\frac{1}{N(t)}\langle\hat{J}^z\rangle=\frac{1}{N(t)}\sum_{j=1}^{N_0}\langle\hat{\sigma}_j^z\rangle
+\end{equation}
+
+Here the macroscopic population inversion $\hat{J}^z=\sum_{j=1}^{N_0}\langle\hat{\sigma}_j^z\rangle$ is defined in the same manner as other macroscopic spin observables such as $\hat{J}^-$ and $\hat{J}^+$.
+
+Since the atoms always enter the cavity in $\estate$, in steady state, the average population inversion $\langle \hat{j}^z\rangle$ tells us of the efficiency of the system, i.e., the percentage of the energy left which is supposed to produce light.
+
+% \subsubsection{The mean spin-spin correlation}
+We can define the mean spin-spin correlation of the intracavity atoms as
+\begin{equation}
+\label{qcumulant}
+    q=\frac{1}{N(N-1)}\sum_{j,l; j\neq l}^{N}\langle \hat{\sigma}_j^+\hat{\sigma}_l^-\rangle
+\end{equation}
+
+The value of $q$ reflects the contribution of the collective behavior of the intracavity atoms to the output light field. 
+
+% \subsubsection{The $g^{(1)}$ function}
+By the Wiener-Khinchin Theorem, the power spectrum of the output field is given by\footnote{David, 2.69}
+\begin{equation}
+    S(\omega)=\int_{-\infty}^\infty dt e^{-i\omega t} \left\langle\hat{a}^\dagger(T+t)\hat{a}(T)\right\rangle
+\end{equation}
+where $T$ is some time after the system is in steady state.
+
+Notice that $\left\langle\hat{a}^\dagger(T+t)\hat{a}(T)\right\rangle$ is the $g^{(1)}$ function of the field at two times. So the $g^{(1)}$ function provides us with the information of the linewidth of the output field.
+
+% \subsubsection{The $g^{(2)}$ function}
+To be added. Basically, the $g^{(2)}$ function gives us the fluctuations.
+
+% \subsubsection{Photon statistics}
+This is the probability of $n$ photons in the cavity. The distribution is 
+\begin{equation}
+    P(n)=\langle\psi| n\rangle \langle n|\psi\rangle
+\end{equation}
+
+
+
+\subsubsection{Observables}
+We look at the observables in steady state defined in section \ref{section:obsevables} one by one.
+\begin{enumerate}
+    \item $N_0 =\Phi\tau=\frac{dN}{dt}\frac{2d}{v_y}$ as in equation \ref{n0simple}
+    \item $I = \gc\sum_{j=1}^{N_0}\sum_{l=1}^{N_0}\langle \hat{\sigma}_j^+\hat{\sigma}_l^-\rangle$ as in equation \ref{icumulant}
+    
+          $I'=\gc\sum_{j=1}^{N_0}\langle \hat{\sigma}_j^+\hat{\sigma}_j^-\rangle$ as in equation \ref{iuncorcumulant}
+    \item $\langle\hat{j}^z\rangle\equiv\frac{1}{N(t)}\langle\hat{J}^z\rangle=\frac{1}{N(t)}\sum_{j=1}^{N_0}\langle\hat{\sigma}_j^z\rangle$ as in equation \ref{jzcumulant}
+    \item $q=\frac{1}{N(N-1)}\sum_{j,l; j\neq l}^{N}\langle \hat{\sigma}_j^+\hat{\sigma}_l^-\rangle$ as in equation \ref{qcumulant}
+    \item The $g^{(1)}$ function and the linewidth. The usual way to find the two time correlation function is to use the quantum regression theorem\footnote{See David, Chapter 3.2.3.}. This method requires getting initial values of $\langle \hat{a}^\dagger(T) \hat{a}(T) \rangle$ at some steady-state time $T$ and then calculate the $g^{(1)}$ function $\langle \hat{a}^\dagger(T+t) \hat{a}(T)\rangle$. However, in our case, the correlations between different pairs of atoms not only evolve with time but also are replaced after each time step. The use of quantum regression theorem cannot incorporate the second change on the correlation. The c-number quantum Langevin method will solve this problem.
+    \item The $g^{(2)}$ function. Same reason as the $g^{(1)}$ function.
+    \item The photon statistics. By keeping up to second order cumulants we have actually implicitly assumed a Gaussian distribution for the photon statistics. Thus we only need to calculate the mean and the variance. $\langle \hat{n}\rangle=\langle\hat{a}^\dagger \hat{a}\rangle$ and $\langle \hat{n}^2\rangle=\langle \hat{a}^\dagger\hat{a}\hat{a}^\dagger\hat{a}\rangle$ would suffice.
+    
+\end{enumerate}
+\bigskip
+
+\subsubsection{Comparison with Dominic's differential equations}
+In the equations 13 - 15 of \cite{fluctuationSSS}, Dominic puts down the closed set of differential equations of the moments $\langle\hat{\sigma}^z_j\rangle$, $\langle\hat{\sigma}^+_j\hat{\sigma}^-_l\rangle$, and $\langle\hat{\sigma}_j^z \hat{\sigma}_l^z\rangle$ in his case. Since we would like to compare our results of $I$ and $\langle \hat{j}^z \rangle$ with his, it would be great if we can make a sanity check that under the same conditions, our sets of differential equations \ref{de01}, \ref{de03}, and \ref{de04} are the same as his equations 13 - 15. 
+
+There are two major differences between our set of equations and his. First, in our case, $w=0$. As we have discussed, the effective "repumping" process in our model is done by replacing leaving atoms by entering atoms. However, this effect is not shown in the direct form of equations, but done by the evolution of differential equations. Second, in our case, atoms do not have the permutation symmetry as they do in Dominic's case since different atoms enter the cavity at different times. Therefore what is shown in Dominic's equations with $N\hat{\sigma}^z$ is now replaced in our case by a collective operator $\hat{J}^z$, and similarly for other terms. 
+
+Indeed, if we set $w=0$ in equations 13 - 15 of \cite{fluctuationSSS}, and assume permutation symmetry in our equations \ref{de01}, \ref{de03}, and \ref{de04}, they should be the sets same differential equations. This is a sanity check to make sure that our derivations are correct.
+
+We have done this sanity check manually and proved that our differential equations indeed reduce to Dominic's equations.
+
+
+\subsubsection{Parameter range estimate}
+As argued previously, Dominic and Murray showed that their model is relevant to the superradiance regime when $w\sim \frac{1}{2}N_0 \gc$. Suppose $w$ and $1/\tau$ play similar roles in the two models, we would expect
+\begin{equation}
+    \tau \sim \frac{2}{N_0 \gc}
+\end{equation}
+
+In our simple model, $N_0$ is a constant, given by 
+\begin{equation}
+    N_0=\Phi\tau
+\end{equation}
+where $\Phi$ is the number of atoms per second.
+
+Also, $\tau$ is given by 
+\begin{equation}
+    \tau = \frac{2d}{v_y}
+\end{equation}
+where $d$ is the focal waist, and $v_y$ is the transit speed of atoms.
+
+Thus we have an estimate range for the parameters
+\begin{equation}
+    \tau \sim \sqrt{\frac{2}{\Phi \gc}}
+\end{equation}
+
+or
+
+\begin{equation}
+    v_y \sim 2d\sqrt{\frac{\Phi \gc}{2}}
+\end{equation}
+
+Together with our previous assumptions, we list all the restrictions on parameters for our model to work
+\begin{enumerate}
+    \item $\gamma \ll N_0 \gc$, i.e., the free-space spontaneous emission of atoms are neglected
+    \item $\kappa \gg N_0 \gc$, i.e., the conditions of bad-cavity limit and adiabatically elimination of the field
+    \item $\tau \sim \sqrt{\frac{2}{\Phi \gc}}$ the steady-state superradiance parameter requirement on the effective "pumping rate"
+\end{enumerate}
+
+Let us look at the $\gamma = 7.5$kHz transition first. One can check that the following parameters shown in Table \ref{param7.5k} will satisfy the three requirements above. Notice that the parameters printed in \textit{italics} are calculated from other parameters. It has been assumed that the cavity used has a single-atom cooperative parameter $C \sim 0.01$.
+
+For the $\gamma=10^{-3}$ Hz transition, similarly, we have the parameters listed in Table \ref{param7.5k}. Assume $C=0.01$. The table shows that we have an expected linewidth of 40mHz.
+
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{ |l |c|c|  }
+\hline
+\textbf{Atom (Sr)} & & \\\hline
+Spontaneous emission rate $\gamma$ & $7.5\times10^3$ Hz& $10^{-3}$ Hz \\\hline
+\textit{Collective decay rate} $\gc = \gamma C$  & 75 Hz & $10^{-5}$ Hz\\\hline
+\textbf{Beam} & & \\\hline
+Longitudinal beam velocity $v_y$ & $5\times 10^2$ m/s & $\sim$\\\hline
+Beam flux $\Phi_{Beam}$ & $10^{14}$/(s$\cdot$ m$^2$) & $\sim$\\\hline
+Beam size $l$ & $2\times10^{-2}$ m & $\sim$\\\hline
+\textit{Beam flux} $\Phi=\Phi_{Beam}\times l \times 2d$  & $2\times10^{9}$ /s& $\sim$\\\hline
+\textit{Transit time} $\tau=2d/v_y$ & $2\times 10^{-6}$ s& $\sim$\\\hline
+\textit{Intracavity atom number} $N_0=\Phi \tau$ & $4\times 10^3$& $\sim$\\\hline
+$N_0\gc$ & $3\times 10^{5}$ Hz &$4\times 10^{-2}$ Hz\\\hline
+\textbf{Cavity} & &\\\hline
+Focal waist $d$  & $5\times10^{-4}$ m& $\sim$\\\hline
+Cooperative parameter $C$ & $0.01$& $\sim$\\\hline
+Cavity decay rate $\kappa$ & $10^7$ Hz& $\sim$\\\hline
+\end{tabular}
+\end{center}
+\caption{Estimation of experimental parameters for the 7.5kHz and the 1mHz transition}
+\label{param7.5k}
+\end{table}
+
+\subsubsection{Simulation Methods}
+There are two ways to compare the simulation results. Recall that
+\begin{equation}
+    N_0 =\Phi\tau=\frac{dN}{dt}\frac{2d}{v_y} 
+\end{equation}
+
+We assume that the focal waist $d$ is fixed for a given cavity. Then to plot steady-state observables vs. $\tau$ we need to vary $v_y$. 
+\begin{enumerate}
+    \item If we only change $v_y$ and keep $\Phi$ as a constant, then $N_0$ is subject to change proportional to $\tau$. The results achieved from this method is shown in section \ref{subsubsectionN0change}.
+    \item If we want to keep $N_0$ as a constant, we can change $v_y$ and $dt$ but keep $v_ydt$ as a constant. This gives the results in section \ref{subsubsectionN0const}. 
+\end{enumerate}
+At this point it is NOT clear which method is more illustrative. But to compare our results with Dominic's paper, in which $N_0$ is constant, we will put more focus on the latter method for now. 
+
+We use the RK2 method to do the numerical integration.
+
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+
+
+
+\subsubsection{Steady-state observables versus transit time ($N_0$ changing)}
+\label{subsubsectionN0change}
+ The "naive" parameters we used here are listed in Table \ref{paramN0change}. The results are shown in Figure \ref{fig:nAtom,int;N0change} and \ref{fig:inv,ssc;N0change}.
+
+\begin{table}[!h]
+    \centering
+    \begin{tabular}{ |l |c|   }
+        \hline
+        \textbf{Atom (Sr)} & \\\hline
+        \textit{Collective decay rate} $\gc = \gamma C$  & 0.1\\\hline
+        \textbf{Beam} & \\\hline
+        Transverse beam velocity $v_y$ & 1-5\\\hline
+        \textit{Beam flux} $\Phi$  & 10\\\hline
+        Transit time $\tau$ & $2d/v_y$ \\\hline
+        \textbf{Cavity} & \\\hline
+        Focal waist $d$  & 5\\\hline
+        \textbf{Simulation}&\\\hline
+        dt & 0.1\\\hline
+        tmax & 80 \\\hline
+    \end{tabular}
+    \caption{Simulation parameters with a changing $N_0$.}
+    \label{paramN0change}
+\end{table}
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3in]{nAtom_N0change_noNoise.eps}
+\includegraphics[width=3in]{intensity_N0change_noNoise.eps}
+\caption{Left: steady-state intracavity atom number $N_0$ vs. transit time $\tau$. Right: steady-state mean photon emission rate vs. transit time $\tau$. The blue line corresponds to the intensity $I$ , while the red dashed line corresponds to the intensity without all spin-spin correlations between different atoms $I'$.}
+\label{fig:nAtom,int;N0change}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=3in]{inversion_N0change_noNoise.eps}
+\includegraphics[width=3in]{spinSpinCor_N0change_noNoise.eps}
+\caption{Left: steady-state mean population inversion $\langle \hat{j}^z \rangle$ vs. transit time $\tau$. Right: steady-state mean spin-spin correlation $q$ vs. transit time $\tau$.}
+\label{fig:inv,ssc;N0change}
+\end{figure}
+
+
+
+
+
+
+
+
+\subsubsection{Steady-state observables versus transit time ($N_0$ constant)}
+\label{subsubsectionN0const}
+The "naive" parameters we used here are listed in Table \ref{paramN0const}. The results are shown in Figure \ref{fig:nAtom,int;N0const} and \ref{fig:inv,ssc;N0const}.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{ |l |c|   }
+\hline
+\textbf{Atom (Sr)} & \\\hline
+\textit{Collective decay rate} $\gc = \gamma C$  & 0.1\\\hline
+\textbf{Beam} & \\\hline
+%Transverse beam velocity $v_y$ & 1-50\\\hline
+Transit time $\tau$ & 0.2-10\\\hline
+Intracavity Atom Number $N_0$ & 10-105\\\hline
+Transverse beam velocity $v_y$ & $2d/\tau$\\\hline
+\textit{Beam flux} $\Phi$  & $N_0/\tau$\\\hline
+\textbf{Cavity} & \\\hline
+Focal waist $d$  & 5\\\hline
+\textbf{Simulation}&\\\hline
+dt & $\tau/N_0$\\\hline
+tmax & 10$\tau$ \\\hline
+\end{tabular}
+    \caption{Simulation parameters with a constant $N_0$.}
+    \label{paramN0const}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3in]{nAtom_N0const_noNoise.eps}
+\includegraphics[width=3in]{intensity_N0const_noNoise.eps}
+\caption{Left: steady-state intracavity atom number $N_0$ vs. transit time $\tau$. Right: steady-state mean photon emission rate vs. transit time $\tau$. The blue line corresponds to the intensity $I$ , while the red dashed line corresponds to the intensity without all spin-spin correlations between different atoms $I'$.}
+\label{fig:nAtom,int;N0const}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3in]{inversion_N0const_noNoise.eps}
+\includegraphics[width=3in]{spinSpinCor_N0const_noNoise.eps}
+\caption{Left: steady-state mean population inversion $\langle \hat{j}^z \rangle$ vs. transit time $\tau$. Right: steady-state mean spin-spin correlation $q$ vs. transit time $\tau$.}
+\label{fig:inv,ssc;N0const}
+\end{figure}
+
+One new phenomenon to notice is that it seems the peak moves towards the $y$-axis as $N_0$ is changed from experiment to experiment. Need to study Jinx's method to find out about the formula for the intensity.
+
+\bigskip
+
+UNFINISHED
+
+\bigskip
+
+We also show the relationship between $I$ and $N_0$ for different transit times in Figure \ref{fig:threeTau;N0const}. Ideally we would want a quadratic relationship at the peak. Need more explanation on the results.
+
+??Doppler free spectropy
+\begin{figure}[H]
+\centering
+\includegraphics[width=6in]{threeTauWithLegendsCopy.pdf}
+\caption{Steady-state mean photon emission rate $I$ vs. steady-state intracavity atom number $N_0$. }
+\label{fig:threeTau;N0const}
+\end{figure}
+
+\subsection{$c$-number Langevin approach (field eliminated)}
+Instead of using the quantum master equation (in Schrodinger picture), we can instead use the quantum Langevin equations (in Heisenberg picture) to study the system\footnote{David's Thesis, Chapter 4.}. Due to the operator nature of the observables, we make the semi-classical approximation and replace the operators by $c$-numbers. Notice that we can either apply this approach after the field is eliminated, or apply it without the elimination. In this section we choose to eliminate the field before dealing with the system.
+
+\subsubsection{Principles}
+???DERIVATION NEEDED
+
+The formal derivations of the quantum Langevin equations can be found in many textbooks and in David's Thesis. Also one can prove that the $c$-number Langevin equations are equivalent to the Fokker-Planck equations for a quasi-probability distribution. Therefore the $c$-number Langevin equations are indeed appropriate to describe the system if the approximations are legitimate, which are often true.
+
+The procedures of the $c$-number Langevin approach can be summarized as the following steps:
+\begin{enumerate}
+    \item Write down the quantum Langevin equations for the system. This is equivalent to writing down the master equation.
+    \item Calculate the drift terms.
+    \item Calculate the diffusion coefficient matrix.
+    \item Transforming to $c$-number equations by forcing the second order moments of the quantum equations to be equal to those of the $c$-number equations. We choose the symmetric ordering of the replacement.
+    \item Run simulations.
+\end{enumerate}
+
+Now we will explain the procedures above in details. NEED EDITING
+
+\subsubsection{Observables}
+\begin{enumerate}
+    \item $N_0 =\Phi\tau=\frac{dN}{dt}\frac{2d}{v_y}$ as in equation \ref{n0simple}
+    \item $I = \gc\sum_{j=1}^{N_0}\sum_{l=1}^{N_0}\langle \hat{\sigma}_j^+\hat{\sigma}_l^-\rangle$ as in equation \ref{icumulant}
+    
+          $I'=\gc\sum_{j=1}^{N_0}\langle \hat{\sigma}_j^+\hat{\sigma}_j^-\rangle$ as in equation \ref{iuncorcumulant}
+    \item $\langle\hat{j}^z\rangle\equiv\frac{1}{N(t)}\langle\hat{J}^z\rangle=\frac{1}{N(t)}\sum_{j=1}^{N_0}\langle\hat{\sigma}_j^z\rangle$ as in equation \ref{jzcumulant}
+    \item $q=\frac{1}{N(N-1)}\sum_{j,l; j\neq l}^{N}\langle \hat{\sigma}_j^+\hat{\sigma}_l^-\rangle$ as in equation \ref{qcumulant}
+    \item The $g^{(1)}$ function and the linewidth. (The usual way to find the two time correlation function is to use the quantum regression theorem\footnote{See David, Chapter 3.2.3.}. This method requires getting initial values of $\langle \hat{a}^\dagger(T) \hat{a}(T) \rangle$ at some steady-state time $T$ and then calculate the $g^{(1)}$ function $\langle \hat{a}^\dagger(T+t) \hat{a}(T)\rangle$. However, in our case, the correlations between different pairs of atoms not only evolve with time but also are replaced after each time step. The use of quantum regression theorem cannot incorporate the second change on the correlation. The c-number quantum Langevin method will solve this problem.) NEED EDITING
+    \item The $g^{(2)}$ function. NEED EDITING
+    \item The photon statistics. By keeping up to second order cumulants we have actually implicitly assumed a Gaussian distribution for the photon statistics. Thus we only need to calculate the mean and the variance. $\langle \hat{n}\rangle=\langle\hat{a}^\dagger \hat{a}\rangle$ and $\langle \hat{n}^2\rangle=\langle \hat{a}^\dagger\hat{a}\hat{a}^\dagger\hat{a}\rangle$ would suffice.
+    
+\end{enumerate}
+\subsubsection{Simulations}
+We run the simulations with parameters as what we did using the cumulant method. The comparison of the results of the two methods is shown in ???. 
+
+The linewidth is
+
+\subsection{Comparison of the three methods}
+We want to surpass the single atom broadening--transit time broadening.
+
+\section{The Real Model}
+\label{section:real}
+
+poissonian atom noise--make observables statistics
+
+doppler effect--detuning
+
+gaussian beam
+
+\subsection{Parameter Space}
+Here we put down the relevant experimental parameters in this problem. Many of them can be chosen from a wide range. Also in cases of need, we may play around with the parameters a little bit.\footnote{$g$ is related to $\gamma$ and $\kappa$. Thus we should use the values correspondingly.}\footnote{Lower speeds can be achieved using a Zeeman slower. Same for transverse speeds.}
+\begin{center}
+\begin{tabular}{ |l |c|   }
+\hline
+\textbf{Atom (Sr)} & \\\hline
+Spontaneous decay rate $\gamma$ & $10^{-3}$Hz - $7.5\times10^3$ Hz \\\hline
+Single photon Rabi frequency $g$ & $0.5$Hz - $1.5\times 10^3$ Hz\\\hline
+\textbf{Beam} & \\\hline
+Average longitudinal beam velocity $v_y$ & 20 - 450 m/s\\\hline
+Average transverse beam velocity $v_x$  & 0.26 - 14 m/s\\\hline
+Beam flux $\Phi_{Beam}$  & $10^{17}$ - $10^{19}$/(s$\cdot$ m$^2$)\\\hline
+Transverse size $l$ & $2\times10^{-2}$ m\\\hline
+\textbf{Cavity} & \\\hline
+Focal waist $d$  & $5\times10^{-4}$ m\\\hline
+Cavity decay rate $\kappa$ & $2\times10^4$ Hz\\\hline
+\end{tabular}
+\end{center}
+
+
+\subsection{More Details}
+change population ratio
+change $\Phi$
+
+derive 2.15-2.17
+ignore $\gamma$ during simulation
+Before further discussing the master equation \ref{master}, we first look at the atom-cavity coupling $g_j(\textbf{v}_j,t,\textbf{x}_j(t))$. It has a form of Gaussian beam for a cavity of mode TEM00...
+
+Following the procedures described in Minghui and David's thesis, the quantum Langevin equations corresponding to the master equation \ref{master} are
+
+where
+
+diffusion matrix
+
+
+\subsection{Simulations}
+data structure
+
+\printbibliography
+\end{document}
