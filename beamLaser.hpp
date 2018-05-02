@@ -118,9 +118,11 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
 //Observables; n is the nTimeStep
 typedef struct Observables 
 {
-  Matrix <unsigned long int, 1, Dynamic> nAtom; 
+  VectorXi nAtom; 
   VectorXd intensity;
   VectorXd inversionAve;
+  VectorXd spinSpinCorAve_re;
+  VectorXd spinSpinCorAve_im;
   MatrixXd qMatrix;
   MatrixXd pMatrix;
   MatrixXd spinSpinCor_re;
@@ -128,9 +130,11 @@ typedef struct Observables
 
   Observables(const int n, const int m, const int l) 
   {
-    nAtom = Matrix <unsigned long int, 1, Dynamic>(n); 
+    nAtom = VectorXi(n); 
     intensity = VectorXd(n);
     inversionAve = VectorXd(n);
+    spinSpinCorAve_re = VectorXd(n);
+    spinSpinCorAve_im = VectorXd(n);
     qMatrix = MatrixXd(m,n);
     pMatrix = MatrixXd(m,n);
     spinSpinCor_re = MatrixXd(l,n);
@@ -159,13 +163,15 @@ typedef struct SpinVariables
 typedef struct ObservableFiles 
 {
   //Definition
-  std::ofstream nAtom, intensity, inversionAve, sxFinal, syFinal, szFinal, 
-    qMatrix, pMatrix, spinSpinCor_re, spinSpinCor_im;
+  std::ofstream nAtom, intensity, inversionAve, spinSpinCorAve_re, spinSpinCorAve_im,
+    sxFinal, syFinal, szFinal, qMatrix, pMatrix, spinSpinCor_re, spinSpinCor_im;
 
   //Constructor              
   ObservableFiles() : nAtom("nAtom.dat"), 
                       intensity("intensity.dat"), 
                       inversionAve("inversionAve.dat"),
+                      spinSpinCorAve_re("spinSpinCorAve_re.dat"),
+                      spinSpinCorAve_im("spinSpinCorAve_im.dat"),
                       sxFinal("sxFinal.dat"),
                       syFinal("syFinal.dat"),
                       szFinal("szFinal.dat"),
@@ -181,6 +187,8 @@ typedef struct ObservableFiles
     nAtom.close();
     intensity.close();
     inversionAve.close();
+    spinSpinCorAve_re.close();
+    spinSpinCorAve_im.close();
     sxFinal.close();
     syFinal.close();
     szFinal.close();

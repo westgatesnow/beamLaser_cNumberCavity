@@ -5,11 +5,11 @@ nstore 1000
 yWall 10
 sigmaXX 0
 sigmaXZ 0
-transitTime 1
+transitTime 0.6
 sigmaPX 0
 sigmaPY 0
 sigmaPZ 0
-density 100
+density 166.66666666666666666666
 rabi 2
 kappa 40
-name test
+name pois_tau0.6_g2_k40_N100

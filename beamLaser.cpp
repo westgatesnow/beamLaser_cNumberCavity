@@ -114,49 +114,49 @@ void generateInternalState(Atom& newAtom, const Param& param)
 
 void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double meanP, int& m)
 {
-  unsigned long int nAtom;
+  int nAtom;
   const double dN = param.density*param.dt;
 
   ///////////////////////////////////////////////////////////////////////////
   // Uniform atom generation
   ///////////////////////////////////////////////////////////////////////////
-  if (dN >= 1) {
-    nAtom = dN;     
+  // if (dN >= 1) {
+  //   nAtom = dN;     
 
-    for (unsigned long int n = 0; n < nAtom; n++) {
-      Atom newAtom; //Create a new atom
-      generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
-      generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
-      ensemble.atoms.push_back(newAtom);
-    }
-  }
-
-  else if (dN > 0){
-    int rep = 1/dN;
-    if (m == rep) {
-      Atom newAtom; //Create a new atom
-      generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
-      generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
-      ensemble.atoms.push_back(newAtom);
-      m = 0;
-    }
-    m++;
-  }
-  else {
-    std::cout << "Bad dN in input file" << std::endl;
-    exit(-1);
-  }
-
-  ///////////////////////////////////////////////////////////////////////////
-  //Poissonian atom generation
-  ///////////////////////////////////////////////////////////////////////////
-  // nAtom = rng.get_poissonian_int(dN);
-  // for (unsigned long int n = 0; n < nAtom; n++) {
+  //   for (unsigned long int n = 0; n < nAtom; n++) {
   //     Atom newAtom; //Create a new atom
   //     generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
   //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
   //     ensemble.atoms.push_back(newAtom);
+  //   }
   // }
+
+  // else if (dN > 0){
+  //   int rep = 1/dN;
+  //   if (m == rep) {
+  //     Atom newAtom; //Create a new atom
+  //     generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
+  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
+  //     ensemble.atoms.push_back(newAtom);
+  //     m = 0;
+  //   }
+  //   m++;
+  // }
+  // else {
+  //   std::cout << "Bad dN in input file" << std::endl;
+  //   exit(-1);
+  // }
+
+  ///////////////////////////////////////////////////////////////////////////
+  //Poissonian atom generation
+  ///////////////////////////////////////////////////////////////////////////
+  nAtom = rng.get_poissonian_int(dN);
+  for (int n = 0; n < nAtom; n++) {
+      Atom newAtom; //Create a new atom
+      generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
+      generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
+      ensemble.atoms.push_back(newAtom);
+  }
 }
   
  
@@ -299,11 +299,11 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   //For convenience
   const double kappa = param.kappa;
   const int nTrajectory = param.nTrajectory;
-  const int nAtom = ensemble.atoms.size();
   const int nTimeStep = param.tmax/param.dt+0.5;
+  const int nAtom = ensemble.atoms.size();
   
   //nAtom
-  observables.nAtom(s) = ensemble.atoms.size();
+  observables.nAtom(s) = nAtom;
   
   //intensity
   observables.intensity(s) = kappa/4*(ensemble.cavity.q.col(nStep).array().square().sum()/nTrajectory                  
@@ -311,17 +311,34 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
                                       -2);
   //inversionAve
   double inversionAve = 0;
-  for (int i = 0; i < nAtom; i++)
-    inversionAve += ensemble.atoms[i].internal.sz.sum();
+  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++)
+    inversionAve += a->internal.sz.sum();
   observables.inversionAve(s) = inversionAve/nAtom/nTrajectory;
   
+  //spinSpinCor
+  double xxAve = 0;
+  double xyAve = 0;
+  double yxAve = 0;
+  double yyAve = 0;
+  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
+    for (std::vector<Atom>::iterator b = ensemble.atoms.begin(); b != ensemble.atoms.end(); b++) {
+      xxAve += (a->internal.sx.cwiseProduct(b->internal.sx)).sum()/nTrajectory;
+      xyAve += (a->internal.sx.cwiseProduct(b->internal.sy)).sum()/nTrajectory;
+      yxAve += (a->internal.sy.cwiseProduct(b->internal.sx)).sum()/nTrajectory;
+      yyAve += (a->internal.sy.cwiseProduct(b->internal.sy)).sum()/nTrajectory;      
+    }
+  }
+  observables.spinSpinCorAve_re(s) = 1.0/4*(xxAve+yyAve)/nAtom/(nAtom-1);
+  observables.spinSpinCorAve_im(s) = 1.0/4*(yxAve-xyAve)/nAtom/(nAtom-1);
+
+
   //qMatrix and pMatrix
   for (int i = 0; i < nTrajectory; i++) {
     observables.qMatrix(i,s) = ensemble.cavity.q(i,nStep);
     observables.pMatrix(i,s) = ensemble.cavity.p(i,nStep);
   }
 
-  //spinSpinCor
+  //spinSpinCor between y=0 and y=y
   double binSize = param.yWall*2/NBIN;
   VectorXd xx = VectorXd::Zero(NBIN);
   VectorXd xy = VectorXd::Zero(NBIN);
@@ -406,6 +423,8 @@ void writeObservables(ObservableFiles& observableFiles,
   observableFiles.nAtom << observables.nAtom << std::endl;
   observableFiles.intensity << observables.intensity << std::endl;
   observableFiles.inversionAve << observables.inversionAve << std::endl;
+  observableFiles.spinSpinCorAve_re << observables.spinSpinCorAve_re << std::endl;
+  observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
   observableFiles.qMatrix << observables.qMatrix << std::endl;
   observableFiles.pMatrix << observables.pMatrix << std::endl;
   observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;

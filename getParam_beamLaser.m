@@ -1,3 +1,4 @@
+%cNumberCavity
 %Import simulation parameters
 dataTable = readtable('input.txt');
 dataVariables = dataTable.Variables;
