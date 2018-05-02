@@ -56,7 +56,8 @@ void getParam(const char* filename, Param *param)
   }
 }
 
-void generateInitialField(Ensemble& ensemble, const Param& param) {
+void generateInitialField(Ensemble& ensemble, const Param& param) 
+{
   int nTimeStep = param.tmax/param.dt+0.5;
   ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
   ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
@@ -116,8 +117,11 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
   unsigned long int nAtom;
   const double dN = param.density*param.dt;
 
+  ///////////////////////////////////////////////////////////////////////////
+  // Uniform atom generation
+  ///////////////////////////////////////////////////////////////////////////
   if (dN >= 1) {
-    nAtom = dN;//rng.get_poissonian_int(dN);      
+    nAtom = dN;     
 
     for (unsigned long int n = 0; n < nAtom; n++) {
       Atom newAtom; //Create a new atom
@@ -142,6 +146,17 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
     std::cout << "Bad dN in input file" << std::endl;
     exit(-1);
   }
+
+  ///////////////////////////////////////////////////////////////////////////
+  //Poissonian atom generation
+  ///////////////////////////////////////////////////////////////////////////
+  // nAtom = rng.get_poissonian_int(dN);
+  // for (unsigned long int n = 0; n < nAtom; n++) {
+  //     Atom newAtom; //Create a new atom
+  //     generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
+  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
+  //     ensemble.atoms.push_back(newAtom);
+  // }
 }
   
  
@@ -271,8 +286,8 @@ void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param, const int n
 void advanceInterval(Ensemble& ensemble, const Param& param, 
                   const double meanP, const int nStep, int& m, Vector3d& spinVar)
 {
-  //The way I write the code is such that newly added atoms are in the tail of the "atoms" vector, so
-  // the first atoms in the "atoms" vector will be the first to be removed.
+  //Newly added atoms are in the tail of the "atoms" vector, so the first atoms 
+  //in the "atoms" vector will be the first to be removed.
   addAtomsFromSource(ensemble, param, meanP, m);
   removeAtomsAtWalls(ensemble, param, spinVar);
   advanceAtomsOneTimeStep(ensemble, param, nStep);
@@ -290,18 +305,62 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   //nAtom
   observables.nAtom(s) = ensemble.atoms.size();
   
-  //inversion
-  double inversionAve = 0;
-  for (int i = 0; i < nAtom; i++) {
-    //inversionAve
-    inversionAve += ensemble.atoms[i].internal.sz.sum();
-  }
-  observables.inversionAve(s) = inversionAve/nAtom/nTrajectory;
-
   //intensity
   observables.intensity(s) = kappa/4*(ensemble.cavity.q.col(nStep).array().square().sum()/nTrajectory                  
                                       +ensemble.cavity.p.col(nStep).array().square().sum()/nTrajectory
                                       -2);
+  //inversionAve
+  double inversionAve = 0;
+  for (int i = 0; i < nAtom; i++)
+    inversionAve += ensemble.atoms[i].internal.sz.sum();
+  observables.inversionAve(s) = inversionAve/nAtom/nTrajectory;
+  
+  //qMatrix and pMatrix
+  for (int i = 0; i < nTrajectory; i++) {
+    observables.qMatrix(i,s) = ensemble.cavity.q(i,nStep);
+    observables.pMatrix(i,s) = ensemble.cavity.p(i,nStep);
+  }
+
+  //spinSpinCor
+  double binSize = param.yWall*2/NBIN;
+  VectorXd xx = VectorXd::Zero(NBIN);
+  VectorXd xy = VectorXd::Zero(NBIN);
+  VectorXd yx = VectorXd::Zero(NBIN);
+  VectorXd yy = VectorXd::Zero(NBIN);
+  VectorXi m_y = VectorXi::Zero(NBIN);
+  //Find the atoms in the first bin
+  VectorXd jx_0 = VectorXd::Zero(nTrajectory);
+  VectorXd jy_0 = VectorXd::Zero(nTrajectory);
+  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
+    if (a->external.X[1] < -param.yWall+binSize) {
+      jx_0 += a->internal.sx;
+      jy_0 += a->internal.sy;
+      m_y(0) += 1;
+    }
+  }               //Can also start from the end of the array and then jump out of the loop 
+                  //when no new atoms appear for a while.
+
+  if(m_y(0) == 0) {
+   std::cout << "\nBin size too small." << std::endl << std::endl; 
+  }
+  //Get spinSpinCor
+  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
+    int binNumber = (a->external.X[1]+param.yWall)/binSize;
+    if (binNumber > NBIN-1)
+      binNumber = NBIN-1;
+    if (binNumber != 0) {
+      m_y(binNumber) += 1;
+      xx(binNumber) += (jx_0.cwiseProduct(a->internal.sx)).sum()/nTrajectory;
+      xy(binNumber) += (jx_0.cwiseProduct(a->internal.sy)).sum()/nTrajectory;
+      yx(binNumber) += (jy_0.cwiseProduct(a->internal.sx)).sum()/nTrajectory;
+      yy(binNumber) += (jy_0.cwiseProduct(a->internal.sy)).sum()/nTrajectory;
+    }
+  } 
+  //Store spinSpinCor
+  for (int i = 0; i < NBIN; i++) {
+    observables.spinSpinCor_re(i,s) = 1.0/4*(xx(i)+yy(i))/m_y(0)/m_y(i);
+    observables.spinSpinCor_im(i,s) = 1.0/4*(yx(i)-xy(i))/m_y(0)/m_y(i);
+  }
 }
 
 void storeSpinVariables(SpinVariables& spinVariables, const Ensemble& ensemble, 
@@ -347,14 +406,17 @@ void writeObservables(ObservableFiles& observableFiles,
   observableFiles.nAtom << observables.nAtom << std::endl;
   observableFiles.intensity << observables.intensity << std::endl;
   observableFiles.inversionAve << observables.inversionAve << std::endl;
+  observableFiles.qMatrix << observables.qMatrix << std::endl;
+  observableFiles.pMatrix << observables.pMatrix << std::endl;
+  observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;
+  observableFiles.spinSpinCor_im << observables.spinSpinCor_im << std::endl;
   observableFiles.sxFinal << spinVariables.sxFinal << std::endl;
   observableFiles.syFinal << spinVariables.syFinal << std::endl;
   observableFiles.szFinal << spinVariables.szFinal << std::endl;  
-  observableFiles.qMatrix << ensemble.cavity.q << std::endl;
-  observableFiles.pMatrix << ensemble.cavity.p << std::endl;
 }
 
-void mkdir(Param& param) {
+void mkdir(Param& param) 
+{
   std::string mkdir = "mkdir "+param.name; //make a new directory to store data
   system(mkdir.c_str());
   std::string cpInput = "cp input.txt "+param.name;
@@ -382,7 +444,7 @@ int main(int argc, char *argv[])
   //Set up initial conditions
   Ensemble ensemble;
   generateInitialField(ensemble, param);
-  Observables observables(param.nstore);
+  Observables observables(param.nstore, param.nTrajectory, NBIN);
   SpinVariables spinVariables(nTimeStep);
 
   //Start simulation
@@ -392,7 +454,7 @@ int main(int argc, char *argv[])
   ObservableFiles observableFiles;
   writeObservables(observableFiles, observables, spinVariables, ensemble);
   
-  //Move .dat files into the directory named "name". Calling from "config.hpp".
+  //Move .dat files into the directory named "name". 
   mkdir(param);
   
 ///////////////////////////////////////////////////////////////////////////////

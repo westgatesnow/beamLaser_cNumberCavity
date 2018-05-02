@@ -26,47 +26,53 @@ using namespace Eigen;
 #include "RNG.hpp"
 RNG rng(time(NULL));
 
+//Some global constants
+#define NVAR 3 // 3 variables for each atom for this code;
+#define NBIN 10 //seperate the cavity length into 100 bins 
 
 //Define data structure
 
 //Atom external states
-typedef struct {
+typedef struct 
+{
   Vector3d X;     //position
   Vector3d P;     //momentum. We suppose mass is one, so momentum is velocity.
 } External;
 
 //Atom internal states
-typedef struct {
+typedef struct 
+{
   VectorXd sx;       //sigma_x. Dim: nTrajectory
   VectorXd sy;       //sigma_y. Dim: nTrajectory
   VectorXd sz;       //sigma_z. Dim: nTrajectory
 } Internal;
 
-//Normally there are NVAR dims of the internal state.
-#define NVAR 3 // 3 variables for each atom for this code;
-
 //Atom total states
-typedef struct {
+typedef struct 
+{
   External external;  //The position and velocity of an atom.
   Internal internal;  //The internal states of an atom. We keep track of sx, sy, and sz
                         //of a single atom at all times for all trajectories.
 } Atom;
 
 //Cavity field
-typedef struct {
+typedef struct 
+{
   MatrixXd q;        //q = a^dagger + a. Dim: nTrajectory*(nTimeStep+1)
   MatrixXd p;        //p = - I (a^dagger - a). Dim: nTrajectory*(nTimeStep+1)
 } Cavity;
 
 //Ensemble of the system
-typedef struct {
+typedef struct 
+{
   std::vector<Atom> atoms;
   Cavity cavity;
 } Ensemble;
 
 //Simulation parameters
-typedef struct Param {
-  //simulation specification
+typedef struct Param 
+{
+  //parameter definitions
   double dt; 
   double tmax;
   int nstore; // number of times to store observables
@@ -82,14 +88,15 @@ typedef struct Param {
   double density;   //the mean number of atoms per unit time;
   double rabi;    //single-atom rabi frequency
   double kappa;   //caivty decay rate. Condition of bad cavity: dt>>1/kappa.
-
   //Other parameters
   std::string name; //name of the directory to store results
 
-  //Set up initial values of the parameters
+  //Constructor; initial values
   Param() : dt(0.01), tmax(10), nstore(10), nTrajectory(1), yWall(5.0e0), 
-    sigmaX(0.0e0,0.0e0), transitTime(1.0e0),
-    sigmaP(0.0e0,0.0e0,0.0e0), density(1.0), rabi(10), kappa(1000), name("abracadabra")  {}
+    sigmaX(0.0e0,0.0e0), transitTime(1.0e0), sigmaP(0.0e0,0.0e0,0.0e0), 
+    density(1.0), rabi(10), kappa(1000), name("abracadabra")
+  {}
+
 } Param;
 
 std::ostream& operator<< (std::ostream& o, const Param& s)
@@ -109,30 +116,53 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
 }
 
 //Observables; n is the nTimeStep
-typedef struct Observables {
-  Observables(const int n) : nAtom(n), 
-                             intensity(n), 
-                             inversionAve(n)
-                                          
-  {}
+typedef struct Observables 
+{
   Matrix <unsigned long int, 1, Dynamic> nAtom; 
   VectorXd intensity;
   VectorXd inversionAve;
+  MatrixXd qMatrix;
+  MatrixXd pMatrix;
+  MatrixXd spinSpinCor_re;
+  MatrixXd spinSpinCor_im;
+
+  Observables(const int n, const int m, const int l) 
+  {
+    nAtom = Matrix <unsigned long int, 1, Dynamic>(n); 
+    intensity = VectorXd(n);
+    inversionAve = VectorXd(n);
+    qMatrix = MatrixXd(m,n);
+    pMatrix = MatrixXd(m,n);
+    spinSpinCor_re = MatrixXd(l,n);
+    spinSpinCor_im = MatrixXd(l,n);
+  } 
+
 } Observables;
 
-typedef struct SpinVariables {
-  SpinVariables(const int m) : sxFinal(m),
-                             syFinal(m), 
-                             szFinal(m)
-                                          
-  {}
+typedef struct SpinVariables 
+{
+  //Definition
   VectorXd sxFinal;
   VectorXd syFinal;
   VectorXd szFinal;
 
+  //Constructor
+  SpinVariables(const int m)                                      
+  { 
+    sxFinal = VectorXd(m);
+    syFinal = VectorXd(m);
+    szFinal = VectorXd(m);
+  }
+
 } SpinVariables;
 
-typedef struct ObservableFiles {
+typedef struct ObservableFiles 
+{
+  //Definition
+  std::ofstream nAtom, intensity, inversionAve, sxFinal, syFinal, szFinal, 
+    qMatrix, pMatrix, spinSpinCor_re, spinSpinCor_im;
+
+  //Constructor              
   ObservableFiles() : nAtom("nAtom.dat"), 
                       intensity("intensity.dat"), 
                       inversionAve("inversionAve.dat"),
@@ -140,9 +170,14 @@ typedef struct ObservableFiles {
                       syFinal("syFinal.dat"),
                       szFinal("szFinal.dat"),
                       qMatrix("qMatrix.dat"),
-                      pMatrix("pMatrix.dat")
+                      pMatrix("pMatrix.dat"),
+                      spinSpinCor_re("spinSpinCor_re.dat"),
+                      spinSpinCor_im("spinSpinCor_im.dat")
   {}
-  ~ObservableFiles() {
+  
+  //Deconstructor
+  ~ObservableFiles() 
+  {
     nAtom.close();
     intensity.close();
     inversionAve.close();
@@ -151,8 +186,10 @@ typedef struct ObservableFiles {
     szFinal.close();
     qMatrix.close();
     pMatrix.close();
+    spinSpinCor_re.close();
+    spinSpinCor_im.close();
   }
-  std::ofstream nAtom, intensity, inversionAve, sxFinal, syFinal, szFinal, qMatrix, pMatrix;
+  
 } ObservableFiles;
 
 #endif

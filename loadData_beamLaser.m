@@ -15,7 +15,10 @@ syFinal = load('syFinal.dat');
 szFinal = load('szFinal.dat');
 qMatrix = load('qMatrix.dat');
 pMatrix = load('pMatrix.dat');
+spinSpinCor_re = load('spinSpinCor_re.dat');
+spinSpinCor_im = load('spinSpinCor_im.dat');
 nTimeStep = tmax/dt;
+NBIN = size(spinSpinCor_re,1);
 
 %Add the previous directory into path
 addpath ~/Desktop/codes/beamLaser_Proj/cNumberCavity/;
