@@ -28,8 +28,22 @@ ylabel('\langle j^z(t) \rangle');
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%spinSpinCor
+%spinSpinCorAve
+figure(2);
+set(gca,'FontSize',20);
+subplot(2,1,1);
+plot(linspace(0,tmax,nstore)/transitTime,spinSpinCorAve_re);
+axis([0 inf 0 0.15]);
+xlabel('t/T','FontSize', 20);
+ylabel('Re[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
 
+subplot(2,1,2);
+plot(linspace(0,tmax,nstore)/transitTime, spinSpinCorAve_im);
+xlabel('t/T','FontSize', 20);
+ylabel('Im[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
+
+fprintf('Program paused. Press enter to continue.\n');
+pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %g(1)function.
 

@@ -11,6 +11,8 @@ cd(projectdir);
 fprintf('Loading data... This may take several minutes.\n')
 intensity = load('intensity.dat');
 inversionAve = load('inversionAve.dat');
+spinSpinCorAve_re = load('spinSpinCorAve_re.dat');
+spinSpinCorAve_im = load('spinSpinCorAve_im.dat');
 sxFinal = load('sxFinal.dat');
 syFinal = load('syFinal.dat');
 szFinal = load('szFinal.dat');
