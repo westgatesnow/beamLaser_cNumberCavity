@@ -29,21 +29,21 @@ fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %spinSpinCorAve
-figure(2);
-set(gca,'FontSize',20);
-subplot(2,1,1);
-plot(linspace(0,tmax,nstore)/transitTime,spinSpinCorAve_re);
-axis([0 inf 0 0.15]);
-xlabel('t/T','FontSize', 20);
-ylabel('Re[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
-
-subplot(2,1,2);
-plot(linspace(0,tmax,nstore)/transitTime, spinSpinCorAve_im);
-xlabel('t/T','FontSize', 20);
-ylabel('Im[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
-
-fprintf('Program paused. Press enter to continue.\n');
-pause;
+% figure(2);
+% set(gca,'FontSize',20);
+% subplot(2,1,1);
+% plot(linspace(0,tmax,nstore)/transitTime,spinSpinCorAve_re);
+% axis([0 inf 0 0.15]);
+% xlabel('t/T','FontSize', 20);
+% ylabel('Re[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
+% 
+% subplot(2,1,2);
+% plot(linspace(0,tmax,nstore)/transitTime, spinSpinCorAve_im);
+% xlabel('t/T','FontSize', 20);
+% ylabel('Im[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
+% 
+% fprintf('Program paused. Press enter to continue.\n');
+% pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %g(1)function.
 
@@ -79,6 +79,14 @@ pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %spectrum
 
+%Method 1: fit the realG1Pos to exponential decay
+x = linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2))';
+f = coeffvalues(fit(x,realG1Pos','exp1','startpoint',[1,-1])); 
+linewidth = -f(2)/pi;
+printWords = ['The linewidth is ', num2str(linewidth,'%.2f'),' transitTime inverse.'];
+disp(printWords);
+
+%Method 2: plot the spectra
 %time reversal and complex
 realG1Plot = [fliplr(realG1Pos),realG1Pos(2:end)];
 imagG1Plot = [-fliplr(imagG1Pos),imagG1Pos(2:end)];
@@ -125,9 +133,12 @@ pause;
 %g(2)function
 
 %g(2) at 0 (take the last data point as our sample data)
-temp1 = sum((qMatrix(:,nstore).^2+pMatrix(:,nstore).^2-2).^2)/nTrajectory;
-temp2 = sum((qMatrix(:,nstore).^2+pMatrix(:,nstore).^2-2))/nTrajectory;
-g2=(temp1-4*temp2)/temp2^2;
+q4 = sum(qMatrix(:,nstore).^4)/nTrajectory;
+p4 = sum(pMatrix(:,nstore).^4)/nTrajectory;
+q2p2 = sum(qMatrix(:,nstore).^2.*pMatrix(:,nstore).^2)/nTrajectory;
+q2 = sum(qMatrix(:,nstore).^2)/nTrajectory;
+p2 = sum(pMatrix(:,nstore).^2)/nTrajectory;
+g2=(q4+p4+2*q2p2-8*(q2+p2)+8)/(q2+p2-2)^2;
 formatSpec = 'The g2(0) value is %f \n';
 fprintf(formatSpec, g2);
 fprintf('Program paused. Press enter to continue.\n');

@@ -95,17 +95,14 @@ void generateInternalState(Atom& newAtom, const Param& param)
   //Set up empty internal state vectors
   VectorXd newSx, newSy, newSz;
   newSx = VectorXd::Zero(nTrajectory);
+  newSy = VectorXd::Zero(nTrajectory);
+  newSz = VectorXd::Ones(nTrajectory);
+  
+  //Random initialization for sx and sy.
   for (int j = 0; j < nTrajectory; j++) 
     newSx[j] = double(rng.get_binomial_int(0.5, 1))*2-1; //50percent giving 1 or -1
-  newSy = VectorXd::Zero(nTrajectory);
   for (int j = 0; j < nTrajectory; j++) 
     newSy[j] = double(rng.get_binomial_int(0.5, 1))*2-1; //50percent giving 1 or -1
-  newSz = VectorXd::Zero(nTrajectory);
-
-  //Initial values
-  // newSx.fill(0);
-  // newSy.fill(0);
-  newSz.fill(1); 
 
   //Complete initiation
   Internal newInternal = {newSx, newSy, newSz};
@@ -120,43 +117,43 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
   ///////////////////////////////////////////////////////////////////////////
   // Uniform atom generation
   ///////////////////////////////////////////////////////////////////////////
-  // if (dN >= 1) {
-  //   nAtom = dN;     
+  if (dN >= 1) {
+    nAtom = dN;     
 
-  //   for (unsigned long int n = 0; n < nAtom; n++) {
-  //     Atom newAtom; //Create a new atom
-  //     generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
-  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
-  //     ensemble.atoms.push_back(newAtom);
-  //   }
-  // }
-
-  // else if (dN > 0){
-  //   int rep = 1/dN;
-  //   if (m == rep) {
-  //     Atom newAtom; //Create a new atom
-  //     generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
-  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
-  //     ensemble.atoms.push_back(newAtom);
-  //     m = 0;
-  //   }
-  //   m++;
-  // }
-  // else {
-  //   std::cout << "Bad dN in input file" << std::endl;
-  //   exit(-1);
-  // }
-
-  ///////////////////////////////////////////////////////////////////////////
-  //Poissonian atom generation
-  ///////////////////////////////////////////////////////////////////////////
-  nAtom = rng.get_poissonian_int(dN);
-  for (int n = 0; n < nAtom; n++) {
+    for (unsigned long int n = 0; n < nAtom; n++) {
       Atom newAtom; //Create a new atom
       generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
       generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
       ensemble.atoms.push_back(newAtom);
+    }
   }
+
+  else if (dN > 0){
+    int rep = 1/dN;
+    if (m == rep) {
+      Atom newAtom; //Create a new atom
+      generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
+      generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
+      ensemble.atoms.push_back(newAtom);
+      m = 0;
+    }
+    m++;
+  }
+  else {
+    std::cout << "Bad dN in input file" << std::endl;
+    exit(-1);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  //Poissonian atom generation
+  ///////////////////////////////////////////////////////////////////////////
+  // nAtom = rng.get_poissonian_int(dN);
+  // for (int n = 0; n < nAtom; n++) {
+  //     Atom newAtom; //Create a new atom
+  //     generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
+  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
+  //     ensemble.atoms.push_back(newAtom);
+  // }
 }
   
  

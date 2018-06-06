@@ -5,12 +5,12 @@
 #using cNumberCavity theory.
 
 iFile=input.txt
-nMax1=5
-nMax2=10
-init_tau=1
+nMax1=1
+nMax2=4
+init_tau=0.65
 interval_tau=0.5
-init_nAtom=100
-interval_nAtom=100
+init_nAtom=400
+interval_nAtom=25
 
 for ((i=0; i<nMax1; i+=1)) do 
   for ((j=0; j<nMax2; j+=1)) do 
