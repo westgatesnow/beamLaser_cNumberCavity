@@ -17,10 +17,12 @@ using namespace Eigen;
 #include <complex>
 #include <iostream>
 #include <fstream>
-#include <cmath>
 #include <getopt.h>
 #include <time.h>
 #include <stdlib.h> 
+//Define pi
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 //Include and define RNG
 #include "RNG.hpp"
@@ -125,10 +127,10 @@ typedef struct Observables
   VectorXd spinSpinCorAve_im;
   MatrixXd qMatrix;
   MatrixXd pMatrix;
-  MatrixXd spinSpinCor_re;
-  MatrixXd spinSpinCor_im;
+  //MatrixXd spinSpinCor_re;
+  //MatrixXd spinSpinCor_im;
 
-  Observables(const int n, const int m, const int l) 
+  Observables(const int n, const int m)//, const int l) 
   {
     nAtom = VectorXi(n); 
     intensity = VectorXd(n);
@@ -137,8 +139,8 @@ typedef struct Observables
     spinSpinCorAve_im = VectorXd(n);
     qMatrix = MatrixXd(m,n);
     pMatrix = MatrixXd(m,n);
-    spinSpinCor_re = MatrixXd(l,n);
-    spinSpinCor_im = MatrixXd(l,n);
+    //spinSpinCor_re = MatrixXd(l,n);
+    //spinSpinCor_im = MatrixXd(l,n);
   } 
 
 } Observables;
@@ -164,7 +166,7 @@ typedef struct ObservableFiles
 {
   //Definition
   std::ofstream nAtom, intensity, inversionAve, spinSpinCorAve_re, spinSpinCorAve_im,
-    sxFinal, syFinal, szFinal, qMatrix, pMatrix, spinSpinCor_re, spinSpinCor_im;
+    sxFinal, syFinal, szFinal, qMatrix, pMatrix;//, spinSpinCor_re, spinSpinCor_im;
 
   //Constructor              
   ObservableFiles() : nAtom("nAtom.dat"), 
@@ -176,9 +178,9 @@ typedef struct ObservableFiles
                       syFinal("syFinal.dat"),
                       szFinal("szFinal.dat"),
                       qMatrix("qMatrix.dat"),
-                      pMatrix("pMatrix.dat"),
-                      spinSpinCor_re("spinSpinCor_re.dat"),
-                      spinSpinCor_im("spinSpinCor_im.dat")
+                      pMatrix("pMatrix.dat")
+                      //spinSpinCor_re("spinSpinCor_re.dat"),
+                      //spinSpinCor_im("spinSpinCor_im.dat")
   {}
   
   //Deconstructor
@@ -194,8 +196,8 @@ typedef struct ObservableFiles
     szFinal.close();
     qMatrix.close();
     pMatrix.close();
-    spinSpinCor_re.close();
-    spinSpinCor_im.close();
+    //spinSpinCor_re.close();
+    //spinSpinCor_im.close();
   }
   
 } ObservableFiles;

@@ -65,23 +65,21 @@ void generateInitialField(Ensemble& ensemble, const Param& param)
 
 void generateExternalState(Atom& newAtom, const Param& param, const double meanP)
 {
-  //Initial values
-  Vector3d X (0, -param.yWall, 0);
-  Vector3d P (0, meanP, 0);
-/*  Vector3d X (
-   rng.get_gaussian_rn (param.sigmaX [0]),
-   param.yWallCreate,
-    rng.get_gaussian_rn (param.sigmaX [1]));
-  //Only keep atoms moving to the positive y direction.
-*/ 
+  //Initial position
 
-/*  Vector3d P (
-    rng.get_gaussian_rn (param.sigmaP [0]),
-    rng.get_gaussian_rn (param.sigmaP [1]) + meanP,
-    rng.get_gaussian_rn (param.sigmaP [2]));
-  while (P[1] <= 0)
-    P[1] = rng.get_gaussian_rn (param.sigmaP [1]) + meanP;
-*/
+  //no distribution
+  Vector3d X (0, -param.yWall, 0);
+  //with distribution
+  //Vector3d X (0, -param.yWall, rng.get_gaussian_rn(param.sigmaX[1]));
+
+
+  //Initial velocity
+
+  //no doppler(vz)
+  //Vector3d P (0, meanP, 0);
+  //doppler
+  Vector3d P (0, meanP, rng.get_gaussian_rn(param.sigmaP[2]));
+
   //Complete initiation
   External newExternal = {X,P};
   newAtom.external = newExternal;
@@ -181,6 +179,23 @@ void advanceExternalStateOneTimeStep(Ensemble& ensemble, const Param& param)
   for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++)
     a->external.X += param.dt * a->external.P;
 }
+void getWaveNumber(double& k, const Param& param)
+{
+  double lambda = 0;
+  if (param.sigmaP[2] == 0) {//No Doppler
+    if (param.sigmaX[1] == 0)//No spread
+      k = 1;                 //choose a finite k such that cos(kz) = 1;
+    else {                   //with spread
+      double ratio = 10000;  //choose a ratio
+      lambda = param.sigmaX[1]/ratio;
+      k = 2*M_PI/lambda;
+    }
+  }
+  else {
+    lambda = param.sigmaP[2]*param.dt;//manully chooose a lambda
+    k = 2*M_PI/lambda;
+  }
+}
 
 void getDiffusionVector(VectorXd& dW, const Param& param) 
 {
@@ -193,41 +208,43 @@ void getDiffusionVector(VectorXd& dW, const Param& param)
   dW[NVAR*nAtom+1] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
 }
 
-void getDriftVector(const VectorXd& sVar, VectorXd& drift, const Param& param) 
+void getDriftVector(const VectorXd& sVar, VectorXd& drift, const VectorXd& rabiEff, const Param& param) 
 {
   //For convenience
-  const double rabi = param.rabi;  
   const double kappa = param.kappa;
   const int size = sVar.size();
   const int nAtom = (size-2)/NVAR;
 
-  //Definition of Jx and Jy
-  double jx = 0, jy = 0;
+  //Definition of JxEff = sum of rabiEff*sx and JyEff;
+  double jxEff = 0, jyEff = 0;
   for (int j = 0; j < nAtom; j++) {
-    jx += sVar[NVAR*j];
-    jy += sVar[NVAR*j+1];
+    jxEff += sVar[NVAR*j]*rabiEff[j];
+    jyEff += sVar[NVAR*j+1]*rabiEff[j];
   }
-
-  //Drift vector terms. Dimension 3*nAtom, structure {D1x,D1y,D1z, D2x, D2y, D2z,...., q, p}
+  //Drift vector terms. Dimension 3*nAtom, structure {D1x,D1y,D1z, D2x, D2y, D2z,...., q, p};
   for (int j = 0; j < nAtom; j++) {
+    double rabi = rabiEff[j];
     drift[NVAR*j] = rabi/2*sVar[NVAR*nAtom+1]*sVar[NVAR*j+2];
     drift[NVAR*j+1] = -rabi/2*sVar[NVAR*nAtom]*sVar[NVAR*j+2];
     drift[NVAR*j+2] = rabi/2*(sVar[NVAR*nAtom]*sVar[NVAR*j+1]
                       -sVar[NVAR*nAtom+1]*sVar[NVAR*j]);
   }
-  drift[NVAR*nAtom] = -rabi/2*jy-kappa/2*sVar[NVAR*nAtom];
-  drift[NVAR*nAtom+1] = rabi/2*jx-kappa/2*sVar[NVAR*nAtom+1];
+  drift[NVAR*nAtom] = -jyEff/2-kappa/2*sVar[NVAR*nAtom];
+  drift[NVAR*nAtom+1] = jxEff/2-kappa/2*sVar[NVAR*nAtom+1];
 }
 
-void stochasticIntegration(VectorXd& sVar, const VectorXd& drift, const VectorXd& dW, const Param& param) {
+void stochasticIntegration(VectorXd& sVar, const VectorXd& drift, const VectorXd& rabiEff, const VectorXd& dW, 
+  const Param& param) {
     //For convenience
     double dt = param.dt;
     int dim = drift.size();
+
     //Y'. Notations see "Beam laser/11.1" on ipad pro.
     VectorXd sVarTemp = sVar+drift*dt+dW;//Temporary value for sVar
+
     //driftTemp as a function of sVarTemp
     VectorXd driftTemp = VectorXd::Zero(dim);
-    getDriftVector(sVarTemp, driftTemp, param);
+    getDriftVector(sVarTemp, driftTemp, rabiEff, param);
     //Y_{n+1}
     sVar += (driftTemp+drift)*dt/2+dW;
 }
@@ -242,27 +259,37 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
   const int nAtom = ensemble.atoms.size();
   const int size = NVAR*nAtom + 2; //3N+2
 
+  //Define a wavenumber k
+  double k;
+  getWaveNumber(k, param);
+
   //Loop over all trajectories. "n" stands for the number of the current trajectory.
   for (int n = 0; n < nTrajectory; n++) {
 
     //Y_n. Notations see "Beam laser/11.1" on ipad pro.
     VectorXd sVar = VectorXd::Zero(size);;//a vector of spins for all the atoms
+    //effective rabi
+    VectorXd rabiEff = VectorXd::Zero(nAtom);
+    //get sVar and rabiEff in one loop
     for (int i = 0; i < nAtom; i++) {
+      //sVar
       sVar[NVAR*i] = ensemble.atoms[i].internal.sx[n];
       sVar[NVAR*i+1] = ensemble.atoms[i].internal.sy[n];
       sVar[NVAR*i+2] = ensemble.atoms[i].internal.sz[n];
+      //rabiEff
+      rabiEff[i] = rabi*cos(k*ensemble.atoms[i].external.X[2]);
     }
     sVar[NVAR*nAtom] = ensemble.cavity.q(n, nStep);
     sVar[NVAR*nAtom+1] = ensemble.cavity.p(n, nStep);
- 
+    
     //drift
     VectorXd drift = VectorXd::Zero(size);
-    getDriftVector(sVar, drift, param);
+    getDriftVector(sVar, drift, rabiEff, param);
     //diffusion
     VectorXd dW = VectorXd::Zero(size);
     getDiffusionVector(dW, param);
     //integration
-    stochasticIntegration(sVar, drift, dW, param);
+    stochasticIntegration(sVar, drift, rabiEff, dW, param);
     //Put back
     for (int i = 0; i < nAtom; i++) {
       ensemble.atoms[i].internal.sx[n] = sVar[NVAR*i];
@@ -276,8 +303,9 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
 
 void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param, const int nStep)
 {
-  advanceExternalStateOneTimeStep(ensemble, param);
+  //When Doppler effects are considered, should advance internal state first.
   advanceInternalStateOneTimeStep(ensemble, param, nStep); //Including both atoms and cavity
+  advanceExternalStateOneTimeStep(ensemble, param);
 }
 
 void advanceInterval(Ensemble& ensemble, const Param& param, 
@@ -335,46 +363,46 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
     observables.pMatrix(i,s) = ensemble.cavity.p(i,nStep);
   }
 
-  //spinSpinCor between y=0 and y=y
-  double binSize = param.yWall*2/NBIN;
-  VectorXd xx = VectorXd::Zero(NBIN);
-  VectorXd xy = VectorXd::Zero(NBIN);
-  VectorXd yx = VectorXd::Zero(NBIN);
-  VectorXd yy = VectorXd::Zero(NBIN);
-  VectorXi m_y = VectorXi::Zero(NBIN);
-  //Find the atoms in the first bin
-  VectorXd jx_0 = VectorXd::Zero(nTrajectory);
-  VectorXd jy_0 = VectorXd::Zero(nTrajectory);
-  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
-    if (a->external.X[1] < -param.yWall+binSize) {
-      jx_0 += a->internal.sx;
-      jy_0 += a->internal.sy;
-      m_y(0) += 1;
-    }
-  }               //Can also start from the end of the array and then jump out of the loop 
-                  //when no new atoms appear for a while.
+  // //spinSpinCor between y=0 and y=y
+  // double binSize = param.yWall*2/NBIN;
+  // VectorXd xx = VectorXd::Zero(NBIN);
+  // VectorXd xy = VectorXd::Zero(NBIN);
+  // VectorXd yx = VectorXd::Zero(NBIN);
+  // VectorXd yy = VectorXd::Zero(NBIN);
+  // VectorXi m_y = VectorXi::Zero(NBIN);
+  // //Find the atoms in the first bin
+  // VectorXd jx_0 = VectorXd::Zero(nTrajectory);
+  // VectorXd jy_0 = VectorXd::Zero(nTrajectory);
+  // for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
+  //   if (a->external.X[1] < -param.yWall+binSize) {
+  //     jx_0 += a->internal.sx;
+  //     jy_0 += a->internal.sy;
+  //     m_y(0) += 1;
+  //   }
+  // }               //Can also start from the end of the array and then jump out of the loop 
+  //                 //when no new atoms appear for a while.
 
-  if(m_y(0) == 0) {
-   std::cout << "\nBin size too small." << std::endl << std::endl; 
-  }
-  //Get spinSpinCor
-  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
-    int binNumber = (a->external.X[1]+param.yWall)/binSize;
-    if (binNumber > NBIN-1)
-      binNumber = NBIN-1;
-    if (binNumber != 0) {
-      m_y(binNumber) += 1;
-      xx(binNumber) += (jx_0.cwiseProduct(a->internal.sx)).sum()/nTrajectory;
-      xy(binNumber) += (jx_0.cwiseProduct(a->internal.sy)).sum()/nTrajectory;
-      yx(binNumber) += (jy_0.cwiseProduct(a->internal.sx)).sum()/nTrajectory;
-      yy(binNumber) += (jy_0.cwiseProduct(a->internal.sy)).sum()/nTrajectory;
-    }
-  } 
-  //Store spinSpinCor
-  for (int i = 0; i < NBIN; i++) {
-    observables.spinSpinCor_re(i,s) = 1.0/4*(xx(i)+yy(i))/m_y(0)/m_y(i);
-    observables.spinSpinCor_im(i,s) = 1.0/4*(yx(i)-xy(i))/m_y(0)/m_y(i);
-  }
+  // if(m_y(0) == 0) {
+  //  std::cout << "\nBin size too small." << std::endl << std::endl; 
+  // }
+  // //Get spinSpinCor
+  // for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
+  //   int binNumber = (a->external.X[1]+param.yWall)/binSize;
+  //   if (binNumber > NBIN-1)
+  //     binNumber = NBIN-1;
+  //   if (binNumber != 0) {
+  //     m_y(binNumber) += 1;
+  //     xx(binNumber) += (jx_0.cwiseProduct(a->internal.sx)).sum()/nTrajectory;
+  //     xy(binNumber) += (jx_0.cwiseProduct(a->internal.sy)).sum()/nTrajectory;
+  //     yx(binNumber) += (jy_0.cwiseProduct(a->internal.sx)).sum()/nTrajectory;
+  //     yy(binNumber) += (jy_0.cwiseProduct(a->internal.sy)).sum()/nTrajectory;
+  //   }
+  // } 
+  // //Store spinSpinCor
+  // for (int i = 0; i < NBIN; i++) {
+  //   observables.spinSpinCor_re(i,s) = 1.0/4*(xx(i)+yy(i))/m_y(0)/m_y(i);
+  //   observables.spinSpinCor_im(i,s) = 1.0/4*(yx(i)-xy(i))/m_y(0)/m_y(i);
+  // }
 }
 
 void storeSpinVariables(SpinVariables& spinVariables, const Ensemble& ensemble, 
@@ -424,8 +452,8 @@ void writeObservables(ObservableFiles& observableFiles,
   observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
   observableFiles.qMatrix << observables.qMatrix << std::endl;
   observableFiles.pMatrix << observables.pMatrix << std::endl;
-  observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;
-  observableFiles.spinSpinCor_im << observables.spinSpinCor_im << std::endl;
+  //observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;
+  //observableFiles.spinSpinCor_im << observables.spinSpinCor_im << std::endl;
   observableFiles.sxFinal << spinVariables.sxFinal << std::endl;
   observableFiles.syFinal << spinVariables.syFinal << std::endl;
   observableFiles.szFinal << spinVariables.szFinal << std::endl;  
@@ -460,7 +488,7 @@ int main(int argc, char *argv[])
   //Set up initial conditions
   Ensemble ensemble;
   generateInitialField(ensemble, param);
-  Observables observables(param.nstore, param.nTrajectory, NBIN);
+  Observables observables(param.nstore, param.nTrajectory);//, NBIN);
   SpinVariables spinVariables(nTimeStep);
 
   //Start simulation
