@@ -1,15 +1,17 @@
 dt 0.01
-tmax 20
-nTrajectory 1000
-nstore 1000
-yWall 1
-sigmaXX 0
-sigmaXZ 10
-transitTime 1.0
-sigmaPX 0
-sigmaPY 0
-sigmaPZ 0.1
-density 100
-rabi 2
-kappa 40
-name test
+      tmax 100
+      nTrajectory 1000
+      nstore 1000
+      yWall 10
+      sigmaXX 0
+      sigmaXZ 0
+      transitTime 1.0
+      sigmaPX 0
+      sigmaPY 0
+      sigmaPZ 1.0
+      density 500
+      rabi 3
+      kappa 90
+      lambda 1.0
+      invT2 0
+      name latt_tau1.0_g3_k90_dens500_l1.0_pz1.0_dz0.25

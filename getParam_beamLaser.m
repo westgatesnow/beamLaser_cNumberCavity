@@ -19,7 +19,9 @@ sigmaPZ = str2double(dataVariables{11,2});
 density = str2double(dataVariables{12,2});
 rabi = str2double(dataVariables{13,2});
 kappa = str2double(dataVariables{14,2});
-name = dataVariables{15,2};
+lambda = str2double(dataVariables{15,2});
+invT2 = str2double(dataVariables{16,2});
+name = dataVariables{17,2};
 
 
 

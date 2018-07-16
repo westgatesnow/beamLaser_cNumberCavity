@@ -30,7 +30,7 @@ RNG rng(time(NULL));
 
 //Some global constants
 #define NVAR 3 // 3 variables for each atom for this code;
-#define NBIN 10 //seperate the cavity length into 100 bins 
+//#define NBIN 10 //seperate the cavity length into 100 bins 
 
 //Define data structure
 
@@ -91,12 +91,14 @@ typedef struct Param
   double rabi;    //single-atom rabi frequency
   double kappa;   //caivty decay rate. Condition of bad cavity: dt>>1/kappa.
   //Other parameters
+  double lambda;  //The wavelength of the laser light
+  double invT2;  //The T2 dephasing time inverse
   std::string name; //name of the directory to store results
 
   //Constructor; initial values
   Param() : dt(0.01), tmax(10), nstore(10), nTrajectory(1), yWall(5.0e0), 
     sigmaX(0.0e0,0.0e0), transitTime(1.0e0), sigmaP(0.0e0,0.0e0,0.0e0), 
-    density(1.0), rabi(10), kappa(1000), name("abracadabra")
+    density(1.0), rabi(10), kappa(1000), lambda(1.0), invT2(0), name("aProgramHasNoName")
   {}
 
 } Param;
@@ -113,7 +115,9 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
   o << s.sigmaP << std::endl;
   o << s.density << std::endl;
   o << s.rabi << std::endl;
-  o << s.kappa << std::endl; 
+  o << s.kappa << std::endl;
+  o << s.lambda << std::endl;
+  o << s.invT2 << std::endl;    
   return o;
 }
 
