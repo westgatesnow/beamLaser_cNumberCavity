@@ -1,5 +1,5 @@
-dt 0.01
-      tmax 100
+dt 0.0001
+      tmax 40
       nTrajectory 1000
       nstore 1000
       yWall 10
@@ -9,9 +9,9 @@ dt 0.01
       sigmaPX 0
       sigmaPY 0
       sigmaPZ 1.0
-      density 500
-      rabi 3
-      kappa 90
+      density 1000
+      rabi 20
+      kappa 4000
       lambda 1.0
       invT2 0
-      name latt_tau1.0_g3_k90_dens500_l1.0_pz1.0_dz0.25
+      name latt_tau1.0_g20_k4000_dens1000_l1.0_pz1.0_dz0.5

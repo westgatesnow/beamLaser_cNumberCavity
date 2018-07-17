@@ -18,7 +18,7 @@ ylabel('\langle j^z(t) \rangle');
 % subplot(2,1,1);
 % scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
 % xlabel('t/T','FontSize', 20);
-% ylabel('\langle j^x(t) \rangle');
+% ylabel('\langle j^x(t)\rangle');
 % 
 % subplot(2,1,2);
 % scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
@@ -48,7 +48,7 @@ pause;
 %g(1)function.
 
 %Take steadyMultiplier*transitTime as the steady state time for now. DO LATER.
-steadyMultiplier = 5;
+steadyMultiplier = 10;
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/tmax*nstore);
 
