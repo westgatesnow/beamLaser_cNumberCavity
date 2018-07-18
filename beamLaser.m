@@ -48,7 +48,7 @@ pause;
 %g(1)function.
 
 %Take steadyMultiplier*transitTime as the steady state time for now. DO LATER.
-steadyMultiplier = 10;
+steadyMultiplier = 1;
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/tmax*nstore);
 
@@ -115,7 +115,7 @@ f = df*(-L/2+1:L/2)/L;
 spectra = [f*transitTime; s]';
 
 %Save spectrum up to k transitTime^-1
-k = 5;
+k = 100;
 effectivePosition = find(abs(spectra(:,1)) < k);
 effectiveSpectra = spectra(effectivePosition,:);
 save spectra.dat effectiveSpectra -ascii;

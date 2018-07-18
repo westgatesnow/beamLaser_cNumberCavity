@@ -74,7 +74,7 @@ void generateExternalState(Atom& newAtom, const Param& param, const double meanP
   //no distribution
   // Vector3d X (0, -param.yWall, 0);
   //with distribution
-  double deltaZ = param.lambda*0.5;
+  double deltaZ = param.sigmaX[1];
   Vector3d X (0, -param.yWall, rng.get_uniform_rn(-deltaZ, deltaZ));
 
 
