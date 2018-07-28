@@ -30,7 +30,7 @@ RNG rng(time(NULL));
 
 //Some global constants
 #define NVAR 3 // 3 variables for each atom for this code;
-//#define NBIN 10 //seperate the cavity length into 100 bins 
+#define NBIN 10 //seperate the cavity length into 100 bins 
 
 //Define data structure
 
@@ -77,8 +77,9 @@ typedef struct Param
   //parameter definitions
   double dt; 
   double tmax;
-  int nstore; // number of times to store observables
+  int nStore; // number of times to store observables
   int nTrajectory; //number of trajectories
+  int nBin; //number of bins along the y direction
   //beam parameters
   double yWall; //position of the wall where atoms are destroyed
                 //The coordinated are chosen s.t. atoms are created at -yWall.
@@ -96,7 +97,7 @@ typedef struct Param
   std::string name; //name of the directory to store results
 
   //Constructor; initial values
-  Param() : dt(0.01), tmax(10), nstore(10), nTrajectory(1), yWall(5.0e0), 
+  Param() : dt(0.01), tmax(10), nStore(10), nTrajectory(1), nBin(10), yWall(5.0e0), 
     sigmaX(0.0e0,0.0e0), transitTime(1.0e0), sigmaP(0.0e0,0.0e0,0.0e0), 
     density(1.0), rabi(10), kappa(1000), lambda(1.0), invT2(0), name("aProgramHasNoName")
   {}
@@ -107,8 +108,9 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
 {
   o << s.dt << std::endl;
   o << s.tmax << std::endl;
-  o << s.nstore << std::endl;
+  o << s.nStore << std::endl;
   o << s.nTrajectory << std::endl;
+  o << s.nBin << std::endl;
   o << s.yWall << std::endl;
   o << s.sigmaX << std::endl;
   o << s.transitTime << std::endl;
@@ -127,24 +129,32 @@ typedef struct Observables
   VectorXi nAtom; 
   VectorXd intensity;
   VectorXd inversionAve;
-  VectorXd spinSpinCorAve_re;
-  VectorXd spinSpinCorAve_im;
   MatrixXd qMatrix;
   MatrixXd pMatrix;
-  //MatrixXd spinSpinCor_re;
-  //MatrixXd spinSpinCor_im;
+  //Definition for the average values of sx, sy, and sz as a function of position
+  //MatrixXd sxMatrix;
+  //MatrixXd syMatrix;
+  //MatrixXd szMatrix;
+  VectorXd spinSpinCorAve_re;
+  VectorXd spinSpinCorAve_im;
+  MatrixXd spinSpinCor_re;
+  MatrixXd spinSpinCor_im;
 
-  Observables(const int n, const int m)//, const int l) 
+  Observables(const int nStore, const int nTrajectory, const int nBin)
   {
-    nAtom = VectorXi(n); 
-    intensity = VectorXd(n);
-    inversionAve = VectorXd(n);
-    spinSpinCorAve_re = VectorXd(n);
-    spinSpinCorAve_im = VectorXd(n);
-    qMatrix = MatrixXd(m,n);
-    pMatrix = MatrixXd(m,n);
-    //spinSpinCor_re = MatrixXd(l,n);
-    //spinSpinCor_im = MatrixXd(l,n);
+    nAtom = VectorXi(nStore); 
+    intensity = VectorXd(nStore);
+    inversionAve = VectorXd(nStore);
+    qMatrix = MatrixXd(nTrajectory, nStore);
+    pMatrix = MatrixXd(nTrajectory, nStore);
+    //sxMatrix = MatrixXd(nTrajectory, nStore, nBin);
+    //syMatrix = MatrixXd(nTrajectory, nStore, nBin);
+    //szMatrix = MatrixXd(nTrajectory, nStore, nBin);
+    spinSpinCorAve_re = VectorXd(nStore);
+    spinSpinCorAve_im = VectorXd(nStore);
+    int nBinSquare = nBin * nBin;
+    spinSpinCor_re = MatrixXd(nBinSquare, nStore);
+    spinSpinCor_im = MatrixXd(nBinSquare, nStore);
   } 
 
 } Observables;
@@ -152,6 +162,7 @@ typedef struct Observables
 typedef struct SpinVariables 
 {
   //Definition
+  //Definition for the average values of sx, sy, and sz as each atom leaves the cavity
   VectorXd sxFinal;
   VectorXd syFinal;
   VectorXd szFinal;
@@ -169,22 +180,38 @@ typedef struct SpinVariables
 typedef struct ObservableFiles 
 {
   //Definition
-  std::ofstream nAtom, intensity, inversionAve, spinSpinCorAve_re, spinSpinCorAve_im,
-    sxFinal, syFinal, szFinal, qMatrix, pMatrix;//, spinSpinCor_re, spinSpinCor_im;
+  std::ofstream nAtom, 
+                intensity, 
+                inversionAve, 
+                qMatrix, 
+                pMatrix,
+                spinSpinCorAve_re, 
+                spinSpinCorAve_im,
+                spinSpinCor_re, 
+                spinSpinCor_im,
+                //sxMatrix,
+                //syMatrix,
+                //szMatrix,
+                sxFinal, 
+                syFinal, 
+                szFinal;
 
   //Constructor              
   ObservableFiles() : nAtom("nAtom.dat"), 
                       intensity("intensity.dat"), 
                       inversionAve("inversionAve.dat"),
+                      qMatrix("qMatrix.dat"),
+                      pMatrix("pMatrix.dat"),
                       spinSpinCorAve_re("spinSpinCorAve_re.dat"),
                       spinSpinCorAve_im("spinSpinCorAve_im.dat"),
+                      spinSpinCor_re("spinSpinCor_re.dat"),
+                      spinSpinCor_im("spinSpinCor_im.dat"),
+                      //sxMatrix("sxMatrix.dat"),
+                      //syMatrix("sxMatrix.dat"),
+                      //szMatrix("sxMatrix.dat"),
                       sxFinal("sxFinal.dat"),
                       syFinal("syFinal.dat"),
-                      szFinal("szFinal.dat"),
-                      qMatrix("qMatrix.dat"),
-                      pMatrix("pMatrix.dat")
-                      //spinSpinCor_re("spinSpinCor_re.dat"),
-                      //spinSpinCor_im("spinSpinCor_im.dat")
+                      szFinal("szFinal.dat")
   {}
   
   //Deconstructor
@@ -193,15 +220,18 @@ typedef struct ObservableFiles
     nAtom.close();
     intensity.close();
     inversionAve.close();
+    qMatrix.close();
+    pMatrix.close();
     spinSpinCorAve_re.close();
     spinSpinCorAve_im.close();
+    spinSpinCor_re.close();
+    spinSpinCor_im.close();
+    //sxMatrix.close();
+    //syMatrix.close();
+    //szMatrix.close();
     sxFinal.close();
     syFinal.close();
     szFinal.close();
-    qMatrix.close();
-    pMatrix.close();
-    //spinSpinCor_re.close();
-    //spinSpinCor_im.close();
   }
   
 } ObservableFiles;

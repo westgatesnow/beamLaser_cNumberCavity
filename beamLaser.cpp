@@ -22,10 +22,12 @@ void getParam(const char* filename, Param *param)
       configInput >> param->dt;
     else if (dummy.compare("tmax") == 0)
       configInput >> param->tmax;
-    else if (dummy.compare("nstore") == 0)
-      configInput >> param->nstore;
+    else if (dummy.compare("nStore") == 0)
+      configInput >> param->nStore;
     else if (dummy.compare("nTrajectory") == 0)
       configInput >> param->nTrajectory;
+    else if (dummy.compare("nBin") == 0)
+      configInput >> param->nBin;
     else if (dummy.compare("yWall") == 0)
       configInput >> param->yWall;
     else if (dummy.compare("sigmaXX") == 0)
@@ -65,6 +67,9 @@ void generateInitialField(Ensemble& ensemble, const Param& param)
   int nTimeStep = param.tmax/param.dt+0.5;
   ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
   ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
+  //initilize q(t=0) = p(t=0) = 1
+  ensemble.cavity.q.col(0).fill(1.0);
+  ensemble.cavity.p.col(0).fill(1.0);
 }
 
 void generateExternalState(Atom& newAtom, const Param& param, const double meanP)
@@ -220,8 +225,8 @@ void getDiffusionVector(VectorXd& dW, const Param& param)
   const double kappa = param.kappa;
   const int nAtom = (dW.size()-2)/NVAR;
   //Diffusion for the field
-  dW[NVAR*nAtom] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
-  dW[NVAR*nAtom+1] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
+  dW[NVAR*nAtom] = sqrt(2*kappa)*rng.get_gaussian_rn(sqrt(dt));
+  dW[NVAR*nAtom+1] = sqrt(2*kappa)*rng.get_gaussian_rn(sqrt(dt));
 }
 
 void getDriftVector(const VectorXd& sVar, VectorXd& drift, const VectorXd& rabiEff, const Param& param) 
@@ -441,11 +446,11 @@ void evolve(Ensemble& ensemble, const Param& param, Observables& observables, Sp
   //for spinVariables
   Vector3d spinVar;    
 
-  //For "nTimeStep" number of data, keep "nstore" of them. 
+  //For "nTimeStep" number of data, keep "nStore" of them. 
   for (int n = 0, s = 0; n <= nTimeStep; n++, t += param.dt) {
-    if ((long)(n+1)*param.nstore/(nTimeStep+1) > s) {
+    if ((long)(n+1)*param.nStore/(nTimeStep+1) > s) {
       storeObservables(observables, s++, ensemble, param, n);
-      std::cout << "Data " << s << "/" << param.nstore << " stored." << std::endl << std::endl;
+      std::cout << "Data " << s << "/" << param.nStore << " stored." << std::endl << std::endl;
     }
     if (n != nTimeStep) {
       spinVar << 0, 0, 0;
@@ -503,7 +508,7 @@ int main(int argc, char *argv[])
   //Set up initial conditions
   Ensemble ensemble;
   generateInitialField(ensemble, param);
-  Observables observables(param.nstore, param.nTrajectory);//, NBIN);
+  Observables observables(param.nStore, param.nTrajectory, param.nBin);
   SpinVariables spinVariables(nTimeStep);
 
   //Start simulation
