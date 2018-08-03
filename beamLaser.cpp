@@ -30,26 +30,20 @@ void getParam(const char* filename, Param *param)
       configInput >> param->nBin;
     else if (dummy.compare("yWall") == 0)
       configInput >> param->yWall;
-    else if (dummy.compare("sigmaXX") == 0)
-      configInput >> param->sigmaX[0];
-    else if (dummy.compare("sigmaXZ") == 0)
-      configInput >> param->sigmaX[1];
+    else if (dummy.compare("lambda") == 0)
+      configInput >> param->lambda;
+    else if (dummy.compare("deltaZ") == 0)
+      configInput >> param->deltaZ;
+    else if (dummy.compare("deltaPz") == 0)
+      configInput >> param->deltaPz;
     else if (dummy.compare("transitTime") == 0)
       configInput >> param->transitTime;
-    else if (dummy.compare("sigmaPX") == 0)
-      configInput >> param->sigmaP[0];
-    else if (dummy.compare("sigmaPY") == 0)
-      configInput >> param->sigmaP[1];
-    else if (dummy.compare("sigmaPZ") == 0)
-      configInput >> param->sigmaP[2];
     else if (dummy.compare("density") == 0)
       configInput >> param->density;
     else if (dummy.compare("rabi") == 0)
       configInput >> param->rabi;
     else if (dummy.compare("kappa") == 0)
       configInput >> param->kappa;
-    else if (dummy.compare("lambda") == 0)
-      configInput >> param->lambda;
     else if (dummy.compare("invT2") == 0)
       configInput >> param->invT2;
     else if (dummy.compare("name") == 0)
@@ -72,14 +66,15 @@ void generateInitialField(Ensemble& ensemble, const Param& param)
   ensemble.cavity.p.col(0).fill(1.0);
 }
 
-void generateExternalState(Atom& newAtom, const Param& param, const double meanP)
+void generateExternalState(Atom& newAtom, const Param& param)
 {
-  //Initial position
+  //meanP
+  double meanP = param.yWall*2/param.transitTime; //vy = deltay/tau//Initial position
 
   //no distribution
   // Vector3d X (0, -param.yWall, 0);
   //with distribution
-  double deltaZ = param.sigmaX[1];
+  double deltaZ = param.deltaZ;
   Vector3d X (0, -param.yWall, rng.get_uniform_rn(-deltaZ, deltaZ));
 
 
@@ -88,7 +83,7 @@ void generateExternalState(Atom& newAtom, const Param& param, const double meanP
   //no doppler(vz)
   //Vector3d P (0, meanP, 0);
   //doppler
-  Vector3d P (0, meanP, rng.get_gaussian_rn(param.sigmaP[2]));
+  Vector3d P (0, meanP, rng.get_gaussian_rn(param.deltaPz));
 
   //Complete initiation
   External newExternal = {X,P};
@@ -108,16 +103,16 @@ void generateInternalState(Atom& newAtom, const Param& param)
   
   //Random initialization for sx and sy.
   for (int j = 0; j < nTrajectory; j++) 
-    newSx[j] = double(rng.get_binomial_int(0.5, 1))*2-1; //50percent giving 1 or -1
+    newSx[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
   for (int j = 0; j < nTrajectory; j++) 
-    newSy[j] = double(rng.get_binomial_int(0.5, 1))*2-1; //50percent giving 1 or -1
+    newSy[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
 
   //Complete initiation
   Internal newInternal = {newSx, newSy, newSz};
   newAtom.internal = newInternal;
 }
 
-void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double meanP, int& m)
+void addAtomsFromSource(Ensemble& ensemble, const Param& param, int& m)
 {
   int nAtom;
   const double dN = param.density*param.dt;
@@ -130,7 +125,7 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
 
     for (unsigned long int n = 0; n < nAtom; n++) {
       Atom newAtom; //Create a new atom
-      generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
+      generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
       generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
       ensemble.atoms.push_back(newAtom);
     }
@@ -140,7 +135,7 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, const double mea
     int rep = 1/dN;
     if (m == rep) {
       Atom newAtom; //Create a new atom
-      generateExternalState(newAtom, param, meanP);    //For each atom, generate its own x and p;
+      generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
       generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
       ensemble.atoms.push_back(newAtom);
       m = 0;
@@ -190,40 +185,18 @@ void advanceExternalStateOneTimeStep(Ensemble& ensemble, const Param& param)
     a->external.X += param.dt * a->external.P;
 }
 
-// void getWaveNumber(double& k, const Param& param)
-// {
-//   double lambda = param.lambda;
-//   k = k = 2*M_PI/lambda;
-//   // double ratio;
-//   // if (param.sigmaP[2] == 0) {//No Doppler;
-//   //   if (param.sigmaX[1] == 0)//No spread;
-//   //     k = 1;                 //Choose a finite k such that cos(kz) = 1;
-//   //   else {                   //With spread;
-//   //     ratio = 0.001;//Choose a sigmaZ * ratio = lambda;
-//   //     lambda = param.sigmaX[1]*ratio;
-//   //     k = 2*M_PI/lambda;
-//   //   }
-//   // }
-//   // else { //Doppler included;
-//   //   if (param.sigmaX[1] == 0) {//No spread
-//   //     ratio = 10;
-//   //     lambda = param.sigmaP[2]*param.transitTime*ratio;   //choose a lambda = ratio * (sigmaVz * transitTime)
-//   //     k = 2*M_PI/lambda; 
-//   //     }                 
-//   //   else {                   //With spread and Doppler--this is the physical case;
-//   //     ratio = 1;
-//   //     lambda = param.sigmaP[2]*param.transitTime*ratio; // Choose lambda comparable to sigmaVz * dt, but much less than sigmaZ
-//   //     k = 2*M_PI/lambda;
-//   //   }
-//   //}
-// }
-
 void getDiffusionVector(VectorXd& dW, const Param& param) 
 {
   //For convenience
   const double dt = param.dt;
   const double kappa = param.kappa;
+  const double invT2 = param.invT2;
   const int nAtom = (dW.size()-2)/NVAR;
+  //diffusion for the atoms
+  for (int j = 0; j < nAtom; j++) {
+    dW[NVAR*j] = sqrt(2*invT2)*rng.get_gaussian_rn(sqrt(dt));
+    dW[NVAR*j+1] = sqrt(2*invT2)*rng.get_gaussian_rn(sqrt(dt));
+  }
   //Diffusion for the field
   dW[NVAR*nAtom] = sqrt(2*kappa)*rng.get_gaussian_rn(sqrt(dt));
   dW[NVAR*nAtom+1] = sqrt(2*kappa)*rng.get_gaussian_rn(sqrt(dt));
@@ -233,22 +206,24 @@ void getDriftVector(const VectorXd& sVar, VectorXd& drift, const VectorXd& rabiE
 {
   //For convenience
   const double kappa = param.kappa;
+  const double invT2 = param.invT2;
   const int size = sVar.size();
   const int nAtom = (size-2)/NVAR;
 
   //Definition of JxEff = sum of rabiEff*sx and JyEff;
   double jxEff = 0, jyEff = 0;
-  for (int j = 0; j < nAtom; j++) {
-    jxEff += sVar[NVAR*j]*rabiEff[j];
-    jyEff += sVar[NVAR*j+1]*rabiEff[j];
-  }
+
   //Drift vector terms. Dimension 3*nAtom, structure {D1x,D1y,D1z, D2x, D2y, D2z,...., q, p};
   for (int j = 0; j < nAtom; j++) {
     double rabi = rabiEff[j];
-    drift[NVAR*j] = rabi/2*sVar[NVAR*nAtom+1]*sVar[NVAR*j+2];
-    drift[NVAR*j+1] = -rabi/2*sVar[NVAR*nAtom]*sVar[NVAR*j+2];
+    //Get jxEff and jyEff
+    jxEff += sVar[NVAR*j]*rabi;
+    jyEff += sVar[NVAR*j+1]*rabi;
+    //
+    drift[NVAR*j] = rabi/2*sVar[NVAR*nAtom+1]*sVar[NVAR*j+2] - invT2*sVar[NVAR*j];
+    drift[NVAR*j+1] = - rabi/2*sVar[NVAR*nAtom]*sVar[NVAR*j+2] - invT2*sVar[NVAR*j+1];
     drift[NVAR*j+2] = rabi/2*(sVar[NVAR*nAtom]*sVar[NVAR*j+1]
-                      -sVar[NVAR*nAtom+1]*sVar[NVAR*j]);
+                      - sVar[NVAR*nAtom+1]*sVar[NVAR*j]);
   }
   drift[NVAR*nAtom] = -jyEff/2-kappa/2*sVar[NVAR*nAtom];
   drift[NVAR*nAtom+1] = jxEff/2-kappa/2*sVar[NVAR*nAtom+1];
@@ -328,12 +303,11 @@ void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param, const int n
   advanceExternalStateOneTimeStep(ensemble, param);
 }
 
-void advanceInterval(Ensemble& ensemble, const Param& param, 
-                  const double meanP, const int nStep, int& m, Vector3d& spinVar)
+void advanceInterval(Ensemble& ensemble, const Param& param, const int nStep, int& m, Vector3d& spinVar)
 {
   //Newly added atoms are in the tail of the "atoms" vector, so the first atoms 
   //in the "atoms" vector will be the first to be removed.
-  addAtomsFromSource(ensemble, param, meanP, m);
+  addAtomsFromSource(ensemble, param, m);
   removeAtomsAtWalls(ensemble, param, spinVar);
   advanceAtomsOneTimeStep(ensemble, param, nStep);
 }
@@ -345,84 +319,82 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   const double kappa = param.kappa;
   const int nTrajectory = param.nTrajectory;
   const int nTimeStep = param.tmax/param.dt+0.5;
+  const int nBin = param.nBin;
   const int nAtom = ensemble.atoms.size();
-  
-  //nAtom
-  observables.nAtom(s) = nAtom;
+
+  //field observables//////////////////////////////////////////////////////////////////////////////////
   
   //intensity
-  observables.intensity(s) = kappa/4*(ensemble.cavity.q.col(nStep).array().square().sum()/nTrajectory                  
+  observables.intensity(s) = kappa*0.25*(ensemble.cavity.q.col(nStep).array().square().sum()/nTrajectory                  
                                       +ensemble.cavity.p.col(nStep).array().square().sum()/nTrajectory
                                       -2);
-  //inversionAve
-  double inversionAve = 0;
-  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++)
-    inversionAve += a->internal.sz.sum();
-  observables.inversionAve(s) = inversionAve/nAtom/nTrajectory;
-  
-  //spinSpinCor
-  double xxAve = 0;
-  double xyAve = 0;
-  double yxAve = 0;
-  double yyAve = 0;
-  for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
-    for (std::vector<Atom>::iterator b = ensemble.atoms.begin(); b != ensemble.atoms.end(); b++) {
-      xxAve += (a->internal.sx.cwiseProduct(b->internal.sx)).sum()/nTrajectory;
-      xyAve += (a->internal.sx.cwiseProduct(b->internal.sy)).sum()/nTrajectory;
-      yxAve += (a->internal.sy.cwiseProduct(b->internal.sx)).sum()/nTrajectory;
-      yyAve += (a->internal.sy.cwiseProduct(b->internal.sy)).sum()/nTrajectory;      
-    }
-  }
-  observables.spinSpinCorAve_re(s) = 1.0/4*(xxAve+yyAve)/nAtom/(nAtom-1);
-  observables.spinSpinCorAve_im(s) = 1.0/4*(yxAve-xyAve)/nAtom/(nAtom-1);
-
 
   //qMatrix and pMatrix
-  for (int i = 0; i < nTrajectory; i++) {
-    observables.qMatrix(i,s) = ensemble.cavity.q(i,nStep);
-    observables.pMatrix(i,s) = ensemble.cavity.p(i,nStep);
+  observables.qMatrix.col(s) = ensemble.cavity.q.col(nStep);
+  observables.pMatrix.col(s) = ensemble.cavity.p.col(nStep);
+  
+  //Atomic observables//////////////////////////////////////////////////////////////////////////////////
+
+  //nAtom
+  observables.nAtom(s) = nAtom;
+
+  //internal matrices and bin indices
+  MatrixXd SX, SY, SZ = MatrixXd::Zero(nAtom, nTrajectory);
+  VectorXd binIndex = VectorXd::Zero(nBin);
+  double binSize = param.yWall*2/nBin;
+  for (int i = 0; i < nAtom; i++) {
+    //internal indices
+    SX.row(i) = ensemble.atoms[i].internal.sx;
+    SY.row(i) = ensemble.atoms[i].internal.sy;
+    SZ.row(i) = ensemble.atoms[i].internal.sz;
+    //bin indices
+    int binNumber = (ensemble.atoms[i].external.X[1]+param.yWall)/binSize;
+    if (binNumber > nBin-1)
+      binNumber = nBin-1;
+    binIndex[binNumber] += 1;
   }
 
-  // //spinSpinCor between y=0 and y=y
-  // double binSize = param.yWall*2/NBIN;
-  // VectorXd xx = VectorXd::Zero(NBIN);
-  // VectorXd xy = VectorXd::Zero(NBIN);
-  // VectorXd yx = VectorXd::Zero(NBIN);
-  // VectorXd yy = VectorXd::Zero(NBIN);
-  // VectorXi m_y = VectorXi::Zero(NBIN);
-  // //Find the atoms in the first bin
-  // VectorXd jx_0 = VectorXd::Zero(nTrajectory);
-  // VectorXd jy_0 = VectorXd::Zero(nTrajectory);
-  // for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
-  //   if (a->external.X[1] < -param.yWall+binSize) {
-  //     jx_0 += a->internal.sx;
-  //     jy_0 += a->internal.sy;
-  //     m_y(0) += 1;
-  //   }
-  // }               //Can also start from the end of the array and then jump out of the loop 
-  //                 //when no new atoms appear for a while.
+  //inversionAve
+  observables.inversionAve(s) = SZ.sum()/nAtom/nTrajectory;
+  
+  //sxMatrix, syMatrix, szMatrix
+  int initRow = 0;
+  for (int i = 0; i < nBin; i++) {
+    // if (binIndex[i] == 0) {
+    //   observables.sxMatrix(i, s) =  0;
+    //   observables.syMatrix(i, s) =  0;
+    //   observables.szMatrix(i, s) =  0;
+    // }
+    // else {
+    observables.sxMatrix(i, s) = SX.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    observables.syMatrix(i, s) = SY.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    observables.szMatrix(i, s) = SZ.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    initRow = binIndex[i];
+  }
 
-  // if(m_y(0) == 0) {
-  //  std::cout << "\nBin size too small." << std::endl << std::endl; 
-  // }
-  // //Get spinSpinCor
-  // for (std::vector<Atom>::iterator a = ensemble.atoms.begin(); a != ensemble.atoms.end(); a++) {
-  //   int binNumber = (a->external.X[1]+param.yWall)/binSize;
-  //   if (binNumber > NBIN-1)
-  //     binNumber = NBIN-1;
-  //   if (binNumber != 0) {
-  //     m_y(binNumber) += 1;
-  //     xx(binNumber) += (jx_0.cwiseProduct(a->internal.sx)).sum()/nTrajectory;
-  //     xy(binNumber) += (jx_0.cwiseProduct(a->internal.sy)).sum()/nTrajectory;
-  //     yx(binNumber) += (jy_0.cwiseProduct(a->internal.sx)).sum()/nTrajectory;
-  //     yy(binNumber) += (jy_0.cwiseProduct(a->internal.sy)).sum()/nTrajectory;
-  //   }
-  // } 
-  // //Store spinSpinCor
-  // for (int i = 0; i < NBIN; i++) {
-  //   observables.spinSpinCor_re(i,s) = 1.0/4*(xx(i)+yy(i))/m_y(0)/m_y(i);
-  //   observables.spinSpinCor_im(i,s) = 1.0/4*(yx(i)-xy(i))/m_y(0)/m_y(i);
-  // }
+  //spinSpinCorAve
+  MatrixXd SX2, SY2, SXSY, SYSX = MatrixXd::Zero(nAtom, nAtom);
+  SX2 = SX*SX;
+  SY2 = SY*SY;
+  SXSY = SX*SY;
+  SYSX = SY*SX;
+  observables.spinSpinCorAve_re(s) = 
+                0.25*((SX2.sum()-SX2.diagonal().sum())+(SY2.sum()-SY2.diagonal().sum()))/nAtom/(nAtom-1);
+  observables.spinSpinCorAve_im(s) = 
+                0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1);
+  
+  //spinSpinCor between y = y1 and y = y2
+  for (int i = 0; i < nBin; i++) { //Can be optimized to half diagonal, but testing on symmetry first???
+    for (int j = 0; j < nBin; j++) {
+      VectorXd SX_1, SX_2, SY_1, SY_2 = VectorXd::Zero(nTrajectory);
+      SX_1 = SX.middleRows(i, binIndex[i]).colwise().sum()/binIndex[i];
+      SX_2 = SX.middleRows(j, binIndex[j]).colwise().sum()/binIndex[j];
+      SY_1 = SY.middleRows(i, binIndex[i]).colwise().sum()/binIndex[i];
+      SY_2 = SY.middleRows(j, binIndex[j]).colwise().sum()/binIndex[j];
+      observables.spinSpinCor_re(i*nBin+j, s) = 0.25*(SX_1.dot(SX_2)+SY_1.dot(SY_2))/nTrajectory;
+      observables.spinSpinCor_im(i*nBin+j, s) = 0.25*(SY_1.dot(SX_2)-SX_1.dot(SY_2))/nTrajectory;
+    }
+  }
 }
 
 void storeSpinVariables(SpinVariables& spinVariables, const Ensemble& ensemble, 
@@ -436,8 +408,6 @@ void storeSpinVariables(SpinVariables& spinVariables, const Ensemble& ensemble,
 
 void evolve(Ensemble& ensemble, const Param& param, Observables& observables, SpinVariables& spinVariables)
 {
-  //meanP
-  double meanP = param.yWall*2/param.transitTime; //vy = deltay/tau
   //evolve
   int nTimeStep = param.tmax/param.dt+0.5;
   double t = 0;
@@ -454,7 +424,7 @@ void evolve(Ensemble& ensemble, const Param& param, Observables& observables, Sp
     }
     if (n != nTimeStep) {
       spinVar << 0, 0, 0;
-      advanceInterval(ensemble, param, meanP, n, m, spinVar);
+      advanceInterval(ensemble, param, n, m, spinVar);
       //store all the spinVariables; since when dN < 1, there are many NaN's
       storeSpinVariables(spinVariables, ensemble, param, n, spinVar);
     }
@@ -468,24 +438,28 @@ void writeObservables(ObservableFiles& observableFiles,
   observableFiles.nAtom << observables.nAtom << std::endl;
   observableFiles.intensity << observables.intensity << std::endl;
   observableFiles.inversionAve << observables.inversionAve << std::endl;
-  observableFiles.spinSpinCorAve_re << observables.spinSpinCorAve_re << std::endl;
-  observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
   observableFiles.qMatrix << observables.qMatrix << std::endl;
   observableFiles.pMatrix << observables.pMatrix << std::endl;
-  //observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;
-  //observableFiles.spinSpinCor_im << observables.spinSpinCor_im << std::endl;
+  observableFiles.spinSpinCorAve_re << observables.spinSpinCorAve_re << std::endl;
+  observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
+  observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;
+  observableFiles.spinSpinCor_im << observables.spinSpinCor_im << std::endl;
+  observableFiles.sxMatrix << observables.sxMatrix << std::endl;
+  observableFiles.syMatrix << observables.syMatrix << std::endl;
+  observableFiles.szMatrix << observables.szMatrix << std::endl;   
   observableFiles.sxFinal << spinVariables.sxFinal << std::endl;
   observableFiles.syFinal << spinVariables.syFinal << std::endl;
   observableFiles.szFinal << spinVariables.szFinal << std::endl;  
 }
 
 void mkdir(Param& param) 
-{
-  std::string mkdir = "mkdir "+param.name; //make a new directory to store data
+{ 
+  std::string dirName = "./debugging/";
+  std::string mkdir = "mkdir "+ dirName + param.name; //make a new directory to store data
   system(mkdir.c_str());
-  std::string cpInput = "cp input.txt "+param.name;
+  std::string cpInput = "cp input.txt " + dirName + param.name;
   system(cpInput.c_str());  
-  std::string moveparam = "mv *.dat "+param.name;
+  std::string moveparam = "mv *.dat " + dirName + param.name;
   system(moveparam.c_str());
 }
 
