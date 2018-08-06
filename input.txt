@@ -12,4 +12,5 @@
       rabi 3
       kappa 90
       invT2 0
+      controlType debugging
       name test

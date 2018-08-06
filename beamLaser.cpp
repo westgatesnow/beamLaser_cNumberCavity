@@ -46,6 +46,8 @@ void getParam(const char* filename, Param *param)
       configInput >> param->kappa;
     else if (dummy.compare("invT2") == 0)
       configInput >> param->invT2;
+    else if (dummy.compare("controlType") == 0)
+      configInput >> param->controlType;    
     else if (dummy.compare("name") == 0)
       configInput >> param->name;
     else {
@@ -337,9 +339,12 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
 
   //nAtom
   observables.nAtom(s) = nAtom;
-
+ 
   //internal matrices and bin indices
-  MatrixXd SX, SY, SZ = MatrixXd::Zero(nAtom, nTrajectory);
+  MatrixXd SX, SY, SZ; //Note: cannot do Matrix SX, SY, SZ = MatrixXd::Zero(nAtom, nTrajectory); have to be this way
+  SX = MatrixXd::Zero(nAtom, nTrajectory);
+  SY = MatrixXd::Zero(nAtom, nTrajectory);
+  SZ = MatrixXd::Zero(nAtom, nTrajectory);
   VectorXd binIndex = VectorXd::Zero(nBin);
   double binSize = param.yWall*2/nBin;
   for (int i = 0; i < nAtom; i++) {
@@ -369,30 +374,34 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
     observables.sxMatrix(i, s) = SX.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
     observables.syMatrix(i, s) = SY.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
     observables.szMatrix(i, s) = SZ.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
-    initRow = binIndex[i];
+    initRow += binIndex[i];
+    //??????
   }
 
   //spinSpinCorAve
   MatrixXd SX2, SY2, SXSY, SYSX = MatrixXd::Zero(nAtom, nAtom);
-  SX2 = SX*SX;
-  SY2 = SY*SY;
-  SXSY = SX*SY;
-  SYSX = SY*SX;
+  SX2 = SX*SX.transpose();
+  SY2 = SY*SY.transpose();
+  SXSY = SX*SY.transpose();
+  SYSX = SY*SX.transpose();
   observables.spinSpinCorAve_re(s) = 
                 0.25*((SX2.sum()-SX2.diagonal().sum())+(SY2.sum()-SY2.diagonal().sum()))/nAtom/(nAtom-1);
   observables.spinSpinCorAve_im(s) = 
                 0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1);
-  
   //spinSpinCor between y = y1 and y = y2
+  int initRow_1 = 0;
   for (int i = 0; i < nBin; i++) { //Can be optimized to half diagonal, but testing on symmetry first???
+    VectorXd SX_1, SX_2, SY_1, SY_2;
+    SX_1 = SX.middleRows(initRow_1, binIndex[i]).colwise().sum()/binIndex[i];
+    SY_1 = SY.middleRows(initRow_1, binIndex[i]).colwise().sum()/binIndex[i];
+    initRow_1 += binIndex[i];
+    int initRow_2 = 0;
     for (int j = 0; j < nBin; j++) {
-      VectorXd SX_1, SX_2, SY_1, SY_2 = VectorXd::Zero(nTrajectory);
-      SX_1 = SX.middleRows(i, binIndex[i]).colwise().sum()/binIndex[i];
-      SX_2 = SX.middleRows(j, binIndex[j]).colwise().sum()/binIndex[j];
-      SY_1 = SY.middleRows(i, binIndex[i]).colwise().sum()/binIndex[i];
-      SY_2 = SY.middleRows(j, binIndex[j]).colwise().sum()/binIndex[j];
+      SX_2 = SX.middleRows(initRow_2, binIndex[j]).colwise().sum()/binIndex[j];
+      SY_2 = SY.middleRows(initRow_2, binIndex[j]).colwise().sum()/binIndex[j];
       observables.spinSpinCor_re(i*nBin+j, s) = 0.25*(SX_1.dot(SX_2)+SY_1.dot(SY_2))/nTrajectory;
       observables.spinSpinCor_im(i*nBin+j, s) = 0.25*(SY_1.dot(SX_2)-SX_1.dot(SY_2))/nTrajectory;
+      initRow_2 += binIndex[j];
     }
   }
 }
@@ -454,9 +463,11 @@ void writeObservables(ObservableFiles& observableFiles,
 
 void mkdir(Param& param) 
 { 
-  std::string dirName = "./debugging/";
-  std::string mkdir = "mkdir "+ dirName + param.name; //make a new directory to store data
-  system(mkdir.c_str());
+  std::string dirName = "./" + param.controlType + "/";
+  std::string mkdir_1 = "mkdir "+ dirName; //make a new catogory to store data
+  system(mkdir_1.c_str());
+  std::string mkdir_2 = "mkdir "+ dirName + param.name; //make a new directory to store data
+  system(mkdir_2.c_str());
   std::string cpInput = "cp input.txt " + dirName + param.name;
   system(cpInput.c_str());  
   std::string moveparam = "mv *.dat " + dirName + param.name;
@@ -473,7 +484,6 @@ int main(int argc, char *argv[])
   //Configuration. Calling functions from "config.hpp".
   CmdLineArgs config;
   getOptions(argc, argv, &config);
-
   //Set up parameters
   Param param;
   getParam (config.configFile, &param);
@@ -484,7 +494,6 @@ int main(int argc, char *argv[])
   generateInitialField(ensemble, param);
   Observables observables(param.nStore, param.nTrajectory, param.nBin);
   SpinVariables spinVariables(nTimeStep);
-
   //Start simulation
   evolve(ensemble, param, observables, spinVariables);
 
