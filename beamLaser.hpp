@@ -212,8 +212,8 @@ typedef struct ObservableFiles
                       spinSpinCor_re("spinSpinCor_re.dat"),
                       spinSpinCor_im("spinSpinCor_im.dat"),
                       sxMatrix("sxMatrix.dat"),
-                      syMatrix("sxMatrix.dat"),
-                      szMatrix("sxMatrix.dat"),
+                      syMatrix("syMatrix.dat"),
+                      szMatrix("szMatrix.dat"),
                       sxFinal("sxFinal.dat"),
                       syFinal("syFinal.dat"),
                       szFinal("szFinal.dat")

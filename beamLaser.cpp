@@ -375,7 +375,6 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
     observables.syMatrix(i, s) = SY.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
     observables.szMatrix(i, s) = SZ.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
     initRow += binIndex[i];
-    //??????
   }
 
   //spinSpinCorAve
@@ -385,9 +384,9 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   SXSY = SX*SY.transpose();
   SYSX = SY*SX.transpose();
   observables.spinSpinCorAve_re(s) = 
-                0.25*((SX2.sum()-SX2.diagonal().sum())+(SY2.sum()-SY2.diagonal().sum()))/nAtom/(nAtom-1);
+                0.25*((SX2.sum()-SX2.diagonal().sum())+(SY2.sum()-SY2.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
   observables.spinSpinCorAve_im(s) = 
-                0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1);
+                0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
   //spinSpinCor between y = y1 and y = y2
   int initRow_1 = 0;
   for (int i = 0; i < nBin; i++) { //Can be optimized to half diagonal, but testing on symmetry first???
