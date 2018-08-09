@@ -15,7 +15,7 @@
 figure(2);
 set(gca,'FontSize',20);
 subplot(2,1,1);
-plot(linspace(0,tmax,nStore)/transitTime, intensity);
+plot(linspace(0,tmax,nStore)/transitTime,intensity);
 xlabel('t/T','FontSize', 20);
 ylabel('\kappa \langle a^+(t) a(t) \rangle');
 
@@ -47,36 +47,52 @@ pause;
 figure(4);
 
 subplot(2,1,1);
-scatter(linspace(0,tmax,nStore)/transitTime, inversionAve, 5, 'filled');
+scatter(linspace(0,tmax,nTimeStep)/transitTime, inversionAve, 5, 'filled');
 xlabel('t/T','FontSize', 20);
 ylabel('\langle j^z(t)\rangle');
 
 subplot(2,1,2);
-plot(1:nBin, szMatrix(:,end));%, 5, 'filled');
-xlabel('nBin','FontSize', 20);
-ylabel('\langle j^z(t) \rangle');
+scatter(1:nBin, szMatrix(:,, 5, 'filled');
+xlabel('t/T','FontSize', 20);
+ylabel('\langle j^y(t) \rangle');
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Plot sxMatrix and syMatrix.
+% Plot sxMatrix.
 figure(5);
 
 subplot(2,1,1);
-scatter(1:nBin, sxMatrix(:,end), 20, 'filled');
+scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
 xlabel('t/T','FontSize', 20);
-ylabel('\langle j^z(t) \rangle');
+ylabel('\langle j^x(t)\rangle');
 
 subplot(2,1,2);
-scatter(1:nBin, syMatrix(:,end), 20, 'filled');
+scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
 xlabel('t/T','FontSize', 20);
-ylabel('\langle j^z(t) \rangle');
+ylabel('\langle j^y(t) \rangle');
+
+fprintf('Program paused. Press enter to continue.\n');
+pause;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Plot syMatrix.
+figure(3);
+
+subplot(2,1,1);
+scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
+xlabel('t/T','FontSize', 20);
+ylabel('\langle j^x(t)\rangle');
+
+subplot(2,1,2);
+scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
+xlabel('t/T','FontSize', 20);
+ylabel('\langle j^y(t) \rangle');
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot spinSpinCorAve.
-figure(6);
+figure(4);
 set(gca,'FontSize',20);
 subplot(2,1,1);
 plot(linspace(0,tmax,nStore)/transitTime,spinSpinCorAve_re);
@@ -88,27 +104,6 @@ subplot(2,1,2);
 plot(linspace(0,tmax,nStore)/transitTime, spinSpinCorAve_im);
 xlabel('t/T','FontSize', 20);
 ylabel('Im[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
-
-fprintf('Program paused. Press enter to continue.\n');
-pause;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Plot spinSpinCor.
-figure(7);
-set(gca,'FontSize',20);
-subplot(2,1,1);
-s_re = reshape(spinSpinCor_re,nBin,nBin,[]);
-[X, Y] = meshgrid(1:nBin, 1:nBin);
-C = X.*Y;
-surf(X, Y, s_re(:,:,end),C);
-colorbar;
-rotate3d on;
-
-subplot(2,1,2);
-s_re = reshape(spinSpinCor_im,nBin,nBin,[]);
-C = X.*Y;
-surf(X, Y, s_im(:,:,end),C);
-colorbar;
-rotate3d on;
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;

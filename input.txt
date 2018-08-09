@@ -2,7 +2,7 @@
       tmax 20
       nStore 1000
       nTrajectory 1000
-      nBin 10
+      nBin 20
       yWall 10
       lambda 1.0
       deltaZ 0
@@ -12,5 +12,5 @@
       rabi 3
       kappa 90
       invT2 0
-      controlType debugging
-      name test
+      controlType dt0.01_dZ0_dPz0_tau1.0_dens100_g3_k90
+      name nBin20

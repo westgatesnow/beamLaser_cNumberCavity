@@ -308,7 +308,7 @@ void advanceAtomsOneTimeStep(Ensemble& ensemble, const Param& param, const int n
 void advanceInterval(Ensemble& ensemble, const Param& param, const int nStep, int& m, Vector3d& spinVar)
 {
   //Newly added atoms are in the tail of the "atoms" vector, so the first atoms 
-  //in the "atoms" vector will be the first to be removed.
+  //  in the "atoms" vector will be the first to be removed.
   addAtomsFromSource(ensemble, param, m);
   removeAtomsAtWalls(ensemble, param, spinVar);
   advanceAtomsOneTimeStep(ensemble, param, nStep);
@@ -349,9 +349,9 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   double binSize = param.yWall*2/nBin;
   for (int i = 0; i < nAtom; i++) {
     //internal indices
-    SX.row(i) = ensemble.atoms[i].internal.sx;
-    SY.row(i) = ensemble.atoms[i].internal.sy;
-    SZ.row(i) = ensemble.atoms[i].internal.sz;
+    SX.row(nAtom-i-1) = ensemble.atoms[i].internal.sx;//Put atoms in SX in such order that new atoms are in the top rows.
+    SY.row(nAtom-i-1) = ensemble.atoms[i].internal.sy;
+    SZ.row(nAtom-i-1) = ensemble.atoms[i].internal.sz;
     //bin indices
     int binNumber = (ensemble.atoms[i].external.X[1]+param.yWall)/binSize;
     if (binNumber > nBin-1)
@@ -365,12 +365,6 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   //sxMatrix, syMatrix, szMatrix
   int initRow = 0;
   for (int i = 0; i < nBin; i++) {
-    // if (binIndex[i] == 0) {
-    //   observables.sxMatrix(i, s) =  0;
-    //   observables.syMatrix(i, s) =  0;
-    //   observables.szMatrix(i, s) =  0;
-    // }
-    // else {
     observables.sxMatrix(i, s) = SX.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
     observables.syMatrix(i, s) = SY.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
     observables.szMatrix(i, s) = SZ.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
@@ -387,6 +381,7 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
                 0.25*((SX2.sum()-SX2.diagonal().sum())+(SY2.sum()-SY2.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
   observables.spinSpinCorAve_im(s) = 
                 0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
+
   //spinSpinCor between y = y1 and y = y2
   int initRow_1 = 0;
   for (int i = 0; i < nBin; i++) { //Can be optimized to half diagonal, but testing on symmetry first???
