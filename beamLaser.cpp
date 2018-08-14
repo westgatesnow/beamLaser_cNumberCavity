@@ -378,25 +378,43 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   SXSY = SX*SY.transpose();
   SYSX = SY*SX.transpose();
   observables.spinSpinCorAve_re(s) = 
-                0.25*((SX2.sum()-SX2.diagonal().sum())+(SY2.sum()-SY2.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
+    0.25*((SX2.sum()-SX2.diagonal().sum())+(SY2.sum()-SY2.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
   observables.spinSpinCorAve_im(s) = 
-                0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
+    0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
 
   //spinSpinCor between y = y1 and y = y2
   int initRow_1 = 0;
   for (int i = 0; i < nBin; i++) { //Can be optimized to half diagonal, but testing on symmetry first???
-    VectorXd SX_1, SX_2, SY_1, SY_2;
-    SX_1 = SX.middleRows(initRow_1, binIndex[i]).colwise().sum()/binIndex[i];
-    SY_1 = SY.middleRows(initRow_1, binIndex[i]).colwise().sum()/binIndex[i];
-    initRow_1 += binIndex[i];
+    MatrixXd SX_1, SX_2, SY_1, SY_2;
+    SX_1 = SX.middleRows(initRow_1, binIndex[i]);
+    SY_1 = SY.middleRows(initRow_1, binIndex[i]);
+    //diagonal terms
+    MatrixXd SX_1sq, SY_1sq, SY_1_SX_1, SX_1_SY_1;
+    SX_1sq = SX_1*SX_1.transpose();
+    SY_1sq = SY_1*SY_1.transpose();
+    SY_1_SX_1 = SY_1*SX_1.transpose();
+    SX_1_SY_1 = SX_1*SY_1.transpose();
+    observables.spinSpinCor_re(i*nBin+i, s) = 
+      0.25*((SX_1sq.sum()-SX_1sq.diagonal().sum())
+           +(SY_1sq.sum()-SY_1sq.diagonal().sum()))/binIndex[i]/(binIndex[i]-1)/nTrajectory;
+    observables.spinSpinCor_im(i*nBin+i, s) = 
+      0.25*((SY_1_SX_1.sum()-SY_1_SX_1.diagonal().sum())
+           +(SX_1_SY_1.sum()-SX_1_SY_1.diagonal().sum()))/binIndex[i]/(binIndex[i]-1)/nTrajectory;
+    //off-diagonal terms
     int initRow_2 = 0;
-    for (int j = 0; j < nBin; j++) {
-      SX_2 = SX.middleRows(initRow_2, binIndex[j]).colwise().sum()/binIndex[j];
-      SY_2 = SY.middleRows(initRow_2, binIndex[j]).colwise().sum()/binIndex[j];
-      observables.spinSpinCor_re(i*nBin+j, s) = 0.25*(SX_1.dot(SX_2)+SY_1.dot(SY_2))/nTrajectory;
-      observables.spinSpinCor_im(i*nBin+j, s) = 0.25*(SY_1.dot(SX_2)-SX_1.dot(SY_2))/nTrajectory;
+    for (int j = i+1; j < nBin; j++) {
+      SX_2 = SX.middleRows(initRow_2, binIndex[j]);
+      SY_2 = SY.middleRows(initRow_2, binIndex[j]);
+      observables.spinSpinCor_re(i*nBin+j, s) = 
+                    0.25*((SX_1*SX_2.transpose()).sum()+(SY_1*SY_2.transpose()).sum())/binIndex[i]/binIndex[j]/nTrajectory;
+      observables.spinSpinCor_im(i*nBin+j, s) = 
+                    0.25*((SY_1*SX_2.transpose()).sum()-(SX_1*SY_2.transpose()).sum())/binIndex[i]/binIndex[j]/nTrajectory;
+      //The other half diagonal terms
+      observables.spinSpinCor_re(j*nBin+i, s) = observables.spinSpinCor_re(i*nBin+j, s);
+      observables.spinSpinCor_im(j*nBin+i, s) = observables.spinSpinCor_im(i*nBin+j, s);
       initRow_2 += binIndex[j];
     }
+    initRow_1 += binIndex[i];
   }
 }
 

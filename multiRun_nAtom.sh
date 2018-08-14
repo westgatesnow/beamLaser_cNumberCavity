@@ -16,7 +16,7 @@ nAtom=$(($init+$i*$interval))
 printf "dt 0.01
 tmax 20
 nTrajectory 1000
-nstore 100
+nStore 100
 yWall 10
 sigmaXX 0
 sigmaXZ 0

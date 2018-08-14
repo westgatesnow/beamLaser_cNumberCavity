@@ -2,14 +2,14 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Plot nAtom.
-% figure(1);
-% set(gca,'FontSize',20);
-% plot(linspace(0,tmax,nStore)/transitTime, nAtom);
-% xlabel('t/T','FontSize', 20);
-% ylabel('N(t)');
-% 
-% fprintf('Program paused. Press enter to continue.\n');
-% pause;
+figure(1);
+set(gca,'FontSize',20);
+plot(linspace(0,tmax,nStore)/transitTime, nAtom);
+xlabel('t/T','FontSize', 20);
+ylabel('N(t)');
+
+fprintf('Program paused. Press enter to continue.\n');
+pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Plot I and szFinal. Can add labels later.
 figure(2);
@@ -20,7 +20,10 @@ xlabel('t/T','FontSize', 20);
 ylabel('\kappa \langle a^+(t) a(t) \rangle');
 
 subplot(2,1,2);
+hold on;
 scatter(linspace(0,tmax,nTimeStep)/transitTime, szFinal, 5, 'filled');
+plot(linspace(0,tmax,nStore)/transitTime, 1-2*intensity/density);
+hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('\langle j^z(t) \rangle_o');
 
@@ -28,20 +31,20 @@ fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot sx and sy final.
-% figure(3);
-% 
-% subplot(2,1,1);
-% scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
-% xlabel('t/T','FontSize', 20);
-% ylabel('\langle j^x(t)\rangle');
-% 
-% subplot(2,1,2);
-% scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
-% xlabel('t/T','FontSize', 20);
-% ylabel('\langle j^y(t) \rangle');
-% 
-% fprintf('Program paused. Press enter to continue.\n');
-% pause;
+figure(3);
+
+subplot(2,1,1);
+scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
+xlabel('t/T','FontSize', 20);
+ylabel('\langle j^x(t)\rangle');
+
+subplot(2,1,2);
+scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
+xlabel('t/T','FontSize', 20);
+ylabel('\langle j^y(t) \rangle');
+
+fprintf('Program paused. Press enter to continue.\n');
+pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot szAve and szMatrix.
 figure(4);
@@ -64,13 +67,13 @@ figure(5);
 
 subplot(2,1,1);
 scatter(1:nBin, sxMatrix(:,end), 20, 'filled');
-xlabel('t/T','FontSize', 20);
-ylabel('\langle j^z(t) \rangle');
+xlabel('nBin','FontSize', 20);
+ylabel('\langle j^x(t) \rangle');
 
 subplot(2,1,2);
 scatter(1:nBin, syMatrix(:,end), 20, 'filled');
-xlabel('t/T','FontSize', 20);
-ylabel('\langle j^z(t) \rangle');
+xlabel('nBin','FontSize', 20);
+ylabel('\langle j^y(t) \rangle');
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
@@ -98,15 +101,13 @@ set(gca,'FontSize',20);
 subplot(2,1,1);
 s_re = reshape(spinSpinCor_re,nBin,nBin,[]);
 [X, Y] = meshgrid(1:nBin, 1:nBin);
-C = X.*Y;
-surf(X, Y, s_re(:,:,end),C);
+surf(X, Y, s_re(:,:,end),s_re(:,:,end));
 colorbar;
 rotate3d on;
 
 subplot(2,1,2);
-s_re = reshape(spinSpinCor_im,nBin,nBin,[]);
-C = X.*Y;
-surf(X, Y, s_im(:,:,end),C);
+s_im = reshape(spinSpinCor_im,nBin,nBin,[]);
+surf(X, Y, s_im(:,:,end),s_im(:,:,end));
 colorbar;
 rotate3d on;
 
@@ -116,7 +117,7 @@ pause;
 %g(1)function.
 
 %Take steadyMultiplier*transitTime as the steady state time for now. DO LATER.
-steadyMultiplier = 9;
+steadyMultiplier = 15;
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/tmax*nStore);
 
@@ -132,7 +133,7 @@ imagG1Pos = (p(:,1)'*q-q(:,1)'*p)/nTrajectory/4;
 realG1 = [linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2));realG1Pos]';
 save realG1.dat realG1 -ascii;
 
-figure(3);
+figure(8);
 subplot(2,1,1);
 plot(linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2)),realG1Pos);
 xlabel('t/T','FontSize', 20);
@@ -159,14 +160,14 @@ disp(printWords);
 realG1Plot = [fliplr(realG1Pos),realG1Pos(2:end)];
 imagG1Plot = [-fliplr(imagG1Pos),imagG1Pos(2:end)];
 G1Plot = realG1Plot+1i*imagG1Plot;
-%figure(4);
+%figure(9);
 %subplot(2,1,1);
 %plot(realG1);
 %subplot(2,1,2);
 %plot(imagG1);
 
 S = fft(ifftshift(G1Plot));
-% figure(5);
+% figure(10);
 % subplot(2,1,1);
 % plot(real(S));
 % subplot(2,1,2);
@@ -189,7 +190,7 @@ effectiveSpectra = spectra(effectivePosition,:);
 save spectra.dat effectiveSpectra -ascii;
 
 %plot the spectrum
-figure(6);
+figure(11);
 plot(effectiveSpectra(:,1),effectiveSpectra(:,2));
 set(gca,'FontSize',20);
 title('Spectrum of the Beam Laser','FontSize',20);

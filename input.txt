@@ -1,16 +1,16 @@
-      dt 0.01
-      tmax 20
-      nStore 1000
-      nTrajectory 1000
-      nBin 20
-      yWall 10
-      lambda 1.0
-      deltaZ 0
-      deltaPz 0
-      transitTime 1.0
-      density 100
-      rabi 3
-      kappa 90
-      invT2 0
-      controlType dt0.01_dZ0_dPz0_tau1.0_dens100_g3_k90
-      name nBin20
+dt 0.0005
+tmax 20
+nStore 1000
+nTrajectory 1000
+nBin 20
+yWall 10
+lambda 1.0
+deltaZ 0
+deltaPz 0
+transitTime 1.0
+density 100
+rabi 3
+kappa 91
+invT2 0
+controlType dt
+name dt0.0005_dZ0_dPz0_tau1.0_nBin20_dens100_g3_k91
