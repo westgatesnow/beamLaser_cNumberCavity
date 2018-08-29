@@ -64,8 +64,8 @@ void generateInitialField(Ensemble& ensemble, const Param& param)
   ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
   ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
   //initilize q(t=0) = p(t=0) = 1
-  ensemble.cavity.q.col(0).fill(1.0);
-  ensemble.cavity.p.col(0).fill(1.0);
+  // ensemble.cavity.q.col(0).fill(1.0);
+  // ensemble.cavity.p.col(0).fill(1.0);
 }
 
 void generateExternalState(Atom& newAtom, const Param& param)
@@ -200,8 +200,8 @@ void getDiffusionVector(VectorXd& dW, const Param& param)
     dW[NVAR*j+1] = sqrt(2*invT2)*rng.get_gaussian_rn(sqrt(dt));
   }
   //Diffusion for the field
-  dW[NVAR*nAtom] = sqrt(2*kappa)*rng.get_gaussian_rn(sqrt(dt));
-  dW[NVAR*nAtom+1] = sqrt(2*kappa)*rng.get_gaussian_rn(sqrt(dt));
+  dW[NVAR*nAtom] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
+  dW[NVAR*nAtom+1] = sqrt(kappa)*rng.get_gaussian_rn(sqrt(dt));
 }
 
 void getDriftVector(const VectorXd& sVar, VectorXd& drift, const VectorXd& rabiEff, const Param& param) 
@@ -339,7 +339,9 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
 
   //nAtom
   observables.nAtom(s) = nAtom;
- 
+  
+
+  //For quick runs, COMMENT THESE OUT///////////////////////////////////////////////////////////////////////////////////////
   //internal matrices and bin indices
   MatrixXd SX, SY, SZ; //Note: cannot do Matrix SX, SY, SZ = MatrixXd::Zero(nAtom, nTrajectory); have to be this way
   SX = MatrixXd::Zero(nAtom, nTrajectory);
@@ -416,6 +418,7 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
     }
     initRow_1 += binIndex[i];
   }
+  //For quick runs, COMMENT THESE OUT///////////////////////////////////////////////////////////////////////////////////////
 }
 
 void storeSpinVariables(SpinVariables& spinVariables, const Ensemble& ensemble, 

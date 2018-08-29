@@ -1,0 +1,1300 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{float}
+
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+\linespread{1.1}
+
+\title{Supplemental Materials}
+\author{Haonan Liu}
+\date{\today}
+
+\usepackage{graphicx}
+\usepackage{biblatex}
+\addbibresource{main.bib}
+
+\usepackage{kbordermatrix}% http://www.hss.caltech.edu/~kcb/TeX/kbordermatrix.sty
+\renewcommand{\kbldelim}{(}% Left delimiter
+\renewcommand{\kbrdelim}{)}% Right delimiter
+
+\newcommand{\gc}{\Gamma_C}
+\newcommand{\omea}{\omega_a}
+\newcommand{\omec}{\omega_c}
+\newcommand{\lindblad}{\mathcal{L}}
+\newcommand{\ope}{\hat{\mathcal{O}}}
+\newcommand{\estate}{|e\rangle}
+\newcommand{\gstate}{|g\rangle}
+\newcommand{\szj}{\hat{\sigma}^z_j}
+\newcommand{\spj}{\hat{\sigma}^+_j}
+\newcommand{\smj}{\hat{\sigma}^-_j}
+\newcommand{\szk}{\hat{\sigma}^z_k}
+\newcommand{\spk}{\hat{\sigma}^+_k}
+\newcommand{\smk}{\hat{\sigma}^-_k}
+\newcommand{\szl}{\hat{\sigma}^z_l}
+\newcommand{\spl}{\hat{\sigma}^+_l}
+\newcommand{\sml}{\hat{\sigma}^-_l}
+%tilde
+\newcommand{\tila}{\hat{\tilde{a}}}
+\newcommand{\tilaDag}{\hat{\tilde{a}}^\dagger}
+\newcommand{\tilszj}{\hat{\tilde{\sigma}}^z_j}
+\newcommand{\tilspj}{\hat{\tilde{\sigma}}^+_j}
+\newcommand{\tilsmj}{\hat{\tilde{\sigma}}^-_j}
+\begin{document}
+
+\maketitle
+\section{cQED Hamiltonian}
+We call the combined system of a cavity and $N$ atoms a cavity QED (cQED) system. The Hamiltonian of $N$ identical atoms with internal frequency $\omea$ interacting with the standing field of a cavity with frequency $\omec$ is given by
+\begin{equation}
+\label{hamil_cqed}
+    \hat{H} = \frac{\hbar \omea}{2}\sum^{N}_{j=1}\szj+\sum^{N}_{j=1}\frac{\hat{\textbf{p}}_j^2}{2m}+\hbar \omec \hat{a}^\dagger \hat{a}+\frac{\hbar g}{2}\sum^{N}_{j=1}\left(\smj \hat{a}^\dagger+\hat{a}\spj\right)\cos{k\hat{z}_j}
+\end{equation}
+
+This Hamiltonian is valid for general cQED systems. In case of the beam laser, however, we make two further assumptions:
+\begin{enumerate}
+    \item The atomic recoil velocity from atom-photon interactions in the cavity is very small compared to the velocity spread of the atomic beam.\footnote{The recoil velocity is in the order of $\frac{\hbar k}{m} \sim \frac{10^{-34}m^2kg/s\times10^{7}m^{-1}}{10^{-25}kg} = 1$ cm/s. The lowest possible transverse velocity of the atomic beam after using a Zeeman slower is $\sim 1$ m/s. Thus the recoil velocity can be ignored and the velocity of each intracavity atom can be taken as constant.} Thus we can assume a constant velocity for each individual atom across the cavity, although the velocities of different atoms are generally different and follow some \textit{a priori} distribution. This allows a classical treatment of the kinetic motion of atoms
+    \begin{equation}
+        \{\hat{\textbf{x}}_j,\hat{\textbf{p}}_j\} \rightarrow \{\textbf{x}_j,\textbf{p}_j\}
+    \end{equation}
+    Under the classical treatment, the momentum term in the Hamiltonian becomes a constant and can be removed. The interaction term can be simplified by involving the \textit{effective coupling factor}
+    \begin{equation}
+        g'_j(t)  \equiv g\cos\left[k\left(z_j(0)+\frac{p^z_j}{m}t\right)\right] = g\cos k z_j(t)
+    \end{equation}
+    
+    \item We assume the system has zero detuning, meaning
+    \begin{equation}
+        \omega_0 \equiv \omea = \omec
+    \end{equation}
+    
+\end{enumerate}
+
+With both assumptions above, the Hamiltonian (\ref{hamil_cqed}) becomes\footnote{Note that since $g'(t)$ is a function of $t$, the Hamiltonian is in fact time-dependent. However, at each timestep in our simulation of the quantum Langevin equations, we can take the Hamiltonian as time-independent just using the value of $g'(t)$ at time $t$.} 
+\begin{equation}
+\label{hamil_beamLaser}
+    \hat{H} = \frac{\hbar \omega_0}{2}\sum^{N}_{j=1}\szj+\hbar \omega_0 \hat{a}^\dagger \hat{a}+\sum^{N}_{j=1}\frac{\hbar g'_j}{2}\left(\smj \hat{a}^\dagger+\hat{a}\spj\right)
+\end{equation}
+
+% One point on notations must be made here. Since we will always work in IP for this problem, from now on:
+
+% (1) we will always use $\hat{H}(t)$ to represent $\hat{V}^I(t)$ as the Hamiltonian in our problem;
+
+% (2) all density matrices, operators, and Hamiltonians without superscripts are in IP
+
+% unless otherwise explained.
+
+% Thus, in this new notation, equation (\ref{hamil_beamLaser_IP}) becomes
+% \begin{equation}
+% \label{hamil_beamLaser}
+%     \hat{H}(t) = \sum^{N}_{j=1}\frac{\hbar g'_j(t)}{2}\left(\hat{\sigma}^{-}_j \hat{a}^{\dagger}+\hat{a}\hat{\sigma}^{+}_j\right)
+% \end{equation}
+
+
+\section{cQED Master Equation}
+The master equation for an open cavity QED system in the Schrödinger Picture is\footnote{David and Minghui's Thesis.}
+\begin{equation}
+\label{master_cqed}
+\frac{d}{dt}\hat{\rho}=\frac{1}{i\hbar}\left[\hat{H},\hat{\rho}\right]+\kappa\lindblad[\hat{a}]\hat{\rho}+\sum^{N}_{j=1}\left[\gamma \lindblad[\hat{\sigma}^{-}_j]\hat{\rho}+\frac{1}{2T_2}\lindblad[\hat{\sigma}^{z}_j]\hat{\rho}+w\lindblad[\hat{\sigma}^{+}_j ]\hat{\rho}\right]
+% w\int_{-1}^{1}du N(u)\lindblad[\hat{\sigma}^+_j e^{iuk'\hat{x}_j}
+\end{equation}
+where $\kappa$ is the cavity decay rate, $\gamma$ is the free-space spontaneous decay rate, $T_2$ is the homogeneous dephasing time, $w$ is the repumping rate, and $\lindblad[\ope]\hat{\rho} = (2\ope\hat{\rho}\ope^\dagger-\ope^\dagger\ope\hat{\rho}-\rho\ope^\dagger\ope)/2$ is the Lindbladian superoperator describing the incoherent processes.
+
+In our case, the transit time $\tau$ for the atomic beam through the cavity often satisfies $\tau \ll \gamma^{-1}$, and there is no repumping in our experimental design. Thus we ignore both the $\gamma$ and $w$ terms in equation (\ref{master_cqed}) and write down the master equation relevant in the beam laser configuration\footnote{Experimentally, the dephasing time $T_2$ is usually the same order as $\gamma^{-1}$ and thus can also be ignored. However, it is interesting to show just theoretically that the phase synchronization of the atoms can lead to a coherent light source with a linewidth far less than $T_2^{-1}$.}
+
+\begin{equation}
+\label{master_beamLaser}
+\frac{d}{dt}\hat{\rho}(t)=\frac{1}{i\hbar}\left[\hat{H},\hat{\rho}\right]+\kappa\lindblad[\hat{a}]\hat{\rho}+\sum^{N}_{j=1}\frac{1}{2T_2}\lindblad[\hat{\sigma}^{z}_j]\hat{\rho}
+\end{equation}
+
+
+\section{cQED Quantum Langevin Equations}
+The master equation (\ref{master_beamLaser}) combined with the Hamiltonian (\ref{hamil_beamLaser}) theoretically is complete to solve the problem. However, simulations with the master equation are historically hard due to their operator-based nature\footnote{We do not have the SU(4) symmetry in this beam laser configuration.}. On the other hand, several semi-classical methods have been developed to solve the corresponding quantum Langevin equations (QLE) for the same open system. To use these methods, we must first write down the QLE's for the system. 
+
+By definition, QLE's are derived in the Heisenberg Picture (HP) by including the reservoir at first and tracing it out after making the Markov approximation\footnote{See David's Thesis p60.}. Here we use a more systematic way to derive the QLE's utilizing the master equation and the Einstein relations\footnote{See David's Thesis p80 and Gardiner's 1985 paper.}.
+
+For any operator $\hat{X}$ in HP, a general quantum Langevin equation has the form
+\begin{equation}
+\label{qle}
+    \frac{d}{dt}\hat{X} = \hat{D}^X(X,t) + \hat{F}^X(X,t)
+\end{equation}
+where we usually separate the right hand side into two parts: $\hat{D}$ accounts for a deterministic change for $\Hat{X}$, and is called the drift term; $\hat{F}$ usually follows $\langle \hat{F}^X(t) \rangle = 0$, and is called the diffusion term\footnote{This paragraph needs editing based on the definition of stochastic differential equations???}.
+
+We now derive the QLE's for the operators $\{\hat{a}, \hat{a}^\dagger, \spj, \smj, \szj\}$. 
+
+\subsection{Drift Terms}
+To obtain the drift terms, we first take the average value of both sides of equation (\ref{qle}) to get
+\begin{equation}
+    \langle \frac{d}{dt}\hat{X} \rangle = \langle\hat{D}^X\rangle
+\end{equation}
+
+Using the transformation relationships between SP and HP, we see that\footnote{All the density matrices and operators here are defined with respect to the whole combination of the system and reservoir. See Gardiner's paper.}
+\begin{equation}
+\label{drift}
+    \langle \frac{d}{dt}\hat{X(t)} \rangle = tr\left[\hat{\rho}(t_0)\frac{d\hat{X}(t)}{dt}\right] = \frac{d}{dt}tr\left[\hat{\rho}(t_0)\hat{X}(t)\right] =\frac{d}{dt}tr\left[\hat{\rho}(t)\hat{X}(t_0)\right]=  tr\left[\hat{X}(t_0)\frac{d\hat{\rho}(t)}{dt}\right]
+\end{equation}
+
+\footnote{In equation (\ref{drift}), we specifically use $t$ and $t_0$ to mark the difference between SP and HP. In the derivations below, it should be self-evident which pictures we are using by observing the time dependence.} Now it is clear that with the help of the master equation (\ref{master_beamLaser}), we can derive $\Hat{D}$ using equation (\ref{drift}).
+
+We first derive the drift terms for the field operators $\hat{a}$. We write down its corresponding quantum Langevin equation
+\begin{equation}
+    \frac{d}{dt}\hat{a} = \hat{D}^a + \hat{F}^a
+\end{equation}
+
+Taking the average value of both sides while using $\langle \hat{F}^a \rangle = 0$,  we have by (\ref{drift})
+\begin{equation}
+    \langle \hat{D}^a \rangle = \langle\frac{d \Hat{a}}{dt}\rangle  = tr\left[\Hat{a} \frac{d\Hat{\rho}}{dt}\right]
+\end{equation}
+
+Substituting the master equation (\ref{master_beamLaser}) with Hamiltonian (\ref{hamil_beamLaser}) into the equation above, we have
+\begin{align}
+\label{drift_a_temp}
+    \notag \langle \hat{D}^a \rangle &= tr\left[\frac{1}{i\hbar}\Hat{a}\left[\Hat{H}, \Hat{\rho}\right]+\kappa\Hat{a}\lindblad[\hat{a}]\hat{\rho}+\sum^{N}_{j=1}\frac{1}{2T_2}\Hat{a}\lindblad[\hat{\sigma}^z_j]\hat{\rho}\right]\\
+    \notag &= tr\left[\frac{1}{i\hbar}\Hat{a}\left[\Hat{H}, \Hat{\rho}\right]+\frac{\kappa}{2}\left(2\Hat{a}^2\Hat{\rho}\Hat{a}^\dagger-\Hat{a}\hat{a}^\dagger\Hat{a}\Hat{\rho}-\Hat{a}\Hat{\rho}\Hat{a}^\dagger\Hat{a}\right)\right]\\
+    \notag &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\Hat{a}, \Hat{H}\right]\right]+\frac{\kappa}{2}tr\left[\hat{\rho}\left(\Hat{a}^\dagger\hat{a}^2-\Hat{a}\hat{a}^\dagger\Hat{a}\right)\right]\\
+    &= -i\omega_0 \langle \hat{a} \rangle-\sum\frac{ig_j'}{2}\langle \smj \rangle - \frac{\kappa}{2}\langle \hat{a} \rangle
+\end{align}
+
+Since the above equation (\ref{drift_a_temp}) works for any density operator, we can remove the average sign and get
+
+\begin{equation}
+\label{qle_a_drift}
+    \hat{D}^a = -i\omega_0 \hat{a}-\sum\frac{ig_j'}{2} \smj  - \frac{\kappa}{2} \hat{a}
+\end{equation}
+
+Taking the complex conjugate, we immediately get
+\begin{equation}
+\label{qle_aDag_drift}
+    \hat{D}^{a^\dagger} = i\omega_0 \hat{a}^\dagger+\sum\frac{ig_j'}{2} \spj  - \frac{\kappa}{2} \hat{a}^\dagger
+\end{equation}
+
+We now derive the drift terms for the atomic spin operators following the similar methods.
+
+For $\spj$, we have
+\begin{align}
+    \notag\langle \Hat{D}^+_j \rangle &= tr\left[\spj \frac{d\hat{\rho}}{dt}\right]\\
+    \notag &= tr\left[\frac{1}{i\hbar}\spj \left[\Hat{H}, \Hat{\rho}\right]+\kappa\spj\lindblad[\hat{a}]\hat{\rho}+\spj\sum^{N}_{k=1}\frac{1}{2T_2}\lindblad[\hat{\sigma}^z_k]\hat{\rho}\right]\\
+    \notag &= tr\left[\frac{1}{i\hbar}\spj\left[\Hat{H}, \Hat{\rho}\right]+\frac{1}{4T_2}\left(2\spj\hat{\sigma}^z_j\Hat{\rho}\hat{\sigma}^z_j-\spj\hat{\sigma}^z_j\hat{\sigma}^z_j\Hat{\rho}-\spj\Hat{\rho}\hat{\sigma}^z_j\hat{\sigma}^z_j\right)\right]\\
+    \notag &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\spj, \Hat{H}\right]\right]+\frac{1}{2T_2}tr\left[\hat{\rho}\left(\szj\spj\szj-\spj\right)\right]\\
+    &= i\omega_0 \langle \spj \rangle-\frac{ig_j'}{2}\langle \hat{a}^\dagger \szj \rangle - \frac{1}{T_2}\langle \spj \rangle
+\end{align}
+
+% Applying change of variables, we get
+% \begin{equation}
+% \label{qle_+_drift}
+%     \frac{d}{dt} \tilspj = -\frac{ig_j'}{2} \tila^\dagger \szj - \frac{1}{T_2} \tilspj + \hat{F}_j^+
+% \end{equation}
+Thus
+\begin{equation}
+\label{qle_+_drift}
+    \hat{D}_j^+ = i\omega_0 \spj-\frac{ig_j'}{2} \hat{a}^\dagger \szj - \frac{1}{T_2} \spj
+\end{equation}
+
+Taking conjugate, we have
+\begin{equation}
+\label{qle_-_drift}
+    \hat{D}_j^- = -i\omega_0 \smj+\frac{ig_j'}{2} \hat{a} \szj - \frac{1}{T_2} \smj
+\end{equation}
+
+For $\szj$, we have
+\begin{align}
+    \notag\langle \Hat{D}^z_j \rangle &= tr\left[\szj \frac{d\hat{\rho}}{dt}\right]\\
+    \notag &= tr\left[\frac{1}{i\hbar}\szj \left[\Hat{H}, \Hat{\rho}\right]+\kappa\szj\lindblad[\hat{a}]\hat{\rho}+\szj\sum^{N}_{k=1}\frac{1}{2T_2}\lindblad[\hat{\sigma}^z_k]\hat{\rho}\right]\\
+    \notag &= tr\left[\frac{1}{i\hbar}\szj\left[\Hat{H}, \Hat{\rho}\right]\right]\\
+    \notag &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\szj, \Hat{H}\right]\right]\\
+    &= ig'_j\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]
+\end{align}
+
+which gives
+\begin{equation}
+\label{qle_z_drift}
+   \hat{D}_j^z  = ig'_j\left[\smj \Hat{a}^\dagger   -  \Hat{a} \spj \right]
+\end{equation}
+
+Equations (\ref{qle_a_drift}), (\ref{qle_aDag_drift}), (\ref{qle_+_drift}), (\ref{qle_-_drift}), and (\ref{qle_z_drift}) give the drift terms.
+% which gives
+% \begin{equation}
+% \label{qle_z}
+%     \hat{D}_j^z = ig'_j\left[ \hat{a}^\dagger \smj  -  \hat{a} \spj \right]
+% \end{equation}
+\subsection{Diffusion Terms}
+For two operators $X$ and $Y$ that both satisfy equation (\ref{qle}), $i.e.$, 
+\begin{align}
+    \frac{d}{dt}\hat{X}(t) &= \hat{D}^X(t) + \hat{F}^X(t)\\
+    \frac{d}{dt}\hat{Y}(t) &= \hat{D}^Y(t) + \hat{F}^Y(t)
+\end{align}
+we can define a diffusion coefficient $M^{XY}(t)$ such that
+\begin{equation}
+    \langle \hat{F}^X(t) \hat{F}^Y(t') \rangle = 2 M^{XY}(t) \delta(t-t')
+\end{equation}
+
+Then by the generalized Einstein relations\footnote{Citation here??},
+\begin{equation}
+    2 M^{XY}(t) = \frac{d}{dt}\langle \hat{X}(t)\hat{Y}(t) \rangle - \langle \hat{X}(t)\hat{D}^Y(t) \rangle - \langle \hat{D}^X(t) \hat{Y}(t) \rangle
+\end{equation}
+
+It is natural to see that in general cases, $2M(t)$ becomes a matrix that expresses the correlations between diffusion terms in the quantum Langevin equations. Therefore we call $2M(t)$ a \textit{diffusion matrix}. 
+
+We now derive the diffusion matrix $2M_{jk}^{\mu\nu}$ in our case, where $\{j,k\}$ stand for individual atoms and $\{\mu,\nu\}$ taking symbols $\{a, a^\dagger, +, -, z\}$ stand for the five operators $\{\hat{a}, \Hat{a}^\dagger, \spj, \smj, \szj\}$. One easily proved but useful relation is
+\begin{equation}
+\label{relationDiffusion}
+    2M^{\mu\nu}_{jk} = \left[2M^{\nu^\ast\mu^\ast}_{kj}\right]^\ast
+\end{equation}
+where $\{a, a^\dagger, +, -, z\}^* \equiv \{a^\dagger, a, -, +, z\}$. Notice that the labels $j,k$ are only valid for atom-atom correlations. When field operators are involved, we can still use this relation by ignoring both the atomic labels $j, k$ for field-field terms or only one of the labels for field-atom terms.
+
+For the field-field terms,
+\begin{flalign}
+\label{diffusion_maa}
+    \notag 2 M^{aa} &= \frac{d}{dt}\langle \hat{a}^2 \rangle - \langle \hat{a}\hat{D}^a \rangle - \langle \hat{D}^a \hat{a} \rangle &\\
+    \notag          &=  tr\left[\Hat{a}^2 \frac{d\Hat{\rho}}{dt}\right] - 2\langle \hat{a}\hat{D}^a \rangle\\
+    \notag          &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\Hat{a}^2,                  \Hat{H}\right]\right]+\frac{\kappa}{2}tr\left[\hat{\rho}\left(\Hat{a}^\dagger\hat{a}^3-\Hat{a}^2\hat{a}^\dagger\Hat{a}\right)\right]- 2\left(-i\omega_0 \Hat{a}^2-\sum\frac{ig_j'}{2} \langle\smj\hat{a}\rangle- \frac{\kappa}{2} \langle\hat{a}^2\rangle\right)\\
+    \notag          &= -2i\omega_0 \Hat{a}^2-\sum ig_j'\langle \smj\hat{a} \rangle - \kappa\langle \hat{a}^2 \rangle +2i\omega_0 \Hat{a}^2+\sum ig_j'\langle \smj\hat{a} \rangle + \kappa\langle \hat{a}^2 \rangle\\
+                    &= 0
+\end{flalign}
+
+\begin{flalign}
+\label{diffusion_maad}
+    \notag 2 M^{aa^\dagger} &= \frac{d}{dt}\langle \hat{a}\Hat{a}^\dagger \rangle - \langle \hat{a}\hat{D}^{a^\dagger} \rangle - \langle \hat{D}^a \hat{a}^\dagger \rangle &\\
+    \notag          &=  tr\left[\Hat{a}\Hat{a}^\dagger \frac{d\Hat{\rho}}{dt}\right] - \langle \hat{a}\hat{D}^{a^\dagger} \rangle - \langle \hat{D}^a \hat{a}^\dagger \rangle\\
+    \notag          &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\Hat{a}\Hat{a}^\dagger,                  \Hat{H}\right]\right]+\frac{\kappa}{2}tr\left[\hat{\rho}\left(2\Hat{a}^\dagger\hat{a}\Hat{a}^\dagger\hat{a}-\hat{a}\Hat{a}^{\dagger^2}\hat{a}-\hat{a}^\dagger{\Hat{a}}^2\hat{a}^\dagger\right)\right]\\
+    \notag          &\ \ -\left(i\omega_0 \Hat{a} \Hat{a}^\dagger+\sum\frac{ig_j'}{2} \langle\spj\hat{a}\rangle- \frac{\kappa}{2} \langle\hat{a}\Hat{a}^\dagger\rangle\right)-\left(-i\omega_0 \Hat{a}\Hat{a}^\dagger-\sum\frac{ig_j'}{2} \langle\smj\hat{a}^\dagger\rangle- \frac{\kappa}{2}\langle \hat{a}\Hat{a}^\dagger\rangle\right)\rangle\\
+    \notag          &= -\sum \frac{ig_j'}{2}\langle\smj\hat{a}^\dagger\rangle+\sum\frac{ig_j'}{2} \langle\spj\hat{a}\rangle-\kappa\langle \Hat{a}^\dagger\hat{a}\rangle\\
+    \notag          &\ \ -\left(\sum\frac{ig_j'}{2} \langle\spj\hat{a}\rangle- \frac{\kappa}{2} \langle\hat{a}\Hat{a}^\dagger\rangle\right)-\left(-\sum\frac{ig_j'}{2} \langle\smj\hat{a}^\dagger\rangle- \frac{\kappa}{2}\langle \hat{a}\Hat{a}^\dagger\rangle\right)\\
+     \notag         &= \kappa\langle\hat{a}\Hat{a}^\dagger-\Hat{a}^\dagger\hat{a}\rangle\\
+                    &= \kappa
+\end{flalign}
+
+Using relation (\ref{relationDiffusion}), from equations (\ref{diffusion_maa}) and (\ref{diffusion_maad}) we immediately get
+\begin{flalign}
+\label{diffusion_madad}
+    2 M^{a^\dagger a^\dagger} &= 0 &\\
+\label{diffusion_mada}
+    2 M^{a^\dagger a} &= \kappa
+\end{flalign}
+
+For atom-atom operators, with $j= k$, we have\footnote{We also apply relation (\ref{relationDiffusion}) here.}
+\begin{flalign}
+\label{diffusion_m++}
+    \notag 2 M^{++}_{jj} &= \frac{d}{dt}\langle \spj\spj \rangle - \langle \spj \hat{D}^+_j \rangle - \langle \hat{D}^+_j \spj \rangle &\\
+    \notag          &= -  \langle \spj \hat{D}^+_j \rangle - \langle \hat{D}^+_j \spj \rangle\\
+    \notag          &= \frac{ig_j'}{2} \langle \hat{a}^\dagger \spj \szj \rangle + \frac{ig_j'}{2} \langle  \hat{a}^\dagger \szj\spj \rangle\\
+                    &= 0\\
+\label{diffusion_m--}                    
+           2 M^{--}_{jj} &=0             
+\end{flalign}
+
+\begin{flalign}
+\label{diffusion_mzz}
+    \notag 2 M^{zz}_{jj} &= \frac{d}{dt}\langle \szj\szj \rangle - \langle \szj \hat{D}^z_j \rangle - \langle \hat{D}^z_j \szj \rangle &\\
+    \notag          &= -  \langle \szj \hat{D}^z_j \rangle - \langle \hat{D}^z_j \szj \rangle\\
+                    &= 0
+\end{flalign}
+
+\begin{flalign}
+\label{diffusion_mz+}
+    \notag 2 M^{z+}_{jj} &= \frac{d}{dt}\langle \szj\spj \rangle - \langle \szj \hat{D}^+_j \rangle - \langle \hat{D}^z_j \spj \rangle &\\
+    \notag          &= \langle \hat{D}_j^+ \rangle - \langle \szj \hat{D}^+_j \rangle - \langle \hat{D}^z_j \spj \rangle\\
+    \notag          &= i\omega_0 \langle \spj \rangle-\frac{ig_j'}{2} \langle \hat{a}^\dagger \szj \rangle - \frac{1}{T_2} \langle \spj \rangle- \left(i\omega_0\spj-\frac{ig_j'}{2} \langle \szj \hat{a}^\dagger \szj \rangle- \frac{1}{T_2} \langle \szj\spj \rangle \right)- \left(-i\omega_0 \spj+ig'_j\left[ \langle \hat{a}^\dagger \smj\spj\rangle  - \langle \hat{a} \spj \spj \rangle \right]\right)\\
+    \notag          &= -\frac{ig_j'}{2} \langle \hat{a}^\dagger \szj \rangle - \frac{1}{T_2} \langle \spj \rangle- \left(-\frac{ig_j'}{2} \langle \hat{a}^\dagger \rangle- \frac{1}{T_2} \langle \spj \rangle \right)- \left(\frac{ig'_j}{2}\langle \hat{a}^\dagger\left(1-\szj\right)\rangle   \right)\\
+                    &= 0\\
+\label{diffusion_m-z}      
+      2 M^{-z}_{jj} &= 0
+\end{flalign}
+
+\begin{flalign}
+\label{diffusion_m+z}
+    \notag 2 M^{+z}_{jj} &= \frac{d}{dt}\langle \spj\szj \rangle - \langle \spj \hat{D}^z_j \rangle - \langle \hat{D}^+_j \szj \rangle &\\
+    \notag          &=  -\langle \hat{D}_j^+ \rangle - \langle \spj \hat{D}^z_j \rangle - \langle \hat{D}^+_j \szj \rangle\\
+    \notag          &= \frac{ig_j'}{2} \langle \hat{a}^\dagger \szj \rangle + \frac{1}{T_2} \langle \spj \rangle- \left(-i\omega_0 \spj+ig'_j\left[ \langle \hat{a}^\dagger \spj\smj\rangle  - \langle \hat{a} \spj \spj \rangle \right]\right)- \left(i\omega_0 \spj-\frac{ig_j'}{2} \langle  \hat{a}^\dagger \szj\szj \rangle- \frac{1}{T_2} \langle \spj\szj \rangle \right)\\
+    \notag          &= \frac{ig_j'}{2} \langle \hat{a}^\dagger \szj \rangle + \frac{1}{T_2} \langle \spj \rangle- \left(\frac{ig'_j}{2}\langle \hat{a}^\dagger\left(1+\szj\right)\rangle   \right)- \left(-\frac{ig_j'}{2} \langle \hat{a}^\dagger \rangle+ \frac{1}{T_2} \langle \spj \rangle \right)\\
+                    &= 0\\
+\label{diffusion_m-z}      
+      2 M^{z-}_{jj} &= 0
+\end{flalign}
+
+\begin{flalign}
+\label{diffusion_m+-}
+    \notag 2 M^{+-}_{jj} &= \frac{d}{dt}\langle \spj\smj \rangle - \langle \spj \hat{D}^-_j \rangle - \langle \hat{D}^+_j \smj \rangle &\\
+    \notag          &=  \frac{1}{2}\langle \Hat{D}^z_j\rangle -\langle \spj \hat{D}^-_j \rangle - \langle \hat{D}^+_j \smj \rangle\\
+    \notag          &= \frac{ig'_j}{2}\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]-\left(-i\omega_0 \spj\smj\frac{ig_j'}{2} \langle \hat{a} \spj\szj \rangle - \frac{1}{T_2} \langle \spj \smj\rangle \right)-\left(i\omega_0 \spj\smj-\frac{ig_j'}{2} \langle \hat{a}^\dagger \szj\smj\rangle - \frac{1}{T_2} \langle \spj \smj \rangle \right)\\
+    \notag          &= \frac{ig'_j}{2}\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]-\left(-\frac{ig_j'}{2} \langle \hat{a} \spj \rangle - \frac{1}{T_2} \langle \spj \smj\rangle \right)-\left(\frac{ig_j'}{2} \langle \hat{a}^\dagger \smj\rangle - \frac{1}{T_2} \langle \spj \smj \rangle \right)\\
+                    &= \frac{1}{T_2}\left(1+\langle \szj \rangle\right)
+\end{flalign}
+
+\begin{flalign}
+\label{diffusion_m-+}
+    \notag 2 M^{-+}_{jj} &= \frac{d}{dt}\langle \smj\spj \rangle - \langle \smj \hat{D}^+_j \rangle - \langle \hat{D}^-_j \spj \rangle &\\
+    \notag          &=  -\frac{1}{2}\langle \Hat{D}^z_j\rangle- \langle \smj \hat{D}^+_j \rangle - \langle \hat{D}^-_j \spj \rangle\\
+    \notag          &= -\frac{ig'_j}{2}\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]-\left(i\omega_0 \smj\spj-\frac{ig_j'}{2} \langle \hat{a}^\dagger \smj\szj \rangle - \frac{1}{T_2} \langle \smj \spj\rangle \right)-\left(-i\omega_0 \smj\spj\frac{ig_j'}{2} \langle \hat{a} \szj\spj\rangle - \frac{1}{T_2} \langle \smj \spj \rangle \right)\\
+    \notag          &= -\frac{ig'_j}{2}\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]-\left(-\frac{ig_j'}{2} \langle \hat{a}^\dagger \smj \rangle - \frac{1}{T_2} \langle \smj \spj\rangle \right)-\left(\frac{ig_j'}{2} \langle \hat{a} \spj\rangle - \frac{1}{T_2} \langle \smj \spj \rangle \right)\\
+                    &= \frac{1}{T_2}\left(1-\langle \szj \rangle \right)
+\end{flalign}
+
+
+
+
+
+For $j \neq k$, we first look at $2 M^{++}_{jk}$\ \footnote{It is straightforward to see that the terms involving $\omega_0$ cancel themselves.}.
+\begin{flalign}
+\label{diffusion_m++jk}
+    \notag 2 M^{++}_{jk} &= \frac{d}{dt}\langle \spj\spk \rangle - \langle \spj \hat{D}^+_k \rangle - \langle \hat{D}^+_j \spk \rangle &\\
+    \notag          &= tr\left[\spj\spk\frac{d\Hat{\rho}}{dt}\right]-  \langle \spj \hat{D}^+_k \rangle - \langle \hat{D}^+_j \spk \rangle\\
+    \notag          &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\spj\spk ,\Hat{H} \right]\right]+\frac{1}{2T_2}tr\left[\spj\spk\sum^{N}_{l=1}\lindblad[\hat{\sigma}^z_l]\hat{\rho}\right]-  \langle \spj \hat{D}^+_k \rangle - \langle \hat{D}^+_j \spk \rangle\\
+    \notag          &= \frac{1}{2i}tr\left[\Hat{\rho}\left[\spj\spk ,\sum^{N}_{l=1} g'_l\left(\sml \hat{a}^\dagger+\hat{a}\spl\right)
+ \right]\right]+\frac{1}{2T_2}tr\left[\spj\spk\sum^{N}_{l=1}\lindblad[\hat{\sigma}^z_l]\hat{\rho}\right]\\
+    \notag          &\ \ \ - \left( -\frac{ig_k'}{2}  \langle \spj \hat{a}^\dagger \szk\rangle - \frac{1}{T_2} \langle \spj  \spk \rangle\right) - \left( -\frac{ig_j'}{2}  \langle  \hat{a}^\dagger \szj\spk\rangle - \frac{1}{T_2} \langle \spj  \spk \rangle\right)\\
+    \notag          &= \frac{1}{2i}\left(g'_k\langle \spj \szk \hat{a}^\dagger \rangle + g'_j\langle \spk \szj \hat{a}^\dagger \rangle \right) - \frac{1}{T_2} \langle \spj  \spk \rangle - \frac{1}{T_2} \langle \spj  \spk \rangle \\
+    \notag          &\ \ \ - \left( -\frac{ig_k'}{2}  \langle \spj \hat{a}^\dagger \szk\rangle - \frac{1}{T_2} \langle \spj  \spk \rangle\right) - \left(
+                    -\frac{ig_j'}{2}  \langle  \hat{a}^\dagger \szj\spk\rangle - \frac{1}{T_2} \langle \spj  \spk \rangle\right)\\
+                    &= 0           
+\end{flalign}
+
+Also, for field-atom terms, we first look at $2 M^{+a}_{j}$.
+\begin{flalign}
+\label{diffusion_m+aj}
+    \notag 2 M^{+a}_{j} &= \frac{d}{dt}\langle \spj\hat{a} \rangle - \langle \spj \hat{D}^a \rangle - \langle \hat{D}^+_j \hat{a} \rangle &\\
+    \notag          &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\spj\hat{a} ,\Hat{H} \right]\right]+\kappa tr\left[\spj\hat{a}\lindblad[\hat{a}]\hat{\rho}\right]+\frac{1}{2T_2}tr\left[\spj\hat{a}\sum^{N}_{l=1}\lindblad[\hat{\sigma}^z_l]\hat{\rho}\right]-\langle \spj \hat{D}^a \rangle - \langle \hat{D}^+_j \hat{a} \rangle\\
+    \notag          &= \frac{1}{2i}tr\left[\Hat{\rho}\left[\spj\hat{a} ,\sum^{N}_{k=1} g'_k\left(\smk \hat{a}^\dagger+\hat{a}\spk\right)
+ \right]\right]- \frac{\kappa}{2}\langle \spj \hat{a} \rangle -\frac{1}{T_2} \langle \hat{a}\spj \rangle\\
+    \notag          &\ \ \ -  \left(-\sum\frac{ig_k'}{2} \langle\spj\smk\rangle  - \frac{\kappa}{2} \langle \spj\hat{a} \rangle \right) - \left(
+                    -\frac{ig_j'}{2} \langle \hat{a}\hat{a}^\dagger \szj \rangle - \frac{1}{T_2} \langle \hat{a}\spj \rangle \right)\\
+    \notag          &= \frac{1}{2i}\left(\sum_{k=1}^N g'_k\langle \spj \smk \rangle + g'_j\langle \szj \hat{a} \hat{a}^\dagger \rangle \right) - \frac{1}{T_2} \langle \spj  \spk \rangle - \frac{1}{T_2} \langle \spj  \spk \rangle \\
+    \notag          &\ \ \ -  \left(-\sum\frac{ig_k'}{2} \langle\spj\smk\rangle  - \frac{\kappa}{2} \langle \spj\hat{a} \rangle \right) - \left(
+                    -\frac{ig_j'}{2} \langle \hat{a}\hat{a}^\dagger \szj \rangle - \frac{1}{T_2} \langle \hat{a}\spj \rangle \right)\\
+                    &= 0           
+\end{flalign}
+
+It is no coincidence that these terms are 0. Physically, due to the fact that in the master equation (\ref{master_beamLaser}), there are only Lindbladian terms with either single-atom arguments or pure field argument, it is guaranteed that there is no diffusion correlations between different atoms and between atoms and the field. Mathematically, one can see that the calculations in the above equations (\ref{diffusion_m++jk}) and (\ref{diffusion_m+aj}) are none other than carrying out the same calculations twice for each equation, thus resulting a cancellation to get a zero result. Therefore
+\begin{equation}
+    2 M^{\mu\nu}_{jk} = 0 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  \
+\end{equation}
+for all $j\neq k$ or atom-field correlations.
+
+Therefore the diffusion matrix for the beam laser configuration is
+\begin{equation}
+\label{diffusion1_pm_beamLaser}
+  2M_{jj}^{\mu \nu} = \kbordermatrix{
+          & \nu=a & a^\dagger & + & - & z \\
+    \mu=a & 0 & \kappa & 0 & 0 & 0\\
+    a^\dagger & \kappa & 0 & 0 & 0 & 0\\
+        + &   0 & 0 & 0 & \frac{1}{T_2}(1+\langle \szj \rangle) & 0 \\
+        - &   0 & 0 & \frac{1}{T_2}(1-\langle \szj \rangle) & 0 & 0\\
+        z &   0 & 0 & 0 & 0 & 0\\
+  }
+\end{equation}
+and
+\begin{equation}
+\label{diffusion2_pm_beamLaser}
+     2 M^{\mu\nu}_{jk} = 0
+\end{equation}
+For reference, we also write down the diffusion matrix for a general cQED system without proof\footnote{David's Thesis}
+\begin{equation}
+  2M_{jj}^{\mu \nu} = \kbordermatrix{
+          & \nu=a & a^\dagger & + & - & z \\
+    \mu=a & 0 & \kappa & 0 & 0 & 0\\
+    a^\dagger & \kappa & 0 & 0 & 0 & 0\\
+        + &   0 & 0 & 0 & w+\frac{1}{T_2}(1+\langle \szj \rangle) & -2w\langle \spj \rangle \\
+        - &   0 & 0 & \gamma+\frac{1}{T_2}(1-\langle \szj \rangle) & 0 & 2\gamma \langle \smj \rangle\\
+        z &   0 & 0 & 2\gamma \langle \spj \rangle & -2w\langle \smj \rangle & 2\gamma (1+ \langle \szj \rangle) +2w (1-\langle \szj \rangle)\\
+  }
+\end{equation}
+\subsection{The Quantum Langevin Equations}
+
+Given the drift and diffusion terms, we write down the full quantum Langevin equations for the beam laser system
+\begin{align}
+\label{qle_beamLaser}
+\notag 
+    \frac{d \hat{a}}{dt} &= -i\omega_0 \Hat{a}-\sum_{j=1}^{N}\frac{ig'_j}{2}\hat{\sigma}_j^--\frac{\kappa}{2}\hat{a}+\hat{F}^a\\\notag
+    \frac{d \hat{a}^\dagger}{dt} &= i\omega_0 \Hat{a}^\dagger+\sum_{j=1}^{N}\frac{ig'_j}{2}\hat{\sigma}_j^+-\frac{\kappa}{2}\hat{a}^\dagger+\hat{F}^{a^\dagger}\\
+    \frac{d \spj}{dt} &= i\omega_0\spj-\frac{ig'_j}{2}\hat{a}^\dagger\hat{\sigma}^z_j- \frac{1}{T_2}\spj + \Hat{F}_j^+\\\notag
+    \frac{d \smj}{dt} &= -i\omega_0\smj+\frac{ig'_j}{2}\hat{\sigma}^z_j\hat{a}-\frac{1}{T_2}\smj+\Hat{F}_j^-\\\notag
+    \frac{d \szj}{dt} &= ig'_j\left(\hat{a}^+\hat{\sigma}^-_j-\hat{\sigma}_j^+\hat{a}\right)+\Hat{F}_j^z
+\end{align}
+
+where 
+\begin{equation}
+    \langle \hat{F}^\mu_j(t) \hat{F}^\nu_k(t') \rangle = 2 M^{\mu\nu}_{jk}(t) \delta(t-t')
+\end{equation}
+and $2 M^{\mu\nu}_{jk}$ satisfy equations (\ref{diffusion1_pm_beamLaser}) and (\ref{diffusion2_pm_beamLaser}).
+
+We now take two separate steps of change of variables to make equations (\ref{qle_beamLaser}) easier for us to simulate.
+
+First, we want to get rid of the terms involving $\omega_0$ by moving into a rotating reference frame with frequency $\omega_0$. Define
+\begin{align}
+    \hat{\tilde{a}} &\equiv e^{i\omega_0 t}\hat{a}\\
+    \hat{\tilde{a}}^\dagger &\equiv e^{-i\omega_0 t}\hat{a}^\dagger\\
+    \hat{\tilde{\sigma}}^- &\equiv e^{i\omega_0 t}\hat{\sigma}^-\\
+    \hat{\tilde{\sigma}}^+ &\equiv e^{-i\omega_0 t}\hat{\sigma}^+\\
+\end{align}
+and the corresponding noise operators
+\begin{align}
+    \hat{\tilde{F}}^a&\equiv e^{i\omega_0 t}\hat{F}^a\\
+    \hat{\tilde{F}}^{a\dagger} &\equiv e^{-i\omega_0 t}\hat{F}^{a^\dagger}\\
+    \hat{\tilde{F}}^- &\equiv e^{i\omega_0 t}\hat{F}^-\\
+    \hat{\tilde{F}}^+ &\equiv e^{-i\omega_0 t}\hat{F}^+
+\end{align}
+
+Note that we do not need to change $\Hat{\sigma}^z$ and $\Hat{F}^z$.
+
+Then with a little bit of algebra, we see that equations (\ref{qle_beamLaser}) become
+\begin{align}
+\label{qle_beamLaser_til}
+\notag 
+    \frac{d \tila}{dt} &= -\sum_{j=1}^{N}\frac{ig'_j}{2}\tilsmj-\frac{\kappa}{2}\tila+\hat{\tilde{F}}^a\\\notag
+    \frac{d \tilaDag}{dt} &= \sum_{j=1}^{N}\frac{ig'_j}{2}\tilspj-\frac{\kappa}{2}\tilaDag+\hat{\tilde{F}}^{a\dagger}\\
+    \frac{d \tilspj}{dt} &= -\frac{ig'_j}{2}\tilaDag\tilszj- \frac{1}{T_2}\tilspj + \hat{\tilde{F}}^+_j\\\notag
+    \frac{d \tilsmj}{dt} &= \frac{ig'_j}{2}\hat{\sigma}^z_j\tila-\frac{1}{T_2}\tilsmj+\hat{\tilde{F}}^-_j\\\notag
+    \frac{d \szj}{dt} &= ig'_j\left(\tilaDag\tilsmj-\tilspj\tila\right)+\Hat{F}_j^z
+\end{align}
+with the diffusion matrix being
+\begin{equation}
+\label{diffusion1_beamLaser_til}
+  2M_{jj}^{\mu \nu} = \kbordermatrix{
+          & \nu=\tilde{a} & \tilde{a}^\dagger & \tilde{+} & \tilde{-} & z \\
+    \mu=\tilde{a} & 0 & \kappa & 0 & 0 & 0\\
+    \tilde{a}^\dagger & \kappa & 0 & 0 & 0 & 0\\
+        \tilde{+} &   0 & 0 & 0 & \frac{1}{T_2}(1+\langle \szj \rangle) & 0 \\
+        \tilde{-} &   0 & 0 & \frac{1}{T_2}(1-\langle \szj \rangle) & 0 & 0\\
+        z &   0 & 0 & 0 & 0 & 0\\
+  }
+\end{equation}
+and
+\begin{equation}
+\label{diffusion2_beamLaser_til}
+     2 M^{\tilde{\mu}\tilde{\nu}}_{jk} = 0
+\end{equation}
+
+Second, the set of equations (\ref{qle_beamLaser_til}) has operators like $\tila$, $\tilaDag$, and $\hat{\tilde{\sigma}}_i^\pm$ that are not hermitian. For future use, it is convenient to express these equations with hermitian operators. Define the following hermitian operators
+\begin{align}
+    \label{atoq}
+    \notag \hat{q} &= \tilaDag+\tila\\
+    \notag \hat{p} &= -i(\tilaDag-\tila)\\
+           \hat{\sigma}^x &= \hat{\tilde{\sigma}}^++\hat{\tilde{\sigma}}^-\\
+    \notag \hat{\sigma}^y &= -i(\hat{\tilde{\sigma}}^+-\hat{\tilde{\sigma}}^-)
+\end{align}
+with the reverse relations
+\begin{align}
+    \label{qtoa}
+    \notag \tila &= \frac{1}{2}(\hat{q}-i\hat{p})\\
+    \notag \tilaDag &= \frac{1}{2}(\hat{q}+i\hat{p})\\
+           \hat{\tilde{\sigma}}^- &= \frac{1}{2}(\hat{\sigma}^x-i\hat{\sigma}^y)\\
+    \notag \hat{\tilde{\sigma}}^+ &= \frac{1}{2}(\hat{\sigma}^x+i\hat{\sigma}^y)
+\end{align}
+
+With such definitions, we make the substitutions and directly write down the same stochastic differential equations as (\ref{qle_beamLaser}) but for the new hermitian operators\footnote{Here we do not care about the ordering of field operators and spin operators.}
+\begin{align}
+    \label{qle_beamLaser_q}
+    \notag \frac{d \hat{q}}{dt} &= -\sum_{j=1}^N\frac{g'_j}{2}\hat{\sigma}_j^y-\frac{\kappa}{2}\hat{q}+\hat{F}^q\\
+    \notag \frac{d \hat{p}}{dt} &= \sum_{j=1}^N\frac{g'_j}{2}\hat{\sigma}_j^x-\frac{\kappa}{2}\hat{p}+\hat{F}^p\\
+    \frac{d \hat{\sigma}_j^x}{dt} &= \frac{g'_j}{2}\hat{p}\hat{\sigma}^z_i-\frac{1}{T_2}\hat{\sigma}_j^x+\hat{F}_j^x\\
+    \notag \frac{d \hat{\sigma}_j^y}{dt} &= -\frac{g'_j}{2}\hat{q}\hat{\sigma}^z_i-\frac{1}{T_2}\hat{\sigma}_j^y+\hat{F}_j^y\\
+    \notag \frac{d \hat{\sigma}_j^z}{dt} &= \frac{g'_j}{2}\left(\hat{q}\hat{\sigma}^y_i-\hat{p}\hat{\sigma}_i^x\right)+\hat{F}_j^z
+\end{align}
+with diffusion relations\footnote{might miss a 2 here. check when writing paper???}
+\begin{equation}
+\label{diffusion1_xy_beamLaser}
+  2M_{jj}^{\mu \nu} = \kbordermatrix{
+          & \nu=q & p & x & y & z \\
+    \mu=q & 2\kappa &  & 0 & 0 & 0\\
+        p & 0 & 2\kappa & 0 & 0 & 0\\
+        x &   0 & 0 & \frac{2}{T_2} & \frac{2i}{T_2}\langle \szj \rangle & 0 \\
+        y &   0 & 0 & -\frac{2i}{T_2}\langle \szj \rangle & \frac{2}{T_2} & 0\\
+        z &   0 & 0 & 0 & 0 & 0\\
+  }
+\end{equation}
+which is now hermitian, and also
+\begin{equation}
+\label{diffusion2_xy_beamLaser}
+     2 M^{\mu\nu}_{jk} = 0
+\end{equation}
+
+\section{$c$-Number Langevin Equations}
+\subsection{Equations}
+So far, our derivations have been exact. Due to the difficulty of doing simulations with exponentially scaling operators, we now use a semi-classical approximation method. Specifically, we treat all the quantum operators as $c$-numbers in equations (\ref{qle_beamLaser_q}), and solve the corresponding $c$-number Langevin equations. It has been shown in Chapter 4 of David's Thesis that this method is equivalent to solving the Fokker-Planck equations with a P representation of the system, and in Chapter 5 that this method gives reliable results compared to the exact quantum Monte Carlo solutions.
+
+Since all the system operators in equations (\ref{qle_beamLaser_q}) are now hermitian, we can actually replace them with real numbers in the $c$-number theory, i.e., 
+\begin{equation}
+    \{ \hat{q}, \hat{p}, \hat{\sigma}^x, \hat{\sigma}^y, \hat{\sigma}^z\} \longrightarrow \{q, p, s^x, s^y, s^z\}\ \ \ \ \ \ \ 
+\end{equation}
+
+
+For the noise operators and the diffusion matrix, we choose a symmetric ordering correspondence\footnote{David's Thesis Chapter 4. In principle we should do so for the system operators as well, but that is trivial in this case.}
+\begin{equation}
+    \frac{1}{2}\left[ \langle \hat{F}_i^\mu\hat{F}_j^\nu\rangle+\langle\hat{F}_j^\nu\hat{F}_i^\mu\rangle\right]\longrightarrow\langle  f_i^\mu f_j^\nu \rangle
+\end{equation}
+and define the $c$-number diffusion matrix $2m_{ij}^{\mu \nu}$
+\begin{equation}
+\label{def:diffusion;cNumber}
+    \langle f_i^\mu(t)f_j^\nu(t')\rangle = 2m_{ij}^{\mu \nu}(t)\delta(t-t')
+\end{equation}
+Obviously,
+\begin{equation}
+    \frac{1}{2}\left(2M_{ij}^{\mu \nu}+2M_{ji}^{\nu \mu}\right) \longrightarrow 2m_{ij}^{\mu \nu}
+\end{equation}
+Using the property (\ref{relationDiffusion}), we see that for $\mu, \nu=x,y,z$, $2M_{ji}^{\nu \mu}={2M_{ij}^{\mu \nu}}^\ast$. Thus we have the expression for the matrix $2m_{ij}^{\mu \nu}$
+\begin{equation}
+    2m_{ij}^{\mu \nu} = 2m_{ji}^{\nu \mu} = Re\left[2M_{ij}^{\mu \nu}\right]
+\end{equation}
+
+Finally, we arrive at the set of $c$-number (or more specifically, real-number) Langevin equations for the beam laser
+\begin{align}
+    \label{cNumber_qle_beamLaser_q}
+    \notag \frac{dq}{dt} &= -\sum_{j=1}^N\frac{g'_j}{2}s_j^y-\frac{\kappa}{2}q+f^q\\
+    \notag \frac{dp}{dt} &= \sum_{j=1}^N\frac{g'_j}{2}s_j^x-\frac{\kappa}{2}p+f^p\\
+    \frac{d s_j^x}{dt} &= \frac{g'_j}{2}ps^z_i-\frac{1}{T_2}s_j^x+f_j^x\\
+    \notag \frac{d s_j^y}{dt} &= -\frac{g'_j}{2}qs^z_i-\frac{1}{T_2}s_j^y+f_j^y\\
+    \notag \frac{d s_j^z}{dt} &= \frac{g'_j}{2}\left(qs^y_i-ps_i^x\right)+f_j^z
+\end{align}
+with diffusion relations  
+\begin{equation}
+    \langle f_i^\mu(t)f_j^\nu(t')\rangle = 2m_{ij}^{\mu \nu}(t)\delta(t-t')
+\end{equation}
+
+where the diffusion matrix $2m$ is
+
+\begin{equation}
+\label{cNumber_diffusion1_xy_beamLaser}
+  2m_{jj}^{\mu \nu} = \kbordermatrix{
+          & \nu=q & p & x & y & z \\
+    \mu=q & 2\kappa &  & 0 & 0 & 0\\
+        p & 0 & 2\kappa & 0 & 0 & 0\\
+        x &   0 & 0 & \frac{2}{T_2} & 0 & 0 \\
+        y &   0 & 0 & 0 & \frac{2}{T_2} & 0\\
+        z &   0 & 0 & 0 & 0 & 0\\
+  }
+\end{equation}
+and 
+\begin{equation}
+\label{cNumber_diffusion2_xy_beamLaser}
+     2 m^{\mu\nu}_{jk} = 0
+\end{equation}
+
+Since the diffusion matrix is diagonal, we can take the advantage of it and write down the final version of a set of practical $c$-number Langevin equations
+\begin{align}
+    \label{cNumber_qle_beamLaser_q}
+    \notag \frac{dq}{dt} &= -\sum_{j=1}^N\frac{g'_j}{2}s_j^y-\frac{\kappa}{2}q+\sqrt{2\kappa}\xi^q(t)\\
+    \notag \frac{dp}{dt} &= \sum_{j=1}^N\frac{g'_j}{2}s_j^x-\frac{\kappa}{2}p+\sqrt{2\kappa}\xi^p(t)\\
+    \frac{d s_j^x}{dt} &= \frac{g'_j}{2}ps^z_i-\frac{1}{T_2}s_j^x+\sqrt{\frac{2}{T_2}}\xi_j^x(t)\\
+    \notag \frac{d s_j^y}{dt} &= -\frac{g'_j}{2}qs^z_i-\frac{1}{T_2}s_j^y+\sqrt{\frac{2}{T_2}}\xi_j^y(t)\\
+    \notag \frac{d s_j^z}{dt} &= \frac{g'_j}{2}\left(qs^y_i-ps_i^x\right)
+\end{align}
+where $\xi(t)$ is a white noise with zero mean and infinite variance.
+
+\subsection{Observables}
+We are interested in the following observables when running simulations using equations (\ref{cNumber_qle_beamLaser_q}).
+\begin{enumerate}
+    \item  $I(t)$\---- photon emission rate (outside field intensity)
+        \begin{align}
+        \label{intensity_cNumberCavity}
+            \notag I &= \kappa \langle \hat{a}^\dagger \hat{a} \rangle\\
+            \notag   &= \kappa \langle \hat{\tilde{a}}^\dagger \hat{\Tilde{a}} \rangle\\
+            \notag   &= \frac{\kappa}{4} \langle ( \hat{q}+i\hat{p})(\hat{q}-i\hat{p}) \rangle\\
+            \notag   &= \frac{\kappa}{4} \langle \hat{q}^2+\hat{p}^2+i\left[\hat{p}\hat{q}-\hat{q}\hat{p}\right] \rangle\\
+            \notag   &= \frac{\kappa}{4}\left[\langle \hat{q}^2\rangle+\langle\hat{p}^2\rangle-2\right]\\
+                     &= \frac{\kappa}{4}\left[\langle q^2 \rangle_e+\langle p^2 \rangle_e-2\right]
+        \end{align}
+        where $\langle q^2 \rangle_e$ means the ensemble average of the real number $q(t)^2$ over all the trajectories.
+    
+    We define $\overline{I_s}$ as the unbiased estimator for the average value of the steady-state intensity $I_s(t)$, and ${\Delta I_s}^2$ as the unbiased estimator for the variance of $I_s(t)$
+    \begin{align}
+    \label{estimator;intensity}
+        \notag \overline{I_s} &= \frac{\sum_{i=1}^{n} I(t_i)}{n}\\
+               {\Delta I_s}^2 &= \frac{\sum_{i=1}^{n} \left(I(t_i)-\overline{I_s}\right)^2}{n-1}
+    \end{align}
+    where $n$ is the size of the steady-state time points we have chosen.
+    
+    This definition can be also be used when poissonian atom generation is employed.
+    \item $j^z(t)$\---- average population inversion of all the intracavity atoms.
+        \begin{align}
+            \notag j^z &= \frac{1}{N}\sum \langle \hat{\sigma}^z _j\rangle\\
+                       &= \frac{1}{N}\sum \langle s_j^z\rangle_e
+        \end{align}
+        
+        Similarly as in the case of intensity define steady-state estimators
+    \begin{align}
+    \label{estimator;jz}
+        \notag \overline{j^z_s} &= \frac{\sum_{i=1}^{n} j^z(t_i)}{n}\\
+               {\Delta j^z_s}^2 &= \frac{\sum_{i=1}^{n} \left(j^z(t_i)-\overline{j^z_s}\right)^2}{n-1}
+    \end{align}
+
+    \item $j^z_{out}(t)$\---- average population inversion of the atoms that are leaving the cavity
+        \begin{equation}
+            j^z_{out} = \frac{1}{N_{out}} \sum_{j=1}^{N_{out}}\langle s_j^z\rangle_e
+        \end{equation}
+        
+        Define steady-state estimators
+    \begin{align}
+    \label{estimator;jzout}
+        \notag \overline{j^z_{out,s}} &= \frac{\sum_{i=1}^{n} j^z_{out}(t_i)}{n}\\
+               {\Delta j^z_{out,s}}^2 &= \frac{\sum_{i=1}^{n} \left(j^z_{out}(t_i)-\overline{j^z_{out,s}}\right)^2}{n-1}
+    \end{align}
+    
+        There is one simple equation that can be used to check the consistency of $I(t)$ and $j^z_{out}(t)$. Energy conservation tells us that the intensity of the field outside of the cavity must be equal to the loss of energy of the atoms. Given that the detuning is zero, we should have
+        \begin{equation}
+            \label{energyConservation}
+            I(t) \approx \frac{\Phi(t)}{2}\left(1-j^z_{out}(t)\right)
+        \end{equation}
+        where $\Phi(t)$ is the atom flux (number of atoms per second).
+        
+        We should notice that when we make the $c$-number approximation at equation (\ref{intensity_cNumberCavity}), there is a possible error of $\frac{1}{2}$ in the intracavity photon number $\langle \Hat{a}^\dagger \Hat{a}\rangle$. When we are in the bad-cavity limit with mean photon number around or below 1, this error becomes huge and equation (\ref{energyConservation}) may not hold. However, for small $\kappa$ and large mean photon number, equation (\ref{energyConservation}) should always hold.
+    
+    \item The $g^{(1)}$ function of the steady-state field
+        \begin{align}
+                \label{g1}
+            \notag g^{(1)}(\tau) &= \langle \hat{a}^\dagger(\tau) \hat{a}(0) \rangle\\
+            \notag   &= \langle \hat{\tilde{a}}^\dagger(\tau) \hat{\tilde{a}}(0) e^{i\omega_0 \tau}\rangle\\
+            \notag   &= \frac{e^{i\omega_0 \tau}}{4} \langle \left( \hat{q}(\tau)+i\hat{p}(\tau)\right)\left(\hat{q}(0)-i\hat{p}(0) \right)\rangle\\
+            \notag   &= \frac{e^{i\omega_0 \tau}}{4} \left[\langle\hat{q}(\tau)\hat{q}(0)\rangle+\langle\hat{p}(\tau)\hat{p}(0)\rangle\right]+\frac{ie^{i\omega_0 \tau}}{4}\left[\langle\hat{p}(\tau)\hat{q}(0)\rangle-\langle\hat{q}(\tau)\hat{p}(0)\rangle\right]\\
+                     &= \frac{e^{i\omega_0 \tau}}{4} \left[\langle q(\tau)q(0)\rangle_e+\langle p(\tau)p(0)\rangle_e\right]+\frac{ie^{i\omega_0 \tau}}{4}\left[\langle p(\tau)q(0)\rangle_e-\langle q(\tau)p(0)\rangle_e\right]
+        \end{align}
+        where we have chosen $\tau = 0$ as some time after the system has reached its steady state. Notice that the extra $e^{i\omega_0 \tau}$ factor only corresponds to a change of origin for the spectrum, and can be ignored if we only care about the linewidth.
+        
+    Once we have the $g^{(1)}$ function, from David's Thesis (p18) or following the Wiener-Khinchin Theorem, we can easily get the power spectra of the field\footnote{Notice that our $g^{(1)}(\tau)$ from equation (\ref{g1}) only has $\tau \geq 0$. Thus to use equation (\ref{powerSpectra})to get the power spectra, we need to define a $g^{(1)}(-\tau)$ first and then Fourier transform the $g^{(1)}$ function over the whole time region.} 
+    \begin{align}
+     \label{powerSpectra}
+        \notag    S(\omega) &= \int_{-\infty}^{\infty}d\tau e^{-i\omega \tau}\langle\hat{a}^\dagger(\tau)\hat{a}(0)\rangle\\
+                  &= \int_{-\infty}^{\infty}d\tau e^{-i\omega \tau}g^{(1)}(\tau)
+    \end{align}
+    
+   We can now define the linewidth of the field $\Delta \nu$ as FWHM of the spectra $S(\omega)$. Specifically, if the $g^{(1)}$ function has the form
+   \begin{equation}
+       g^{(1)}(\tau) = e^{-\frac{\tau}{\tau_c}}
+   \end{equation}
+   Then one can easily get 
+   \begin{equation}
+       S(\omega) = \frac{2\tau_c}{1+\tau_c^2 \omega^2}
+   \end{equation}
+   Comparing $S(\omega_0)$ with a Lorentzian function
+  \begin{equation}
+      S_{Lor}(\omega) = A \frac{\Delta \nu}{\Delta \nu^2+4\nu^2} = A'\frac{\pi \Delta \nu}{(\pi\Delta\nu)^2+\omega^2}
+  \end{equation}
+  we get
+   \begin{equation}
+       \Delta \nu = \frac{1}{\pi \tau_c}
+   \end{equation}
+    
+    \item The $g^{(2)}$ function of the steady-state field
+    \begin{align}
+                \label{g2}
+            \notag g^{(2)}(\tau) &= \frac{\langle \hat{a}^\dagger(0)\hat{a}^\dagger(\tau) \hat{a}(\tau)\hat{a}(0) \rangle}{\langle\hat{a}^\dagger(0)\hat{a}(0)\rangle\langle\hat{a}^\dagger(\tau) \hat{a}(\tau)\rangle }\\
+            &= \frac{\langle \hat{a}^\dagger(0)\hat{a}^\dagger(\tau) \hat{a}(\tau)\hat{a}(0) \rangle}{\langle\hat{a}^\dagger(0)\hat{a}(0)\rangle^2}
+        \end{align}
+        where again we have chosen $\tau = 0$ as some time after the system has reached its steady state (so actually $\langle\hat{a}^\dagger(0)\hat{a}(0)\rangle=\langle\hat{a}^\dagger(\tau) \hat{a}(\tau)\rangle$).
+    
+    From equation (4.4.62) of Gardiner and Zoller's $Quantum Noise$, we know that
+    \begin{equation}
+        \langle \hat{a}^\dagger\hat{a}^\dagger\hat{a}\hat{a} \rangle_{sym} = \frac{1}{6}\langle(\hat{a}^\dagger)^2\hat{a}^2+\hat{a}^\dagger\hat{a}\hat{a}^\dagger\hat{a}+\hat{a}^\dagger\hat{a}^2\hat{a}^\dagger+\hat{a}(\hat{a}^\dagger)^2\hat{a}+\hat{a}\hat{a}^\dagger\hat{a}\hat{a}^\dagger+\hat{a}^2(\hat{a}^\dagger)^2\rangle
+    \end{equation}
+    For $\tau = 0$, we have\footnote{Correct???Need a paragraph here dealing with the 4th order moment terms.}
+    \begin{align}
+                \label{g2(0)}
+            \notag g^{(2)}(0) &= \frac{\langle \hat{a}^\dagger(0)\hat{a}^\dagger(0) \hat{a}(0)\hat{a}(0) \rangle}{\langle\hat{a}^\dagger(0)\hat{a}(0)\rangle^2 }\\
+            \notag &= \frac{\langle \hat{a}^\dagger \hat{a} \hat{a}^\dagger \hat{a} \rangle-\langle\hat{a}^\dagger \hat{a}\rangle}{\langle\hat{a}^\dagger\hat{a}\rangle^2 }\\
+             \notag&= \frac{\frac{1}{16} \langle (\hat{q}^2+\hat{p}^2-2)^2\rangle-\frac{1}{4}\langle (\hat{q}^2+\hat{p}^2-2)\rangle}{\frac{1}{16}\langle (\hat{q}^2+\hat{p}^2-2)\rangle^2 }\\
+             &= \frac{ \langle (q^2+p^2-2)^2\rangle_e-4\langle (q^2+p^2-2)\rangle_e}{\langle (q^2+p^2-2)\rangle_e^2 }
+            % \notag &= \frac{\langle \hat{I}^2\rangle-\kappa\langle\hat{I}\rangle}{\langle\hat{I}\rangle^2 }\\
+            % \notag &= \frac{\frac{\kappa^2}{16} \langle (\hat{q}^2+\hat{p}^2-2)^2\rangle-\kappa\langle\hat{I}\rangle}{\langle\hat{I}\rangle^2 }\\
+            % &= \frac{\frac{\kappa^2}{16} \langle (q^2+p^2-2)^2\rangle_e-\kappa I}{I^2 }
+        \end{align}
+    \item The atom-atom spin correlation as a function of position $y$ and time $t$
+    \begin{align}
+        \notag    &\langle \hat{\sigma}_i^+\hat{\sigma}_j^-\rangle \\
+        \notag=   &\frac{1}{4}\langle \left( \hat{\sigma}_i^x+i\hat{\sigma}_i^y\right) \left( \hat{\sigma}_j^x-i\hat{\sigma}_j^y\right)\rangle\\
+        \notag=   &\frac{1}{4}\left[\langle \hat{\sigma}_i^x\hat{\sigma}_j^x\rangle+\langle \hat{\sigma}_i^y\hat{\sigma}_j^y\rangle \right]+\frac{i}{4}\left[\langle \hat{\sigma}_i^y\hat{\sigma}_j^x\rangle-\langle \hat{\sigma}_i^x\hat{\sigma}_j^y\rangle \right]\\
+       =   &\frac{1}{4}\left[\langle s_i^xs_j^x\rangle_e+\langle s_i^ys_j^y\rangle_e \right]+\frac{i}{4}\left[\langle s_i^ys_j^x\rangle_e-\langle s_i^xs_j^y\rangle_e \right]
+    \end{align}
+    where we are only interested in the case $i\neq j$.
+    
+    Now we define the position-dependent average spin-spin correlation
+    \begin{align}
+        \phi(y,t) &= \frac{1}{m_{0}m_{y}}\sum_{i=1}^{m_0}\sum_{j=1}^{m_y}\langle \hat{\sigma}_i^+(0,t)\hat{\sigma}_j^-(y,t)\rangle\\
+        \notag          &=\frac{1}{4m_{0}m_{y}}\sum_{i=1}^{m_0}\sum_{j=1}^{m_y}\left[\langle s_i^x(0,t) s_j^x(y,t)\rangle_e+\langle s_i^y(0,t) s_j^y(y,t)\rangle_e \right]\\
+        \notag          &\ +\frac{i}{4m_{0}m_{y}}\sum_{i=1}^{m_0}\sum_{j=1}^{m_y}\left[\langle s_i^y(0,t)s_j^x(y,t)\rangle_e-\langle s_i^x(0,t)s_j^y(y,t)\rangle_e \right]
+    \end{align}
+    where the $m_0$ is the number of atoms at $y=0$ and $m_y$ is the number of atoms at $y=y$. Notice that $y$ as in position is completely unrelated to $y$ as in $\hat{\sigma}^y$.
+    
+    The steady-state position-dependent average spin-spin correlation can be defined
+    \begin{equation}
+        \phi_s(y) = \frac{1}{m_{0}m_{y}}\sum_{i=1}^{m_0}\sum_{j=1}^{m_y}\langle \hat{\sigma}_i^+(0)\hat{\sigma}_j^-(y)\rangle
+    \end{equation}
+\end{enumerate}
+
+
+
+
+
+\section{Cumulant Theory}
+\label{section: cumulant}
+
+We can also use another semi-classical approximation method to study the system, called a cumulant method.
+
+\printbibliography
+\end{document}
+
+
+
+
+
+
+% \maketitle
+% \section{cQED Hamiltonian}
+% We call the combined system of a cavity and $N$ atoms a cavity QED (cQED) system. In Schrodinger Picture (SP), the Hamiltonian of $N$ identical atoms with internal frequency $\omea$ interacting with the standing field of a cavity with frequency $\omec$ is given by\footnote{Notice that at this point we do not use any superscripts for operators in SP.}
+% \begin{equation}
+%     \hat{H}^S = \frac{\hbar \omea}{2}\sum^{N}_{j=1}\szj+\sum^{N}_{j=1}\frac{\hat{\textbf{p}}_j^2}{2m}+\hbar \omec \hat{a}^\dagger \hat{a}+\frac{\hbar g}{2}\sum^{N}_{j=1}\left(\smj \hat{a}^\dagger+\hat{a}\spj\right)\cos{k\hat{z}_j}
+% \end{equation}
+
+% It is convenient to work with this Hamiltonian in the Interaction Picture (IP). Choose\footnote{$\hat{H}^S_0$ should not be explicitly dependent on $t$ and is usually already solved or under control.}
+% \begin{equation}
+%     \hat{H}^S_0 = \frac{\hbar \omea}{2}\sum^{N}_{j=1}\szj+\sum^{N}_{j=1}\frac{\hat{\textbf{p}}_j^2}{2m}+\hbar \omec \hat{a}^\dagger \hat{a}
+% \end{equation}
+
+% With the detuning of the system defined as $ \Delta \equiv \omec-\omea$, we can rewrite $\hat{H}^S_0$ as 
+% \begin{equation}
+%     \hat{H}^S_0 = \sum^{N}_{j=1}\frac{\hat{\textbf{p}}_j^2}{2m}+\hbar \omea\left(\frac{1}{2}\sum^{N}_{j=1}\szj+ \hat{a}^\dagger \hat{a}\right) +\hbar\Delta \hat{a}^\dagger \hat{a}
+% \end{equation}
+
+% Then the interaction term of Hamiltonian in SP is
+% \begin{equation}
+%     \hat{V}^S \equiv \hat{H}^S-\hat{H}^S_0 = \frac{\hbar g}{2}\sum^{N}_{j=1}\left(\smj \hat{a}^\dagger+\hat{a}\spj\right)\cos{k\hat{z}_j}
+% \end{equation}
+
+% Define the unitary
+% \begin{equation}
+%     \hat{U}_0(t) = e^{-i\hat{H}_0 t/\hbar}
+% \end{equation}
+
+% Immediately we write down the interaction term of Hamiltonian in IP
+% \begin{equation}
+%     \hat{V}^I \equiv \hat{U}_0^\dagger \hat{V}^S \hat{U}_0
+% \end{equation}
+% with the transformation of operators given by
+% \begin{equation}
+%     \Hat{X}^I \equiv \hat{U}_0^\dagger \hat{X}^S \hat{U}_0
+% \end{equation}
+
+% Thus
+% \begin{align}
+% \label{VI_temp}
+%     \notag \hat{V}^I(t) &= \hat{U}_0^\dagger \hat{V}^S \hat{U}_0\\
+%     \notag           &= \Hat{U}_0^\dagger \frac{\hbar g}{2}\sum^{N}_{j=1}\left(\smj \hat{a}^\dagger+\hat{a}\spj\right)\Hat{U}_0 \Hat{U}^\dagger \cos{k\hat{z}_j} \Hat{U}^0\\
+%     \notag           &=  \frac{\hbar g}{2}\sum^{N}_{j=1}\left(\hat{\sigma}^{-^I}_j \hat{a}^{\dagger^I}+\hat{a}^I\hat{\sigma}^{+^I}_j\right) \Hat{U}^\dagger \cos{k\hat{z}_j} \Hat{U}^0\\ 
+%     \notag           &=  \frac{\hbar g}{2}\sum^{N}_{j=1}\left(\hat{\sigma}^{-^I}_j \hat{a}^{\dagger^I}+\hat{a}^I\hat{\sigma}^{+^I}_j\right) \left[e^{\frac{it}{\hbar}\sum\frac{\hat{\textbf{p}}_j^2}{2m}} \cos{k\hat{z}_j}e^{-\frac{it}{\hbar}\sum\frac{\hat{\textbf{p}}_j^2}{2m}}\right] \\
+%               &=  \frac{\hbar g}{2}\sum^{N}_{j=1}\left(\hat{\sigma}^{-^I}_j \hat{a}^{\dagger^I}+\hat{a}^I\hat{\sigma}^{+^I}_j\right)\left[e^{\frac{it}{\hbar}\sum\frac{\hat{p}_j^{z^2}}{2m}} \cos{k\hat{z}_j} e^{-\frac{it}{\hbar}\sum\frac{\hat{p}_j^{z^2}}{2m}}\right]
+% \end{align}
+
+% % By the Zassenhaus formula, 
+% % \begin{equation}
+% %     \label{zassenhaus}
+% %     e^{\hat{A}+\hat{B}} = e^{\hat{A}}+e^{\hat{B}}   \ \ \ \ \ \ \ \ \ \text{if} \ [\hat{A},\hat{B}] = 0
+% % \end{equation}
+
+% % Thus 
+% % \begin{align}
+% % \label{VI_temp}
+% %     \notag \hat{V}^I(t) &= \hat{U}_0^\dagger \hat{V}^S \hat{U}_0\\
+% %     \notag           &= e^{\frac{it}{\hbar}[\sum\frac{\hat{\textbf{p}}_j^2}{2m}+\hbar \omea (\frac{1}{2}\sum\szj+\hat{a}^\dagger \hat{a})+\hbar\Delta \hat{a}^\dagger \hat{a}}] \frac{\hbar g}{2}\sum\left(\smj \hat{a}^\dagger+\hat{a}\spj\right)\cos{k\hat{z}_j} e^{-\frac{it}{\hbar}[\sum\frac{\hat{\textbf{p}}_j^2}{2m}+\hbar \omea (\frac{1}{2}\sum\szj+\hat{a}^\dagger \hat{a})+\hbar\Delta \hat{a}^\dagger \hat{a}]}\\
+% %     \notag           &= \sum_{j}\frac{\hbar g}{2} e^{i\Delta t \hat{a}^\dagger \hat{a}} \left[e^{\frac{it}{\hbar}\sum\frac{\hat{\textbf{p}}_j^2}{2m}} \cos{k\hat{z}_j} e^{-\frac{it}{\hbar}\sum\frac{\hat{\textbf{p}}_j^2}{2m}}\right] \left[e^{i \omea t (\frac{1}{2}\sum\szj+\hat{a}^\dagger \hat{a}) } \left(\smj \hat{a}^\dagger+\hat{a}\spj\right) e^{-i \omea t (\frac{1}{2}\sum\szj+\hat{a}^\dagger \hat{a}) }\right]e^{-i\Delta t \hat{a}^\dagger \hat{a}}\\
+% %     \notag           &= \sum_{j}\frac{\hbar g}{2} e^{i\Delta t \hat{a}^\dagger \hat{a}} \left[e^{\frac{it}{\hbar}\sum\frac{\hat{p}_j^{z^2}}{2m}} \cos{k\hat{z}_j} e^{-\frac{it}{\hbar}\sum\frac{\hat{p}_j^{z^2}}{2m}}\right] \left[e^{i \omea t (\frac{1}{2}\sum\szj+\hat{a}^\dagger \hat{a}) } \left(\smj \hat{a}^\dagger+\hat{a}\spj\right) e^{-i \omea t (\frac{1}{2}\sum\szj+\hat{a}^\dagger \hat{a}) }\right]e^{-i\Delta t \hat{a}^\dagger \hat{a}}\\
+% % \end{align}
+
+% By the Baker-Hausdorff Lemma\footnote{From Sakurai.}
+% \begin{equation}
+%     \label{bakerHausdorff}
+%     e^{i \lambda \hat{A}} \hat{B} e^{-i \lambda \hat{A}} = \hat{B} + i\lambda [\hat{A}, \hat{B}] + \frac{(i\lambda)^2}{2!}[\hat{A},[\hat{A},\hat{B}]] + \dotsm  \ \ \ \ \ \ \text{for real} \ \lambda 
+% \end{equation}
+
+% and induction through series expansion, we can get
+%  \begin{equation}
+%  \label{baker1}
+%      e^{\frac{it}{\hbar}\sum\frac{\hat{p}_j^{z^2}}{2m}} \cos{k\hat{z}_j} e^{-\frac{it}{\hbar}\sum\frac{\hat{p}_j^{z^2}}{2m}} = \cos\left[k\left(\hat{z}_j+\frac{\hat{p}^z_j}{m}t\right)\right]
+%  \end{equation}
+
+% % and
+
+% %  \begin{equation}
+% %  \label{baker2}
+% %      e^{i \omea t (\frac{1}{2}\sum\szj+\hat{a}^\dagger \hat{a}) } \left(\smj \hat{a}^\dagger+\hat{a}\spj\right) e^{-i \omea t (\frac{1}{2}\sum\szj+\hat{a}^\dagger \hat{a}) } = \smj \hat{a}^\dagger+\hat{a}\spj
+% %  \end{equation}
+
+% Substituting equation (\ref{baker1}) into equation (\ref{VI_temp}),  we get
+% \begin{equation}
+% \label{hamil_cqed}
+%     \hat{V}^I(t) = \frac{\hbar g}{2}\sum^{N}_{j=1}\left(\hat{\sigma}^{-^I}_j \hat{a}^{\dagger^I}+\hat{a}^I\hat{\sigma}^{+^I}_j\right)\cos\left[k\left(\hat{z}_j+\frac{\hat{p}^z_j}{m}t\right)\right]
+% \end{equation}
+
+
+% The Hamiltonian (\ref{hamil_cqed}) is valid for general cQED systems. 
+% % (1) We will always assume zero detuning $\Delta = 0$ for our system. 
+% % (2) 
+% In the beam laser problem, however, the atomic recoil velocity from atom-photon interactions in the cavity is very small compared to the velocity spread of the atomic beam. Thus we can assume a constant velocity for each individual atom across the cavity, although the velocities themselves are different and follow some a priori distribution. This allows a classical treatment of the kinetic motion of atoms
+% \begin{equation}
+%     \{\hat{\textbf{x}}_j,\hat{\textbf{p}}_j\} \rightarrow \{\textbf{x}_j,\textbf{p}_j\}
+% \end{equation}
+% For convenience, define the effective coupling factor
+% \begin{equation}
+%     g'_j(z_j(0), p^z_j, t)  \equiv g\cos\left[k\left(z_j(0)+\frac{p^z_j}{m}t\right)\right] = g\cos k z_j(t)
+% \end{equation}
+
+% With all the conditions above, the Hamiltonian (\ref{hamil_cqed}) becomes as simple as
+% \begin{equation}
+% \label{hamil_beamLaser_IP}
+%     \hat{V}^I(t) = \sum^{N}_{j=1}\frac{\hbar g'_j(t)}{2}\left(\hat{\sigma}^{-^I}_j \hat{a}^{\dagger^I}+\hat{a}^I\hat{\sigma}^{+^I}_j\right)
+% \end{equation}
+
+% % One point on notations must be made here. Since we will always work in IP for this problem, from now on:
+
+% % (1) we will always use $\hat{H}(t)$ to represent $\hat{V}^I(t)$ as the Hamiltonian in our problem;
+
+% % (2) all density matrices, operators, and Hamiltonians without superscripts are in IP
+
+% % unless otherwise explained.
+
+% % Thus, in this new notation, equation (\ref{hamil_beamLaser_IP}) becomes
+% % \begin{equation}
+% % \label{hamil_beamLaser}
+% %     \hat{H}(t) = \sum^{N}_{j=1}\frac{\hbar g'_j(t)}{2}\left(\hat{\sigma}^{-}_j \hat{a}^{\dagger}+\hat{a}\hat{\sigma}^{+}_j\right)
+% % \end{equation}
+
+
+% \section{cQED Master Equation}
+% The master equation for an open cavity QED system in SP is\footnote{David and Minghui's Thesis. The recoil effect of repumping has also been modelled. }
+% \begin{equation}
+% \label{master_cqed}
+% \frac{d}{dt}\hat{\rho}^S=\frac{1}{i\hbar}\left[\hat{H}^S(t),\hat{\rho}^S\right]+\kappa\lindblad[\hat{a}^S]\hat{\rho}^S+\sum^{N}_{j=1}\left[\gamma \lindblad[\hat{\sigma}^{-^S}_j]\hat{\rho}^S+\frac{1}{2T_2}\lindblad[\hat{\sigma}^{z^S}_j]\hat{\rho}^S+w\lindblad[\hat{\sigma}^{+^S}_j ]\hat{\rho}^S\right]
+% % w\int_{-1}^{1}du N(u)\lindblad[\hat{\sigma}^+_j e^{iuk'\hat{x}_j}
+% \end{equation}
+% where $\kappa$ is the cavity decay rate, $\gamma$ is the free-space spontaneous decay rate, $T_2$ is the homogeneous dephasing time, $w$ is the repumping rate, and $\lindblad[\ope]\hat{\rho} = (2\ope\hat{\rho}\ope^\dagger-\ope^\dagger\ope\hat{\rho}-\rho\ope^\dagger\ope)/2$ is the Lindbladian superoperator describing the incoherent processes.
+
+% In our case, the transit time $\tau$ for the atomic beam through the cavity often satisfies $\tau \ll \gamma^{-1}$, and there is no repumping in our experimental design. Thus we ignore both the $\gamma$ and $w$ terms in equation (\ref{master_cqed}) and write down the master equation relevant in the beam laser configuration
+% \begin{equation}
+% \label{master_beamLaser_SP}
+% \frac{d}{dt}\hat{\rho}^S=\frac{1}{i\hbar}\left[\hat{H}^S(t),\hat{\rho}^S\right]+\kappa\lindblad[\hat{a}^S]\hat{\rho}^S+\sum^{N}_{j=1}\frac{1}{2T_2}\lindblad[\hat{\sigma}^{z^S}_j]\hat{\rho}^S
+% \end{equation}
+
+% It can be shown that equation (\ref{master_beamLaser_SP}) holds also in IP\footnote{See my notes. The proof is straightforward by substituting in unitaries $\Hat{U}_0$ and $\Hat{U}_0^\dagger$ into equation (\ref{master_beamLaser_SP}). $i.e.,$ the master equation is invariant under similarity transformation.}. Thus in IP, we can put down 
+% \begin{equation}
+% \label{master_beamLaser}
+% \frac{d}{dt}\hat{\rho}=\frac{1}{i\hbar}\left[\hat{H}(t),\hat{\rho}\right]+\kappa\lindblad[\hat{a}]\hat{\rho}+\sum^{N}_{j=1}\frac{1}{2T_2}\lindblad[\hat{\sigma}^{z}_j]\hat{\rho}
+% \end{equation}
+
+
+
+% \section{cQED Quantum Langevin Equations}
+% The master equation (\ref{master_beamLaser}) combined with the Hamiltonian (\ref{hamil_beamLaser}) theoretically is complete to solve the problem. However, simulations with the master equation are historically hard due to their operator-based nature. On the other hand, several semi-classical methods have been developed to solve the corresponding quantum Langevin equations (QLE) for the same open system. To use these methods, we must first write down the QLE's for the system. 
+
+% By definition, QLE's can be derived from including the reservoir at first and tracing it out after making the Markov approximation\footnote{See David's Thesis p60.}. Here we use a more systematic way to derive the QLE's utilizing the master equation and the Einstein relations\footnote{See David's Thesis p80.}.
+
+% For any operator $\hat{X}$, a general quantum Langevin equation has the form
+% \begin{equation}
+% \label{qle}
+%     \frac{d}{dt}\hat{X} = \hat{D}^X(X,t) + \hat{F}^X(X,t)
+% \end{equation}
+% where we usually separate the right hand side into two parts: $\hat{D}$ accounts for a deterministic change for $\Hat{X}$, and is called the drift term; $\hat{F}$ usually follows $\langle \hat{F}^X(t) \rangle = 0$, and is called the diffusion term\footnote{This paragraph needs editing based on the definition of stochastic differential equations???}.
+
+% We now derive the QLE's for the operators $\{\hat{a}, \hat{a}^\dagger, \spj, \smj, \szj\}$. 
+
+% \subsection{Drift Terms}
+% To obtain the drift terms, we first take the average value of both sides of equation (\ref{qle}) to get
+% \begin{equation}
+%     \langle \frac{d}{dt}\hat{X}(t) \rangle = \langle\hat{D}^X\rangle
+% \end{equation}
+
+% With some algebra, it can be shown that both in SP and IP,
+% \begin{equation}
+%     \langle \frac{d}{dt}\hat{X}(t) \rangle = tr\left[X\frac{d\Hat{\rho}}{dt}\right] = tr\left[\hat{X}^S\frac{d\hat{\rho}^S}{dt}\right] =tr\left[\hat{X}^I\frac{d\hat{\rho}^I}{dt}\right] 
+% \end{equation}
+
+% Therefore, if we know the exact form of $\frac{d\hat{\rho}}{dt}$, $i.e.,$ the master equation, then we can derive $\Hat{D}$ from there.
+
+
+% We first derive the drift terms for the field operators $\hat{a}$. We write down its corresponding quantum Langevin equation
+% \begin{equation}
+%     \frac{d}{dt}\hat{a} = \hat{D}^a + \hat{F}^a
+% \end{equation}
+
+% Taking the average value of both sides while using $\langle \hat{F}^a \rangle = 0$,  we have
+% \begin{equation}
+%     \langle \hat{D}^a \rangle = \langle\frac{d \Hat{a}}{dt}\rangle  = tr\left[\Hat{a}^I \frac{d\Hat{\rho}^I}{dt}\right]
+% \end{equation}
+
+% Substituting the master equation (\ref{master_beamLaser_IP}) with Hamiltonian (\ref{hamil_beamLaser}) into the equation above, we have
+% \begin{align}
+%     \notag \langle \hat{D}^a \rangle &= tr\left[\frac{1}{i\hbar}\Hat{a}^I\left[\Hat{H}, \Hat{\rho}^I\right]+\kappa\Hat{a}\lindblad[\hat{a}]\hat{\rho}+\sum^{N}_{j=1}\frac{1}{2T_2}\Hat{a}\lindblad[\hat{\sigma}^z_j]\hat{\rho}\right]\\
+%     \notag &= tr\left[\frac{1}{i\hbar}\Hat{a}\left[\Hat{H}, \Hat{\rho}\right]+\frac{\kappa}{2}\left(2\Hat{a}^2\Hat{\rho}\Hat{a}^\dagger-\Hat{a}\hat{a}^\dagger\Hat{a}\Hat{\rho}-\Hat{a}\Hat{\rho}\Hat{a}^\dagger\Hat{a}\right)\right]\\
+%     \notag &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\Hat{a}, \Hat{H}\right]\right]+\frac{\kappa}{2}tr\left[\hat{\rho}\left(\Hat{a}^\dagger\hat{a}^2-\Hat{a}\hat{a}^\dagger\Hat{a}\right)\right]\\
+%     &= -\sum\frac{ig_j'}{2}\langle \smj \rangle - \frac{\kappa}{2}\langle \hat{a} \rangle
+% \end{align}
+
+% Since the wavevectors are arbitrary, we can remove the average sign
+
+% \begin{equation}
+% \label{qle_a}
+%     \hat{D}^a = -\sum\frac{ig_j'}{2} \smj  - \frac{\kappa}{2} \hat{a}
+% \end{equation}
+
+% Taking the conjugation, we immediately get
+% \begin{equation}
+% \label{qle_a}
+%     \hat{D}^{a^\dagger} = \sum\frac{ig_j'}{2} \spj  + \frac{\kappa}{2} \hat{a}^\dagger
+% \end{equation}
+
+% We now derive the drift terms for the atomic spin operators following the similar methods.
+% \begin{align}
+%     \notag\frac{d\langle \spj \rangle}{dt} &= tr\left[\spj \frac{d\hat{\rho}}{dt}\right]\\
+%     \notag &= tr\left[\frac{1}{i\hbar}\spj \left[\Hat{H}, \Hat{\rho}\right]+\kappa\spj\lindblad[\hat{a}]\hat{\rho}+\spj\sum^{N}_{k=1}\frac{1}{2T_2}\lindblad[\hat{\sigma}^z_k]\hat{\rho}\right]\\
+%     \notag &= tr\left[\frac{1}{i\hbar}\spj\left[\Hat{H}, \Hat{\rho}\right]+\frac{1}{4T_2}\left(2\spj\hat{\sigma}^z_j\Hat{\rho}\hat{\sigma}^z_j-\spj\hat{\sigma}^z_j\hat{\sigma}^z_j\Hat{\rho}-\spj\Hat{\rho}\hat{\sigma}^z_j\hat{\sigma}^z_j\right)\right]\\
+%     \notag &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\spj, \Hat{H}\right]\right]+\frac{1}{2T_2}tr\left[\hat{\rho}\left(\szj\spj\szj-\spj\right)\right]\\
+%     &= -\frac{ig_j'}{2}\langle \hat{a}^\dagger \szj \rangle - \frac{1}{T_2}\langle \spj \rangle
+% \end{align}
+
+% This gives
+% \begin{equation}
+% \label{qle_p}
+%     \hat{D}_j^+ = -\frac{ig_j'}{2} \hat{a}^\dagger \szj - \frac{1}{T_2} \spj
+% \end{equation}
+
+% Thus
+% \begin{equation}
+% \label{qle_m}
+%     \hat{D}_j^- = \frac{ig_j'}{2} \hat{a} \szj - \frac{1}{T_2} \smj
+% \end{equation}
+
+% Finally, we have
+% \begin{align}
+%     \notag\frac{d\langle \szj \rangle}{dt} &= tr\left[\szj \frac{d\hat{\rho}}{dt}\right]\\
+%     \notag &= tr\left[\frac{1}{i\hbar}\szj \left[\Hat{H}, \Hat{\rho}\right]+\kappa\szj\lindblad[\hat{a}]\hat{\rho}+\szj\sum^{N}_{k=1}\frac{1}{2T_2}\lindblad[\hat{\sigma}^z_k]\hat{\rho}\right]\\
+%     \notag &= tr\left[\frac{1}{i\hbar}\szj\left[\Hat{H}, \Hat{\rho}\right]\right]\\
+%     \notag &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\szj, \Hat{H}\right]\right]\\
+%     &= ig'_j\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]
+% \end{align}
+
+% which gives
+% \begin{equation}
+% \label{qle_z}
+%     \hat{D}_j^z = ig'_j\left[ \hat{a}^\dagger \smj  -  \hat{a} \spj \right]
+% \end{equation}
+% \subsection{Diffusion Terms}
+% For two operators $X$ and $Y$ that both satisfy equation (\ref{qle}), $i.e.$, 
+% \begin{align}
+%     \frac{d}{dt}\hat{X}(t) &= \hat{D}^X(t) + \hat{F}^X(t)\\
+%     \frac{d}{dt}\hat{Y}(t) &= \hat{D}^Y(t) + \hat{F}^Y(t)
+% \end{align}
+% we can define a diffusion coefficient $M^{XY}(t)$ such that
+% \begin{equation}
+%     \langle \hat{F}^X(t) \hat{F}^Y(t') \rangle = 2 M^{XY}(t) \delta(t-t')
+% \end{equation}
+
+% Then by the generalized Einstein relations\footnote{Citation here??},
+% \begin{equation}
+%     2 M^{XY}(t) = \frac{d}{dt}\langle \hat{X}(t)\hat{Y}(t) \rangle - \langle \hat{X}(t)\hat{D}^Y(t) \rangle - \langle \hat{D}^X(t) \hat{Y}(t) \rangle
+% \end{equation}
+
+% It is natural to see that in general cases, $2M(t)$ becomes a matrix that expresses the correlations between diffusion terms in the quantum Langevin equations. Therefore we call $2M(t)$ a \textit{diffusion matrix}. 
+
+% We now derive the diffusion matrix $2M_{jk}^{\mu\nu}$ in our case, where $\{j,k\}$ stand for individual atoms and $\{\mu,\nu\}$ taking symbols $\{a, a^\dagger, +, -, z\}$ stand for the five operators $\{\hat{a}, \hat{a}^\dagger, \spj, \smj, \szj\}$. One easily proved but useful relation is
+% \begin{equation}
+% \label{relationDiffusion}
+%     2M^{\mu\nu}_{jk} = \left[2M^{\nu^\ast\mu^\ast}_{kj}\right]^\ast
+% \end{equation}
+% where $\{a, a^\dagger, +, -, z\}^* \equiv \{a^\dagger, a, -, +, z\}$. Notice that the labels $j,k$ are only valid for atom-atom correlations. When field operators are involved, we can still use this relation by ignoring both the atomic labels $j, k$ for field-field terms or only one of the labels for field-atom terms.
+
+% For the field-field terms,
+% \begin{flalign}
+% \label{diffusion_maa}
+%     \notag 2 M^{aa} &= \frac{d}{dt}\langle \hat{a}^2 \rangle - \langle \hat{a}\hat{D}^a \rangle - \langle \hat{D}^a \hat{a} \rangle &\\
+%     \notag          &=  tr\left[\Hat{a}^2 \frac{d\Hat{\rho}}{dt}\right] - 2\langle \hat{a}\hat{D}^a \rangle\\
+%     \notag          &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\Hat{a}^2,                  \Hat{H}\right]\right]+\frac{\kappa}{2}tr\left[\hat{\rho}\left(\Hat{a}^\dagger\hat{a}^3-\Hat{a}^2\hat{a}^\dagger\Hat{a}\right)\right]- 2\left(-\sum\frac{ig_j'}{2} \langle\smj\hat{a}\rangle- \frac{\kappa}{2} \langle\hat{a}^2\rangle\right)\\
+%     \notag          &= -\sum ig_j'\langle \smj\hat{a} \rangle - \kappa\langle \hat{a}^2 \rangle +\sum ig_j'\langle \smj\hat{a} \rangle + \kappa\langle \hat{a}^2 \rangle\\
+%                     &= 0
+% \end{flalign}
+
+% \begin{flalign}
+% \label{diffusion_maad}
+%     \notag 2 M^{aa^\dagger} &= \frac{d}{dt}\langle \hat{a}\Hat{a}^\dagger \rangle - \langle \hat{a}\hat{D}^{a^\dagger} \rangle - \langle \hat{D}^a \hat{a}^\dagger \rangle &\\
+%     \notag          &=  tr\left[\Hat{a}\Hat{a}^\dagger \frac{d\Hat{\rho}}{dt}\right] - \langle \hat{a}\hat{D}^{a^\dagger} \rangle - \langle \hat{D}^a \hat{a}^\dagger \rangle\\
+%     \notag          &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\Hat{a}\Hat{a}^\dagger,                  \Hat{H}\right]\right]+\frac{\kappa}{2}tr\left[\hat{\rho}\left(2\Hat{a}^\dagger\hat{a}\Hat{a}^\dagger\hat{a}-\hat{a}\Hat{a}^{\dagger^2}\hat{a}-\hat{a}^\dagger{\Hat{a}}^2\hat{a}^\dagger\right)\right]\\
+%     \notag          &\ \ -\left(\sum\frac{ig_j'}{2} \langle\spj\hat{a}\rangle- \frac{\kappa}{2} \langle\hat{a}\Hat{a}^\dagger\rangle\right)-\left(-\sum\frac{ig_j'}{2} \langle\smj\hat{a}^\dagger\rangle- \frac{\kappa}{2}\langle \hat{a}\Hat{a}^\dagger\rangle\right)\rangle\\
+%     \notag          &= -\sum \frac{ig_j'}{2}\langle\smj\hat{a}^\dagger\rangle+\sum\frac{ig_j'}{2} \langle\spj\hat{a}\rangle-\kappa\langle \Hat{a}^\dagger\hat{a}\rangle\\
+%     \notag          &\ \ -\left(\sum\frac{ig_j'}{2} \langle\spj\hat{a}\rangle- \frac{\kappa}{2} \langle\hat{a}\Hat{a}^\dagger\rangle\right)-\left(-\sum\frac{ig_j'}{2} \langle\smj\hat{a}^\dagger\rangle- \frac{\kappa}{2}\langle \hat{a}\Hat{a}^\dagger\rangle\right)\\
+%      \notag         &= \kappa\langle\hat{a}\Hat{a}^\dagger-\Hat{a}^\dagger\hat{a}\rangle\\
+%                     &= \kappa
+% \end{flalign}
+
+% Using relation (\ref{relationDiffusion}), from equations (\ref{diffusion_maa}) and (\ref{diffusion_maad}) we immediately get
+% \begin{flalign}
+% \label{diffusion_madad}
+%     2 M^{a^\dagger a^\dagger} &= 0 &\\
+% \label{diffusion_mada}
+%     2 M^{a^\dagger a} &= \kappa
+% \end{flalign}
+
+% For atom-atom operators, with $j= k$, we have\footnote{We also apply relation (\ref{relationDiffusion}) here.}
+% \begin{flalign}
+% \label{diffusion_m++}
+%     \notag 2 M^{++}_{jj} &= \frac{d}{dt}\langle \spj\spj \rangle - \langle \spj \hat{D}^+_j \rangle - \langle \hat{D}^+_j \spj \rangle &\\
+%     \notag          &= -  \langle \spj \hat{D}^+_j \rangle - \langle \hat{D}^+_j \spj \rangle\\
+%     \notag          &= \frac{ig_j'}{2} \langle \hat{a}^\dagger \spj \szj \rangle + \frac{ig_j'}{2} \langle  \hat{a}^\dagger \szj\spj \rangle\\
+%                     &= 0\\
+% \label{diffusion_m--}                    
+%           2 M^{--}_{jj} &=0             
+% \end{flalign}
+
+% \begin{flalign}
+% \label{diffusion_mzz}
+%     \notag 2 M^{zz}_{jj} &= \frac{d}{dt}\langle \szj\szj \rangle - \langle \szj \hat{D}^z_j \rangle - \langle \hat{D}^z_j \szj \rangle &\\
+%     \notag          &= -  \langle \szj \hat{D}^z_j \rangle - \langle \hat{D}^z_j \szj \rangle\\
+%                     &= 0
+% \end{flalign}
+
+% \begin{flalign}
+% \label{diffusion_mz+}
+%     \notag 2 M^{z+}_{jj} &= \frac{d}{dt}\langle \szj\spj \rangle - \langle \szj \hat{D}^+_j \rangle - \langle \hat{D}^z_j \spj \rangle &\\
+%     \notag          &= \langle \hat{D}_j^+ \rangle - \langle \szj \hat{D}^+_j \rangle - \langle \hat{D}^z_j \spj \rangle\\
+%     \notag          &= -\frac{ig_j'}{2} \langle \hat{a}^\dagger \szj \rangle - \frac{1}{T_2} \langle \spj \rangle- \left(-\frac{ig_j'}{2} \langle \szj \hat{a}^\dagger \szj \rangle- \frac{1}{T_2} \langle \szj\spj \rangle \right)- \left(ig'_j\left[ \langle \hat{a}^\dagger \smj\spj\rangle  - \langle \hat{a} \spj \spj \rangle \right]\right)\\
+%     \notag          &= -\frac{ig_j'}{2} \langle \hat{a}^\dagger \szj \rangle - \frac{1}{T_2} \langle \spj \rangle- \left(-\frac{ig_j'}{2} \langle \hat{a}^\dagger \rangle- \frac{1}{T_2} \langle \spj \rangle \right)- \left(\frac{ig'_j}{2}\langle \hat{a}^\dagger\left(1-\szj\right)\rangle   \right)\\
+%                     &= 0\\
+% \label{diffusion_m-z}      
+%       2 M^{-z}_{jj} &= 0
+% \end{flalign}
+
+% \begin{flalign}
+% \label{diffusion_m+z}
+%     \notag 2 M^{+z}_{jj} &= \frac{d}{dt}\langle \spj\szj \rangle - \langle \spj \hat{D}^z_j \rangle - \langle \hat{D}^+_j \szj \rangle &\\
+%     \notag          &=  -\langle \hat{D}_j^+ \rangle - \langle \spj \hat{D}^z_j \rangle - \langle \hat{D}^+_j \szj \rangle\\
+%     \notag          &= \frac{ig_j'}{2} \langle \hat{a}^\dagger \szj \rangle + \frac{1}{T_2} \langle \spj \rangle- \left(ig'_j\left[ \langle \hat{a}^\dagger \spj\smj\rangle  - \langle \hat{a} \spj \spj \rangle \right]\right)- \left(-\frac{ig_j'}{2} \langle  \hat{a}^\dagger \szj\szj \rangle- \frac{1}{T_2} \langle \spj\szj \rangle \right)\\
+%     \notag          &= \frac{ig_j'}{2} \langle \hat{a}^\dagger \szj \rangle + \frac{1}{T_2} \langle \spj \rangle- \left(\frac{ig'_j}{2}\langle \hat{a}^\dagger\left(1+\szj\right)\rangle   \right)- \left(-\frac{ig_j'}{2} \langle \hat{a}^\dagger \rangle+ \frac{1}{T_2} \langle \spj \rangle \right)\\
+%                     &= 0\\
+% \label{diffusion_m-z}      
+%       2 M^{z-}_{jj} &= 0
+% \end{flalign}
+
+% \begin{flalign}
+% \label{diffusion_m+-}
+%     \notag 2 M^{+-}_{jj} &= \frac{d}{dt}\langle \spj\smj \rangle - \langle \spj \hat{D}^-_j \rangle - \langle \hat{D}^+_j \smj \rangle &\\
+%     \notag          &=  \frac{1}{2}\langle \Hat{D}^z_j\rangle -\langle \spj \hat{D}^-_j \rangle - \langle \hat{D}^+_j \smj \rangle\\
+%     \notag          &= \frac{ig'_j}{2}\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]-\left(\frac{ig_j'}{2} \langle \hat{a} \spj\szj \rangle - \frac{1}{T_2} \langle \spj \smj\rangle \right)-\left(-\frac{ig_j'}{2} \langle \hat{a}^\dagger \szj\smj\rangle - \frac{1}{T_2} \langle \spj \smj \rangle \right)\\
+%     \notag          &= \frac{ig'_j}{2}\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]-\left(-\frac{ig_j'}{2} \langle \hat{a} \spj \rangle - \frac{1}{T_2} \langle \spj \smj\rangle \right)-\left(\frac{ig_j'}{2} \langle \hat{a}^\dagger \smj\rangle - \frac{1}{T_2} \langle \spj \smj \rangle \right)\\
+%                     &= \frac{1}{T_2}\left(1+\langle \szj \rangle\right)
+% \end{flalign}
+
+% \begin{flalign}
+% \label{diffusion_m-+}
+%     \notag 2 M^{-+}_{jj} &= \frac{d}{dt}\langle \smj\spj \rangle - \langle \smj \hat{D}^+_j \rangle - \langle \hat{D}^-_j \spj \rangle &\\
+%     \notag          &=  -\frac{1}{2}\langle \Hat{D}^z_j\rangle- \langle \smj \hat{D}^+_j \rangle - \langle \hat{D}^-_j \spj \rangle\\
+%     \notag          &= -\frac{ig'_j}{2}\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]-\left(-\frac{ig_j'}{2} \langle \hat{a}^\dagger \smj\szj \rangle - \frac{1}{T_2} \langle \smj \spj\rangle \right)-\left(\frac{ig_j'}{2} \langle \hat{a} \szj\spj\rangle - \frac{1}{T_2} \langle \smj \spj \rangle \right)\\
+%     \notag          &= -\frac{ig'_j}{2}\left[\langle \hat{a}^\dagger \smj \rangle - \langle \hat{a} \spj \rangle\right]-\left(-\frac{ig_j'}{2} \langle \hat{a}^\dagger \smj \rangle - \frac{1}{T_2} \langle \smj \spj\rangle \right)-\left(\frac{ig_j'}{2} \langle \hat{a} \spj\rangle - \frac{1}{T_2} \langle \smj \spj \rangle \right)\\
+%                     &= \frac{1}{T_2}\left(1-\langle \szj \rangle \right)
+% \end{flalign}
+
+
+
+
+
+% For $j \neq k$, we first look at $2 M^{++}_{jk}$.
+% \begin{flalign}
+% \label{diffusion_m++jk}
+%     \notag 2 M^{++}_{jk} &= \frac{d}{dt}\langle \spj\spk \rangle - \langle \spj \hat{D}^+_k \rangle - \langle \hat{D}^+_j \spk \rangle &\\
+%     \notag          &= tr\left[\spj\spk\frac{d\Hat{\rho}}{dt}\right]-  \langle \spj \hat{D}^+_k \rangle - \langle \hat{D}^+_j \spk \rangle\\
+%     \notag          &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\spj\spk ,\Hat{H} \right]\right]+\frac{1}{2T_2}tr\left[\spj\spk\sum^{N}_{l=1}\lindblad[\hat{\sigma}^z_l]\hat{\rho}\right]-  \langle \spj \hat{D}^+_k \rangle - \langle \hat{D}^+_j \spk \rangle\\
+%     \notag          &= \frac{1}{2i}tr\left[\Hat{\rho}\left[\spj\spk ,\sum^{N}_{l=1} g'_l\left(\sml \hat{a}^\dagger+\hat{a}\spl\right)
+%  \right]\right]+\frac{1}{2T_2}tr\left[\spj\spk\sum^{N}_{l=1}\lindblad[\hat{\sigma}^z_l]\hat{\rho}\right]\\
+%     \notag          &\ \ \ - \left( -\frac{ig_k'}{2}  \langle \spj \hat{a}^\dagger \szk\rangle - \frac{1}{T_2} \langle \spj  \spk \rangle\right) - \left( -\frac{ig_j'}{2}  \langle  \hat{a}^\dagger \szj\spk\rangle - \frac{1}{T_2} \langle \spj  \spk \rangle\right)\\
+%     \notag          &= \frac{1}{2i}\left(g'_k\langle \spj \szk \hat{a}^\dagger \rangle + g'_j\langle \spk \szj \hat{a}^\dagger \rangle \right) - \frac{1}{T_2} \langle \spj  \spk \rangle - \frac{1}{T_2} \langle \spj  \spk \rangle \\
+%     \notag          &\ \ \ - \left( -\frac{ig_k'}{2}  \langle \spj \hat{a}^\dagger \szk\rangle - \frac{1}{T_2} \langle \spj  \spk \rangle\right) - \left(
+%                     -\frac{ig_j'}{2}  \langle  \hat{a}^\dagger \szj\spk\rangle - \frac{1}{T_2} \langle \spj  \spk \rangle\right)\\
+%                     &= 0           
+% \end{flalign}
+
+% Also, for field-atom terms, we first look at $2 M^{+a}_{j}$.
+% \begin{flalign}
+% \label{diffusion_m+aj}
+%     \notag 2 M^{+a}_{j} &= \frac{d}{dt}\langle \spj\hat{a} \rangle - \langle \spj \hat{D}^a \rangle - \langle \hat{D}^+_j \hat{a} \rangle &\\
+%     \notag          &= \frac{1}{i\hbar}tr\left[\Hat{\rho}\left[\spj\hat{a} ,\Hat{H} \right]\right]+\kappa tr\left[\spj\hat{a}\lindblad[\hat{a}]\hat{\rho}\right]+\frac{1}{2T_2}tr\left[\spj\hat{a}\sum^{N}_{l=1}\lindblad[\hat{\sigma}^z_l]\hat{\rho}\right]-\langle \spj \hat{D}^a \rangle - \langle \hat{D}^+_j \hat{a} \rangle\\
+%     \notag          &= \frac{1}{2i}tr\left[\Hat{\rho}\left[\spj\hat{a} ,\sum^{N}_{k=1} g'_k\left(\smk \hat{a}^\dagger+\hat{a}\spk\right)
+%  \right]\right]- \frac{\kappa}{2}\langle \spj \hat{a} \rangle -\frac{1}{T_2} \langle \hat{a}\spj \rangle\\
+%     \notag          &\ \ \ -  \left(-\sum\frac{ig_k'}{2} \langle\spj\smk\rangle  - \frac{\kappa}{2} \langle \spj\hat{a} \rangle \right) - \left(
+%                     -\frac{ig_j'}{2} \langle \hat{a}\hat{a}^\dagger \szj \rangle - \frac{1}{T_2} \langle \hat{a}\spj \rangle \right)\\
+%     \notag          &= \frac{1}{2i}\left(\sum_{k=1}^N g'_k\langle \spj \smk \rangle + g'_j\langle \szj \hat{a} \hat{a}^\dagger \rangle \right) - \frac{1}{T_2} \langle \spj  \spk \rangle - \frac{1}{T_2} \langle \spj  \spk \rangle \\
+%     \notag          &\ \ \ -  \left(-\sum\frac{ig_k'}{2} \langle\spj\smk\rangle  - \frac{\kappa}{2} \langle \spj\hat{a} \rangle \right) - \left(
+%                     -\frac{ig_j'}{2} \langle \hat{a}\hat{a}^\dagger \szj \rangle - \frac{1}{T_2} \langle \hat{a}\spj \rangle \right)\\
+%                     &= 0           
+% \end{flalign}
+
+% It is no coincidence that these terms are 0. Physically, due to the fact that in the master equation (\ref{master_beamLaser}), there are only Lindbladian terms with either single-atom arguments or pure field argument, it is guaranteed that there is no diffusion correlations between different atoms and between atoms and the field. Mathematically, one can see that the calculations in the above equations (\ref{diffusion_m++jk}) and (\ref{diffusion_m+aj}) are none other than carrying out the same calculations twice for each equation, thus resulting a cancellation to get a zero result. Therefore
+% \begin{equation}
+%     2 M^{\mu\nu}_{jk} = 0 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  \
+% \end{equation}
+% for all $j\neq k$ or atom-field correlations.
+
+% Therefore the diffusion matrix for the beam laser configuration is
+% \begin{equation}
+% \label{diffusion1_pm_beamLaser}
+%   2M_{jj}^{\mu \nu} = \kbordermatrix{
+%           & \nu=a & a^\dagger & + & - & z \\
+%     \mu=a & 0 & \kappa & 0 & 0 & 0\\
+%     a^\dagger & \kappa & 0 & 0 & 0 & 0\\
+%         + &   0 & 0 & 0 & \frac{1}{T_2}(1+\langle \szj \rangle) & 0 \\
+%         - &   0 & 0 & \frac{1}{T_2}(1-\langle \szj \rangle) & 0 & 0\\
+%         z &   0 & 0 & 0 & 0 & 0\\
+%   }
+% \end{equation}
+% and
+% \begin{equation}
+% \label{diffusion2_pm_beamLaser}
+%      2 M^{\mu\nu}_{jk} = 0
+% \end{equation}
+% For reference, we also write down the diffusion matrix for a general cQED system without proof\footnote{David's Thesis}
+% \begin{equation}
+%   2M_{jj}^{\mu \nu} = \kbordermatrix{
+%           & \nu=a & a^\dagger & + & - & z \\
+%     \mu=a & 0 & \kappa & 0 & 0 & 0\\
+%     a^\dagger & \kappa & 0 & 0 & 0 & 0\\
+%         + &   0 & 0 & 0 & w+\frac{1}{T_2}(1+\langle \szj \rangle) & -2w\langle \spj \rangle \\
+%         - &   0 & 0 & \gamma+\frac{1}{T_2}(1-\langle \szj \rangle) & 0 & 2\gamma \langle \smj \rangle\\
+%         z &   0 & 0 & 2\gamma \langle \spj \rangle & -2w\langle \smj \rangle & 2\gamma (1+ \langle \szj \rangle) +2w (1-\langle \szj \rangle)\\
+%   }
+% \end{equation}
+% \subsection{The Quantum Langevin Equations}
+% Given the drift and diffusion terms, we write down the full quantum Langevin equations for the beam laser system
+% \begin{align}
+% \label{qle_beamLaser}
+% \notag 
+%     \frac{d \hat{a}}{dt} &= -\sum_{j=1}^{N}\frac{ig'_j}{2}\hat{\sigma}_j^--\frac{\kappa}{2}\hat{a}+\hat{F}^a\\\notag
+%     \frac{d \hat{a}^\dagger}{dt} &= \sum_{j=1}^{N}\frac{ig'_j}{2}\hat{\sigma}_j^+-\frac{\kappa}{2}\hat{a}^\dagger+\hat{F}^{a^\dagger}\\
+%     \frac{d \spj}{dt} &= -\frac{ig'_j}{2}\hat{a}^\dagger\hat{\sigma}^z_j- \frac{1}{T_2}\spj + \Hat{F}_j^+\\\notag
+%     \frac{d \smj}{dt} &= \frac{ig'_j}{2}\hat{\sigma}^z_j\hat{a}-\frac{1}{T_2}\smj+\Hat{F}_j^-\\\notag
+%     \frac{d \szj}{dt} &= ig'_j\left(\hat{a}^+\hat{\sigma}^-_j-\hat{\sigma}_j^+\hat{a}\right)+\Hat{F}_j^z
+% \end{align}
+
+% where 
+% \begin{equation}
+%     \langle \hat{F}^\mu_j(t) \hat{F}^\nu_k(t') \rangle = 2 M^{\mu\nu}_{jk}(t) \delta(t-t')
+% \end{equation}
+% and $2 M^{\mu\nu}_{jk}$ satisfy equations (\ref{diffusion1_pm_beamLaser}) and (\ref{diffusion2_pm_beamLaser}).
+
+% The set of equations (\ref{qle_beamLaser}) has operators like $\hat{a}$, $\Hat{a}^\dagger$, and $\hat{\sigma}_i^\pm$ that are not hermitian. For future use, it is convenient to express these equations with hermitian operators. Define the following hermitian operators
+% \begin{align}
+%     \label{atoq}
+%     \notag \hat{q} &= \hat{a}^\dagger+\hat{a}\\
+%     \notag \hat{p} &= -i(\hat{a}^\dagger-\hat{a})\\
+%           \hat{\sigma}^x &= \hat{\sigma}^++\hat{\sigma}^-\\
+%     \notag \hat{\sigma}^y &= -i(\hat{\sigma}^+-\hat{\sigma}^-)
+% \end{align}
+% with the reverse relations
+% \begin{align}
+%     \label{qtoa}
+%     \notag \hat{a} &= \frac{1}{2}(\hat{q}-i\hat{p})\\
+%     \notag \hat{a}^\dagger &= \frac{1}{2}(\hat{q}+i\hat{p})\\
+%           \hat{\sigma}^- &= \frac{1}{2}(\hat{\sigma}^x-i\hat{\sigma}^y)\\
+%     \notag \hat{\sigma}^+ &= \frac{1}{2}(\hat{\sigma}^x+i\hat{\sigma}^y)
+% \end{align}
+
+% With such definitions, we make the substitutions and directly write down the same stochastic differential equations as (\ref{qle_beamLaser}) but for the new hermitian operators\footnote{Here we do not care about the ordering of field operators and spin operators.}
+% \begin{align}
+%     \label{qle_beamLaser_q}
+%     \notag \frac{d \hat{q}}{dt} &= -\sum_{j=1}^N\frac{g'_j}{2}\hat{\sigma}_j^y-\frac{\kappa}{2}\hat{q}+\hat{F}^q\\
+%     \notag \frac{d \hat{p}}{dt} &= \sum_{j=1}^N\frac{g'_j}{2}\hat{\sigma}_j^x-\frac{\kappa}{2}\hat{p}+\hat{F}^p\\
+%     \frac{d \hat{\sigma}_j^x}{dt} &= \frac{g'_j}{2}\hat{p}\hat{\sigma}^z_i-\frac{1}{T_2}\hat{\sigma}_j^x+\hat{F}_j^x\\
+%     \notag \frac{d \hat{\sigma}_j^y}{dt} &= -\frac{g'_j}{2}\hat{q}\hat{\sigma}^z_i-\frac{1}{T_2}\hat{\sigma}_j^y+\hat{F}_j^y\\
+%     \notag \frac{d \hat{\sigma}_j^z}{dt} &= \frac{g'_j}{2}\left(\hat{q}\hat{\sigma}^y_i-\hat{p}\hat{\sigma}_i^x\right)+\hat{F}_j^z
+% \end{align}
+% with diffusion relations\footnote{might miss a 2 here. check when writing paper???}
+% \begin{equation}
+% \label{diffusion1_xy_beamLaser}
+%   2M_{jj}^{\mu \nu} = \kbordermatrix{
+%           & \nu=q & p & x & y & z \\
+%     \mu=q & 2\kappa &  & 0 & 0 & 0\\
+%         p & 0 & 2\kappa & 0 & 0 & 0\\
+%         x &   0 & 0 & \frac{2}{T_2} & \frac{2i}{T_2}\langle \szj \rangle & 0 \\
+%         y &   0 & 0 & -\frac{2i}{T_2}\langle \szj \rangle & \frac{2}{T_2} & 0\\
+%         z &   0 & 0 & 0 & 0 & 0\\
+%   }
+% \end{equation}
+% which is now hermitian, and also
+% \begin{equation}
+% \label{diffusion2_xy_beamLaser}
+%      2 M^{\mu\nu}_{jk} = 0
+% \end{equation}
+
+% \section{$c$-Number Langevin Equations}
+
+% So far, our derivations have been exact. Due to the difficulty of doing simulations with exponentially scaling operators, we now use a semi-classical approximation method. Specifically, we treat all the quantum operators as $c$-numbers in equations (\ref{qle_beamLaser_q}), and solve the corresponding $c$-number Langevin equations. It has been shown in Chapter 4 of David's Thesis that this method is equivalent to solving the Fokker-Planck equations with a P representation of the system, and in Chapter 5 that this method gives reliable results compared to the exact quantum Monte Carlo solutions.
+
+% Since all the system operators in equations (\ref{qle_beamLaser_q}) are now hermitian, we can actually replace them with real numbers in the $c$-number theory, i.e., 
+% \begin{equation}
+%     \{ \hat{q}, \hat{p}, \hat{\sigma}^x, \hat{\sigma}^y, \hat{\sigma}^z\} \longrightarrow \{q, p, s^x, s^y, s^z\}\ \ \ \ \ \ \ 
+% \end{equation}
+
+
+% For the noise operators and the diffusion matrix, we choose a symmetric ordering correspondence\footnote{David's Thesis Chapter 4. In principle we should do so for the system operators as well, but that is trivial in this case.}
+% \begin{equation}
+%     \frac{1}{2}\left[ \langle \hat{F}_i^\mu\hat{F}_j^\nu\rangle+\langle\hat{F}_j^\nu\hat{F}_i^\mu\rangle\right]\longrightarrow\langle  f_i^\mu f_j^\nu \rangle
+% \end{equation}
+% and define the $c$-number diffusion matrix $2m_{ij}^{\mu \nu}$
+% \begin{equation}
+% \label{def:diffusion;cNumber}
+%     \langle f_i^\mu(t)f_j^\nu(t')\rangle = 2m_{ij}^{\mu \nu}(t)\delta(t-t')
+% \end{equation}
+% Obviously,
+% \begin{equation}
+%     \frac{1}{2}\left(2M_{ij}^{\mu \nu}+2M_{ji}^{\nu \mu}\right) \longrightarrow 2m_{ij}^{\mu \nu}
+% \end{equation}
+% Using the property (\ref{relationDiffusion}), we see that for $\mu, \nu=x,y,z$, $2M_{ji}^{\nu \mu}={2M_{ij}^{\mu \nu}}^\ast$. Thus we have the expression for the matrix $2m_{ij}^{\mu \nu}$
+% \begin{equation}
+%     2m_{ij}^{\mu \nu} = 2m_{ji}^{\nu \mu} = Re\left[2M_{ij}^{\mu \nu}\right]
+% \end{equation}
+
+% Finally, we arrive at the set of $c$-number (or more specifically, real-number) Langevin equations for the beam laser
+% \begin{align}
+%     \label{cNumber_qle_beamLaser_q}
+%     \notag \frac{dq}{dt} &= -\sum_{j=1}^N\frac{g'_j}{2}s_j^y-\frac{\kappa}{2}q+f^q\\
+%     \notag \frac{dp}{dt} &= \sum_{j=1}^N\frac{g'_j}{2}s_j^x-\frac{\kappa}{2}p+f^p\\
+%     \frac{d s_j^x}{dt} &= \frac{g'_j}{2}ps^z_i-\frac{1}{T_2}s_j^x+f_j^x\\
+%     \notag \frac{d s_j^y}{dt} &= -\frac{g'_j}{2}qs^z_i-\frac{1}{T_2}s_j^y+f_j^y\\
+%     \notag \frac{d s_j^z}{dt} &= \frac{g'_j}{2}\left(qs^y_i-ps_i^x\right)+f_j^z
+% \end{align}
+% with diffusion relations  
+% \begin{equation}
+%     \langle f_i^\mu(t)f_j^\nu(t')\rangle = 2m_{ij}^{\mu \nu}(t)\delta(t-t')
+% \end{equation}
+
+% where the diffusion matrix $2m$ is
+
+% \begin{equation}
+% \label{cNumber_diffusion1_xy_beamLaser}
+%   2m_{jj}^{\mu \nu} = \kbordermatrix{
+%           & \nu=q & p & x & y & z \\
+%     \mu=q & 2\kappa &  & 0 & 0 & 0\\
+%         p & 0 & 2\kappa & 0 & 0 & 0\\
+%         x &   0 & 0 & \frac{2}{T_2} & 0 & 0 \\
+%         y &   0 & 0 & 0 & \frac{2}{T_2} & 0\\
+%         z &   0 & 0 & 0 & 0 & 0\\
+%   }
+% \end{equation}
+% and 
+% \begin{equation}
+% \label{cNumber_diffusion2_xy_beamLaser}
+%      2 m^{\mu\nu}_{jk} = 0
+% \end{equation}
+
+% Since the diffusion matrix is diagonal, we can take the advantage of it and write down the final version of a set of practical $c$-number Langevin equations
+% \begin{align}
+%     \label{cNumber_qle_beamLaser_q}
+%     \notag \frac{dq}{dt} &= -\sum_{j=1}^N\frac{g'_j}{2}s_j^y-\frac{\kappa}{2}q+\sqrt{2\kappa}\xi^q(t)\\
+%     \notag \frac{dp}{dt} &= \sum_{j=1}^N\frac{g'_j}{2}s_j^x-\frac{\kappa}{2}p+\sqrt{2\kappa}\xi^p(t)\\
+%     \frac{d s_j^x}{dt} &= \frac{g'_j}{2}ps^z_i-\frac{1}{T_2}s_j^x+\sqrt{\frac{2}{T_2}}\xi_j^x(t)\\
+%     \notag \frac{d s_j^y}{dt} &= -\frac{g'_j}{2}qs^z_i-\frac{1}{T_2}s_j^y+\sqrt{\frac{2}{T_2}}\xi_j^y(t)\\
+%     \notag \frac{d s_j^z}{dt} &= \frac{g'_j}{2}\left(qs^y_i-ps_i^x\right)
+% \end{align}
+% where $\xi(t)$ is a white noise with zero mean and infinite variance.
+
+% \section{Cumulant Theory}
+% \label{section: cumulant}
+
+% We can also use another semi-classical approximation method to study the system, called a cumulant method.
+
+% \printbibliography
+% \end{document}

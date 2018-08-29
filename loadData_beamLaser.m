@@ -1,6 +1,7 @@
 %cNumberCavity
 %Initialization
-clear; close all; clc;
+clear; close all; 
+%clc;
 
 %Get parameters
 getParam_beamLaser;

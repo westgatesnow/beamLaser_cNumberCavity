@@ -31,20 +31,20 @@ fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot sx and sy final.
-figure(3);
-
-subplot(2,1,1);
-scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
-xlabel('t/T','FontSize', 20);
-ylabel('\langle j^x(t)\rangle');
-
-subplot(2,1,2);
-scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
-xlabel('t/T','FontSize', 20);
-ylabel('\langle j^y(t) \rangle');
-
-fprintf('Program paused. Press enter to continue.\n');
-pause;
+% figure(3);
+% 
+% subplot(2,1,1);
+% scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
+% xlabel('t/T','FontSize', 20);
+% ylabel('\langle j^x(t)\rangle');
+% 
+% subplot(2,1,2);
+% scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
+% xlabel('t/T','FontSize', 20);
+% ylabel('\langle j^y(t) \rangle');
+% 
+% fprintf('Program paused. Press enter to continue.\n');
+% pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot szAve and szMatrix.
 figure(4);
@@ -63,20 +63,20 @@ fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot sxMatrix and syMatrix.
-figure(5);
-
-subplot(2,1,1);
-scatter(1:nBin, sxMatrix(:,end), 20, 'filled');
-xlabel('nBin','FontSize', 20);
-ylabel('\langle j^x(t) \rangle');
-
-subplot(2,1,2);
-scatter(1:nBin, syMatrix(:,end), 20, 'filled');
-xlabel('nBin','FontSize', 20);
-ylabel('\langle j^y(t) \rangle');
-
-fprintf('Program paused. Press enter to continue.\n');
-pause;
+% figure(5);
+% 
+% subplot(2,1,1);
+% scatter(1:nBin, sxMatrix(:,end), 20, 'filled');
+% xlabel('nBin','FontSize', 20);
+% ylabel('\langle j^x(t) \rangle');
+% 
+% subplot(2,1,2);
+% scatter(1:nBin, syMatrix(:,end), 20, 'filled');
+% xlabel('nBin','FontSize', 20);
+% ylabel('\langle j^y(t) \rangle');
+% 
+% fprintf('Program paused. Press enter to continue.\n');
+% pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot spinSpinCorAve.
 figure(6);
@@ -152,7 +152,10 @@ pause;
 x = linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2))';
 f = coeffvalues(fit(x,realG1Pos','exp1','startpoint',[1,-1])); 
 linewidth = -f(2)/pi;
-printWords = ['The linewidth is ', num2str(linewidth,'%.2f'),' transitTime inverse.'];
+gammac = rabi^2/kappa*transitTime;
+ratio_gc = linewidth/gammac;
+printWords = ['The linewidth is ', num2str(linewidth,'%.2f'),...
+    ' transitTime inverse or ', num2str(ratio_gc,'%.2f'),' gammac.'];
 disp(printWords);
 
 %Method 2: plot the spectra
