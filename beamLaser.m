@@ -43,7 +43,7 @@ hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('q');
 
-Deltat=0.1;
+Deltat=0.05;
 %Deltat defined above is impirical and used to acount for the right Delta t
 %that should used for the adiabatic elimination
 subplot(2,1,2);

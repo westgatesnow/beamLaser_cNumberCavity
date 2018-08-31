@@ -1,16 +1,16 @@
-dt 0.005
-tmax 20
-nStore 1000
-nTrajectory 1000
-nBin 30
-yWall 1.0
-lambda 1.0
-deltaZ 0.5
-deltaPz 10.0
-transitTime 1.0
-density 100
-rabi 2
-kappa 40
-invT2 0
-controlType dens100
-name dt0.005_dZ0.5_dPz10.0_tau1.0_nBin30_dens100_g2_k40_yWall1.0
+dt 0.004
+      tmax 20
+      nStore 1000
+      nTrajectory 1000
+      nBin 30
+      yWall 1.0
+      lambda 1.0
+      deltaZ 0.5
+      deltaPz 10.0
+      transitTime 1.0
+      density 500
+      rabi 1
+      kappa 10
+      invT2 0
+      controlType dens500
+      name dt0.004_dZ0.5_dPz10.0_tau1.0_nBin30_dens500_g1_k10_yWall1.0

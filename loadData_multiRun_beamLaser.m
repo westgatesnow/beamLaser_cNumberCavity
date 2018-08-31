@@ -1,5 +1,5 @@
 %cNumberCavity
-%This file is used to load the data from running "multirun.sh"
+%This file is used to load the data from running "multirun_beamLaser.sh"
 
 %Initialization
 clear; close all; clc;

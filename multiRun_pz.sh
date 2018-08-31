@@ -7,8 +7,8 @@
 iFile=input.txt
 nMax1=10
 nMax2=1
-init_pz=0.1
-interval_pz=0.1
+init_pz=1.0
+interval_pz=1.0
 init_dens=100
 interval_dens=100
 
@@ -18,41 +18,39 @@ for ((i=0; i<nMax1; i+=1)) do
     dens=$(echo "$init_dens + $interval_dens * $j" | bc -l)
     if (( $(bc <<< "$pz < 1") )) 
     then
-      printf "dt 0.01
-      tmax 100
+      printf "dt 0.005
+      tmax 20
+      nStore 1000
       nTrajectory 1000
-      nstore 1000
-      yWall 10
-      sigmaXX 0
-      sigmaXZ 0
+      nBin 30
+      yWall 1.0
+      lambda 1.0
+      deltaZ 0.5
+      deltaPz $pz
       transitTime 1.0
-      sigmaPX 0
-      sigmaPY 0
-      sigmaPZ $pz
       density $dens
       rabi 3
       kappa 90
-      lambda 1.0
       invT2 0
-      name latt_tau1.0_g3_k90_dens${dens}_l1.0_pz0${pz}_dz0.25" > $iFile
+      controlType dens100
+      name dt0.005_dZ0.5_dPz0${pz}_tau1.0_nBin30_dens${dens}_g3_k90_yWall1.0" > $iFile
     else
-      printf "dt 0.01
-      tmax 100
+      printf "dt 0.005
+      tmax 20
+      nStore 1000
       nTrajectory 1000
-      nstore 1000
-      yWall 10
-      sigmaXX 0
-      sigmaXZ 0
+      nBin 30
+      yWall 1.0
+      lambda 1.0
+      deltaZ 0.5
+      deltaPz $pz
       transitTime 1.0
-      sigmaPX 0
-      sigmaPY 0
-      sigmaPZ $pz
       density $dens
       rabi 3
       kappa 90
-      lambda 1.0
       invT2 0
-      name latt_tau1.0_g3_k90_dens${dens}_l1.0_pz${pz}_dz0.25" > $iFile
+      controlType dens100
+      name dt0.005_dZ0.5_dPz${pz}_tau1.0_nBin30_dens${dens}_g3_k90_yWall1.0" > $iFile
     fi
     ./beamLaser -f $iFile
   done
