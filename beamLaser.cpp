@@ -63,6 +63,8 @@ void generateInitialField(Ensemble& ensemble, const Param& param)
   int nTimeStep = param.tmax/param.dt+0.5;
   ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
   ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
+  ensemble.cavity.qAE.setZero(param.nTrajectory, nTimeStep+1);
+  ensemble.cavity.pAE.setZero(param.nTrajectory, nTimeStep+1);
   //initilize q(t=0) = p(t=0) = 1
   // ensemble.cavity.q.col(0).fill(1.0);
   // ensemble.cavity.p.col(0).fill(1.0);
@@ -292,6 +294,8 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
       ensemble.atoms[i].internal.sx[n] = sVar[NVAR*i];
       ensemble.atoms[i].internal.sy[n] = sVar[NVAR*i+1];
       ensemble.atoms[i].internal.sz[n] = sVar[NVAR*i+2];
+      ensemble.cavity.qAE(n,nStep+1) -= rabiEff[i]*sVar[NVAR*i+1]/kappa;
+      ensemble.cavity.pAE(n,nStep+1) += rabiEff[i]*sVar[NVAR*i]/kappa;
     }
     ensemble.cavity.q(n,nStep+1) = sVar[NVAR*nAtom];
     ensemble.cavity.p(n,nStep+1) = sVar[NVAR*nAtom+1];
@@ -334,6 +338,8 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   //qMatrix and pMatrix
   observables.qMatrix.col(s) = ensemble.cavity.q.col(nStep);
   observables.pMatrix.col(s) = ensemble.cavity.p.col(nStep);
+  observables.qAEMatrix.col(s) = ensemble.cavity.qAE.col(nStep);
+  observables.pAEMatrix.col(s) = ensemble.cavity.pAE.col(nStep);
   
   //Atomic observables//////////////////////////////////////////////////////////////////////////////////
 
@@ -348,6 +354,7 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   SY = MatrixXd::Zero(nAtom, nTrajectory);
   SZ = MatrixXd::Zero(nAtom, nTrajectory);
   VectorXd binIndex = VectorXd::Zero(nBin);
+  VectorXd binSum = VectorXd::Zero(nBin);
   double binSize = param.yWall*2/nBin;
   for (int i = 0; i < nAtom; i++) {
     //internal indices
@@ -360,17 +367,18 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
       binNumber = nBin-1;
     binIndex[binNumber] += 1;
   }
-
+  for (int i = 1; i < nBin; i++) {
+    binSum[i] = binSum[i-1] + binIndex[i-1];
+  }
+  
   //inversionAve
   observables.inversionAve(s) = SZ.sum()/nAtom/nTrajectory;
   
   //sxMatrix, syMatrix, szMatrix
-  int initRow = 0;
   for (int i = 0; i < nBin; i++) {
-    observables.sxMatrix(i, s) = SX.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
-    observables.syMatrix(i, s) = SY.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
-    observables.szMatrix(i, s) = SZ.middleRows(initRow, binIndex[i]).sum()/binIndex[i]/nTrajectory;
-    initRow += binIndex[i];
+    observables.sxMatrix(i, s) = SX.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    observables.syMatrix(i, s) = SY.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    observables.szMatrix(i, s) = SZ.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
   }
 
   //spinSpinCorAve
@@ -385,11 +393,10 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
     0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
 
   //spinSpinCor between y = y1 and y = y2
-  int initRow_1 = 0;
   for (int i = 0; i < nBin; i++) { //Can be optimized to half diagonal, but testing on symmetry first???
     MatrixXd SX_1, SX_2, SY_1, SY_2;
-    SX_1 = SX.middleRows(initRow_1, binIndex[i]);
-    SY_1 = SY.middleRows(initRow_1, binIndex[i]);
+    SX_1 = SX.middleRows(binSum[i], binIndex[i]);
+    SY_1 = SY.middleRows(binSum[i], binIndex[i]);
     //diagonal terms
     MatrixXd SX_1sq, SY_1sq, SY_1_SX_1, SX_1_SY_1;
     SX_1sq = SX_1*SX_1.transpose();
@@ -403,10 +410,9 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
       0.25*((SY_1_SX_1.sum()-SY_1_SX_1.diagonal().sum())
            +(SX_1_SY_1.sum()-SX_1_SY_1.diagonal().sum()))/binIndex[i]/(binIndex[i]-1)/nTrajectory;
     //off-diagonal terms
-    int initRow_2 = 0;
     for (int j = i+1; j < nBin; j++) {
-      SX_2 = SX.middleRows(initRow_2, binIndex[j]);
-      SY_2 = SY.middleRows(initRow_2, binIndex[j]);
+      SX_2 = SX.middleRows(binSum[j], binIndex[j]);
+      SY_2 = SY.middleRows(binSum[j], binIndex[j]);
       observables.spinSpinCor_re(i*nBin+j, s) = 
                     0.25*((SX_1*SX_2.transpose()).sum()+(SY_1*SY_2.transpose()).sum())/binIndex[i]/binIndex[j]/nTrajectory;
       observables.spinSpinCor_im(i*nBin+j, s) = 
@@ -414,9 +420,7 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
       //The other half diagonal terms
       observables.spinSpinCor_re(j*nBin+i, s) = observables.spinSpinCor_re(i*nBin+j, s);
       observables.spinSpinCor_im(j*nBin+i, s) = observables.spinSpinCor_im(i*nBin+j, s);
-      initRow_2 += binIndex[j];
     }
-    initRow_1 += binIndex[i];
   }
   //For quick runs, COMMENT THESE OUT///////////////////////////////////////////////////////////////////////////////////////
 }
@@ -464,6 +468,8 @@ void writeObservables(ObservableFiles& observableFiles,
   observableFiles.inversionAve << observables.inversionAve << std::endl;
   observableFiles.qMatrix << observables.qMatrix << std::endl;
   observableFiles.pMatrix << observables.pMatrix << std::endl;
+  observableFiles.qAEMatrix << observables.qAEMatrix << std::endl;
+  observableFiles.pAEMatrix << observables.pAEMatrix << std::endl;
   observableFiles.spinSpinCorAve_re << observables.spinSpinCorAve_re << std::endl;
   observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
   observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;

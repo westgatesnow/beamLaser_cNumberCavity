@@ -62,6 +62,8 @@ typedef struct
 {
   MatrixXd q;        //q = a^dagger + a. Dim: nTrajectory*(nTimeStep+1)
   MatrixXd p;        //p = - I (a^dagger - a). Dim: nTrajectory*(nTimeStep+1)
+  MatrixXd qAE;      //qAE = the expcted adiabatic eliminated value of q = -\sum{g_j/k \sigma_j^y}
+  MatrixXd pAE;      //pAE = the expcted adiabatic eliminated value of p = \sum{g_j/k \sigma_j^y}
 } Cavity;
 
 //Ensemble of the system
@@ -137,6 +139,8 @@ typedef struct Observables
   VectorXd inversionAve;
   MatrixXd qMatrix;
   MatrixXd pMatrix;
+  MatrixXd qAEMatrix;
+  MatrixXd pAEMatrix;
   MatrixXd sxMatrix;
   MatrixXd syMatrix;
   MatrixXd szMatrix;
@@ -152,6 +156,8 @@ typedef struct Observables
     inversionAve = VectorXd(nStore);
     qMatrix = MatrixXd(nTrajectory, nStore);
     pMatrix = MatrixXd(nTrajectory, nStore);
+    qAEMatrix = MatrixXd(nTrajectory, nStore);
+    pAEMatrix = MatrixXd(nTrajectory, nStore);
     sxMatrix = MatrixXd(nBin, nStore);
     syMatrix = MatrixXd(nBin, nStore);
     szMatrix = MatrixXd(nBin, nStore);
@@ -190,6 +196,8 @@ typedef struct ObservableFiles
                 inversionAve, 
                 qMatrix, 
                 pMatrix,
+                qAEMatrix, 
+                pAEMatrix,
                 spinSpinCorAve_re, 
                 spinSpinCorAve_im,
                 spinSpinCor_re, 
@@ -207,6 +215,8 @@ typedef struct ObservableFiles
                       inversionAve("inversionAve.dat"),
                       qMatrix("qMatrix.dat"),
                       pMatrix("pMatrix.dat"),
+                      qAEMatrix("qAEMatrix.dat"),
+                      pAEMatrix("pAEMatrix.dat"),
                       spinSpinCorAve_re("spinSpinCorAve_re.dat"),
                       spinSpinCorAve_im("spinSpinCorAve_im.dat"),
                       spinSpinCor_re("spinSpinCor_re.dat"),
@@ -227,6 +237,8 @@ typedef struct ObservableFiles
     inversionAve.close();
     qMatrix.close();
     pMatrix.close();
+    qAEMatrix.close();
+    pAEMatrix.close();
     spinSpinCorAve_re.close();
     spinSpinCorAve_im.close();
     spinSpinCor_re.close();

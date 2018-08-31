@@ -30,6 +30,33 @@ ylabel('\langle j^z(t) \rangle_o');
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%comparison to adiabatic elimination
+figure(12);
+%q and qAE
+
+set(gca,'FontSize',20);
+subplot(2,1,1);
+hold on;
+plot(linspace(0,tmax,nStore)/transitTime, mean(qMatrix,1));
+plot(linspace(0,tmax,nStore)/transitTime, mean(qAEMatrix,1));
+hold off;
+xlabel('t/T','FontSize', 20);
+ylabel('q');
+
+Deltat=0.1;
+%Deltat defined above is impirical and used to acount for the right Delta t
+%that should used for the adiabatic elimination
+subplot(2,1,2);
+hold on;
+plot(linspace(0,tmax,nStore)/transitTime, mean(qMatrix.^2,1));
+plot(linspace(0,tmax,nStore)/transitTime, mean(qAEMatrix.^2,1)+4/kappa/Deltat);
+hold off;
+xlabel('t/T','FontSize', 20);
+ylabel('q^2');
+
+fprintf('Program paused. Press enter to continue.\n');
+pause;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot sx and sy final.
 % figure(3);
 % 
@@ -214,3 +241,4 @@ g2=(q4+p4+2*q2p2-8*(q2+p2)+8)/(q2+p2-2)^2;
 formatSpec = 'The g2(0) value is %f \n';
 fprintf(formatSpec, g2);
 fprintf('Program paused. Press enter to continue.\n');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
