@@ -34,3 +34,4 @@ nTimeStep = tmax/dt;
 
 %Add the previous directory into path
 addpath ~/Desktop/codes/beamLaser_Proj/cNumberCavity/;
+addpath ~/Desktop/codes/beamLaser_Proj/common/;

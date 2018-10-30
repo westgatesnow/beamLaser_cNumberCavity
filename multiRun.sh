@@ -6,54 +6,52 @@
 
 iFile=input.txt
 nMax1=10
-nMax2=1
-init_tau=1.0
-interval_tau=0.5
-init_nAtom=400
-interval_nAtom=25
+nMax2=10
+init_tau=0.5
+interval_tau=0.1
+init_nAtom=50
+interval_nAtom=50
 
 for ((i=0; i<nMax1; i+=1)) do 
   for ((j=0; j<nMax2; j+=1)) do 
     tau=$(echo "$init_tau + $interval_tau * $i" | bc -l)
     nAtom=$(echo "$init_nAtom + $interval_nAtom * $j" | bc -l)
-    #dens=$(echo "$nAtom / $tau" | bc -l)
+    dens=$(echo "$nAtom / $tau" | bc -l)
     if (( $(bc <<< "$tau < 1") )) 
     then
-      printf "dt 0.01
-      tmax 100
+      printf "dt 0.005
+      tmax 20
+      nStore 1000
       nTrajectory 1000
-      nstore 1000
-      yWall 10
-      sigmaXX 0
-      sigmaXZ 0
+      nBin 20
+      yWall 1.0
+      lambda 1.0
+      deltaZ 0.5
+      deltaPz 0.5
       transitTime $tau
-      sigmaPX 0
-      sigmaPY 0
-      sigmaPZ 0
-      density 100
+      density $dens
       rabi 3
       kappa 90
-      lambda 1.0
       invT2 0
-      name pois_tau0${tau}_g2_k40_N${nAtom}" > $iFile
+      controlType contour_dpz0.5
+      name pois_dt0.005_dZ0.5_dPz0.5_tau0${tau}_nBin20_nAtom${nAtom}_g3_k90_yWall1.0" > $iFile
     else
-      printf "dt 0.01
-      tmax 100
+      printf "dt 0.005
+      tmax 20
+      nStore 1000
       nTrajectory 1000
-      nstore 1000
-      yWall 10
-      sigmaXX 0
-      sigmaXZ 0
+      nBin 20
+      yWall 1.0
+      lambda 1.0
+      deltaZ 0.5
+      deltaPz 0.5
       transitTime $tau
-      sigmaPX 0
-      sigmaPY 0
-      sigmaPZ 0
-      density 100
+      density $dens
       rabi 3
       kappa 90
-      lambda 1.0
       invT2 0
-      name latt_tau${tau}_g3_k90_den100_l1.0_pz0_dz0_dt0.01" > $iFile
+      controlType contour_dpz0.5
+      name pois_dt0.005_dZ0.5_dPz0.5_tau${tau}_nBin20_nAtom${nAtom}_g3_k90_yWall1.0" > $iFile
     fi
     ./beamLaser -f $iFile
   done

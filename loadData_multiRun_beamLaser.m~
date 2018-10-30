@@ -31,7 +31,7 @@ gc = rabi^2/kappa;
 %Can use uniform distri in log scale??????
 
 nMaxTau = 10;%
-initTau = 0.5;%
+initTau = 0.1;%
 intervalTau = 0.1;
 tauList = (initTau+(0:nMaxTau-1)*intervalTau)*gc;
 
@@ -42,17 +42,15 @@ intervalNAtom = 500;
 nAtomAveList =initNAtom+(0:nMaxNAtom-1)*intervalNAtom;
 
 %define empty data structure for variables
-nAtom = zeros(nMaxTau,nMaxNAtom,nStore);
-intensity = zeros(nMaxTau,nMaxNAtom,nStore);
-inversionAve = zeros(nMaxTau,nMaxNAtom,nStore);
-spinSpinCorAve = zeros(nMaxTau,nMaxNAtom,nStore);
+nAtom = zeros(nMaxTau,nMaxNAtom,nstore);
+intensity = zeros(nMaxTau,nMaxNAtom,nstore);
+inversionAve = zeros(nMaxTau,nMaxNAtom,nstore);
+spinSpinCorAve = zeros(nMaxTau,nMaxNAtom,nstore);
 szFinal = zeros(nMaxTau,nMaxNAtom,nTimeStep);
-qMatrix = zeros(nMaxTau,nMaxNAtom,nTrajectory,nStore);
-pMatrix = zeros(nMaxTau,nMaxNAtom,nTrajectory,nStore);
+qMatrix = zeros(nMaxTau,nMaxNAtom,nTrajectory,nstore);
+pMatrix = zeros(nMaxTau,nMaxNAtom,nTrajectory,nstore);
 
 %load all the data needed
-projectdir1 = controlType;
-cd(projectdir1);
 timeRequired = 3.2*nMaxTau*nMaxNAtom;
 printWords1 = ['Begin loading. Time required: ' , num2str(timeRequired), ' seconds.'];
 disp(printWords1);
@@ -63,7 +61,7 @@ for j = 1:nMaxNAtom
         tau = initTau+intervalTau*(i-1);
         nAtomAve = initNAtom+intervalNAtom*(j-1);
         filename = ['pois_dt0.005_dZ0.5_dPz0.5_tau', ...
-            num2str(tau,'%.1f'), '_nBin20_nAtom',num2str(nAtomAve),'_g3_k90_yWall1.0', ];
+            num2str(tau,'%.2f'), 'nBin20_g2_k40_N', num2str(nAtomAve)];
         cd(filename);
         %Load data.
         nAtom(i,j,:) = load('nAtom.dat');
@@ -104,10 +102,10 @@ for j = 1:nMaxNAtom
 %         %spinSpinCor_re = load('spinSpinCor_re.dat');
 %         %spinSpinCor_im = load('spinSpinCor_im.dat');  
 %         cd ..;
-%             %Print out info
-%         percentage = (i+nMaxTau1+(j-1)*nMaxTau)/nMaxTau/nMaxNAtom*100;
-%         printWords2 = ['Finish loading ', num2str(percentage,'%.1f'),'%...'];
-%         disp(printWords2);
-%     end
+            %Print out info
+        percentage = (i+nMaxTau1+(j-1)*nMaxTau)/nMaxTau/nMaxNAtom*100;
+        printWords2 = ['Finish loading ', num2str(percentage,'%.1f'),'%...'];
+        disp(printWords2);
+    end
 end
 toc;

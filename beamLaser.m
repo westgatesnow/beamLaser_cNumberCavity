@@ -1,5 +1,11 @@
 %cNumberCavity
 
+%Take steadyMultiplier*transitTime as the steady state time. 
+%This is empirical for now. Improve later?
+steadyMultiplier = 15;
+
+t0 = steadyMultiplier*transitTime;
+n0 = ceil(t0/tmax*nStore);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Plot nAtom.
 figure(1);
@@ -8,6 +14,9 @@ plot(linspace(0,tmax,nStore)/transitTime, nAtom);
 xlabel('t/T','FontSize', 20);
 ylabel('N(t)');
 
+nAtomPrint = mean(nAtom(n0:end));
+formatSpec = 'The steady-state nAtom is %d. \n';
+fprintf(formatSpec, nAtomPrint);
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -27,6 +36,10 @@ hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('\langle j^z(t) \rangle_o');
 
+intensityPrint = mean(intensity(n0:end));
+szFinalPrint = mean(szFinal(n0:end), 'omitnan');
+formatSpec = 'The steady-state intensity is %4.2f. \nThe steady-state szFinal is %4.2f.\n';
+fprintf(formatSpec, intensityPrint, szFinalPrint);
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -43,13 +56,13 @@ hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('q');
 
-Deltat=0.05;
+Deltat=0;
 %Deltat defined above is impirical and used to acount for the right Delta t
 %that should used for the adiabatic elimination
 subplot(2,1,2);
 hold on;
 plot(linspace(0,tmax,nStore)/transitTime, mean(qMatrix.^2,1));
-plot(linspace(0,tmax,nStore)/transitTime, mean(qAEMatrix.^2,1)+4/kappa/Deltat);
+plot(linspace(0,tmax,nStore)/transitTime, mean(qAEMatrix.^2,1));%+4/kappa/Deltat);
 hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('q^2');
@@ -140,13 +153,13 @@ rotate3d on;
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Movie of space-space correlation over time
+%This program uses the definition of s_re and X, Y, Z.
+% movie_ssCor;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %g(1)function.
-
-%Take steadyMultiplier*transitTime as the steady state time for now. DO LATER.
-steadyMultiplier = 15;
-t0 = steadyMultiplier*transitTime;
-n0 = ceil(t0/tmax*nStore);
 
 q = qMatrix(:,n0:nStore);
 p = pMatrix(:,n0:nStore);
@@ -241,4 +254,3 @@ g2=(q4+p4+2*q2p2-8*(q2+p2)+8)/(q2+p2-2)^2;
 formatSpec = 'The g2(0) value is %f \n';
 fprintf(formatSpec, g2);
 fprintf('Program paused. Press enter to continue.\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

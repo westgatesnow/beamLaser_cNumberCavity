@@ -5,7 +5,7 @@
 #using cNumberCavity theory.
 
 iFile=input.txt
-nMax1=10
+nMax1=5
 nMax2=1
 init_pz=1.0
 interval_pz=1.0
@@ -32,7 +32,7 @@ for ((i=0; i<nMax1; i+=1)) do
       rabi 3
       kappa 90
       invT2 0
-      controlType dens100
+      controlType dopplerWeakPlot
       name dt0.005_dZ0.5_dPz0${pz}_tau1.0_nBin30_dens${dens}_g3_k90_yWall1.0" > $iFile
     else
       printf "dt 0.005
@@ -49,7 +49,7 @@ for ((i=0; i<nMax1; i+=1)) do
       rabi 3
       kappa 90
       invT2 0
-      controlType dens100
+      controlType dopplerWeakPlot
       name dt0.005_dZ0.5_dPz${pz}_tau1.0_nBin30_dens${dens}_g3_k90_yWall1.0" > $iFile
     fi
     ./beamLaser -f $iFile
