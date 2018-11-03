@@ -31,14 +31,14 @@ gc = rabi^2/kappa;
 %Can use uniform distri in log scale??????
 
 nMaxTau = 10;%
-initTau = 0.5;%
+initTau = 0.1;%
 intervalTau = 0.1;
 tauList = (initTau+(0:nMaxTau-1)*intervalTau)*gc;
 
 %nAtomAve
 nMaxNAtom = 10;%
 initNAtom = 50;
-intervalNAtom = 500;
+intervalNAtom = 50;
 nAtomAveList =initNAtom+(0:nMaxNAtom-1)*intervalNAtom;
 
 %define empty data structure for variables
@@ -62,7 +62,7 @@ for j = 1:nMaxNAtom
         %define the name of the directory
         tau = initTau+intervalTau*(i-1);
         nAtomAve = initNAtom+intervalNAtom*(j-1);
-        filename = ['pois_dt0.005_dZ0.5_dPz0.5_tau', ...
+        filename = ['pois_dt0.005_dZ0.5_dPz1.0_tau', ...
             num2str(tau,'%.1f'), '_nBin20_nAtom',num2str(nAtomAve),'_g3_k90_yWall1.0', ];
         cd(filename);
         %Load data.
@@ -110,4 +110,5 @@ for j = 1:nMaxNAtom
 %         disp(printWords2);
 %     end
 end
+cd ..;
 toc;

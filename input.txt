@@ -6,11 +6,11 @@ dt 0.005
       yWall 1.0
       lambda 1.0
       deltaZ 0.5
-      deltaPz 0.5
-      transitTime 1.0
-      density 500.00000000000000000000
+      deltaPz 1.0
+      transitTime .5
+      density 1000.00000000000000000000
       rabi 3
       kappa 90
       invT2 0
-      controlType contour_dpz0.5
-      name pois_dt0.005_dZ0.5_dPz0.5_tau1.0_nBin20_nAtom500_g3_k90_yWall1.0
+      controlType contour_dpz1.0
+      name pois_dt0.005_dZ0.5_dPz1.0_tau0.5_nBin20_nAtom500_g3_k90_yWall1.0
