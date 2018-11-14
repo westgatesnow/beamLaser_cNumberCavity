@@ -126,43 +126,43 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, int& m)
   ///////////////////////////////////////////////////////////////////////////
   // Uniform atom generation
   ///////////////////////////////////////////////////////////////////////////
-  // if (dN >= 1) {
-  //   nAtom = dN;     
+  if (dN >= 1) {
+    nAtom = dN;     
 
-  //   for (unsigned long int n = 0; n < nAtom; n++) {
-  //     Atom newAtom; //Create a new atom
-  //     generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
-  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
-  //     ensemble.atoms.push_back(newAtom);
-  //   }
-  // }
-
-  // else if (dN > 0){
-  //   int rep = 1/dN;
-  //   if (m == rep) {
-  //     Atom newAtom; //Create a new atom
-  //     generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
-  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
-  //     ensemble.atoms.push_back(newAtom);
-  //     m = 0;
-  //   }
-  //   m++;
-  // }
-  // else {
-  //   std::cout << "Bad dN in input file" << std::endl;
-  //   exit(-1);
-  // }
-
-  ///////////////////////////////////////////////////////////////////////////
-  //Poissonian atom generation
-  ///////////////////////////////////////////////////////////////////////////
-  nAtom = rng.get_poissonian_int(dN);
-  for (int n = 0; n < nAtom; n++) {
+    for (unsigned long int n = 0; n < nAtom; n++) {
       Atom newAtom; //Create a new atom
       generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
       generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
       ensemble.atoms.push_back(newAtom);
+    }
   }
+
+  else if (dN > 0){
+    int rep = 1/dN;
+    if (m == rep) {
+      Atom newAtom; //Create a new atom
+      generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
+      generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
+      ensemble.atoms.push_back(newAtom);
+      m = 0;
+    }
+    m++;
+  }
+  else {
+    std::cout << "Bad dN in input file" << std::endl;
+    exit(-1);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  //Poissonian atom generation
+  ///////////////////////////////////////////////////////////////////////////
+  // nAtom = rng.get_poissonian_int(dN);
+  // for (int n = 0; n < nAtom; n++) {
+  //     Atom newAtom; //Create a new atom
+  //     generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
+  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
+  //     ensemble.atoms.push_back(newAtom);
+  // }
 }
   
  

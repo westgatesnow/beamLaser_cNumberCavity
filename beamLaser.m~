@@ -38,7 +38,7 @@ ylabel('\langle j^z(t) \rangle_o');
 
 intensityPrint = mean(intensity(n0:end));
 szFinalPrint = mean(szFinal(n0:end), 'omitnan');
-formatSpec = 'The steady-state intensity is %4.4f. \nThe steady-state szFinal is %4.4f.\n';
+formatSpec = 'The steady-state intensity is %4.2f. \nThe steady-state szFinal is %4.2f.\n';
 fprintf(formatSpec, intensityPrint, szFinalPrint);
 fprintf('Program paused. Press enter to continue.\n');
 pause;
@@ -104,9 +104,10 @@ plot(1:nBin, szMatrix(:,end));%, 5, 'filled');
 xlabel('nBin','FontSize', 20);
 ylabel('\langle j^z(t) \rangle');
 
-inversionAvePrint = mean(inversionAve(n0:end));
-formatSpec = 'The steady-state szAve is %4.4f.\n';
-fprintf(formatSpec, inversionAvePrint);
+szAvePrint = mean(inversionAve(n0:end));
+szFinalPrint = mean(szFinal(n0:end), 'omitnan');
+formatSpec = 'The steady-state intensity is %4.2f. \nThe steady-state szFinal is %4.2f.\n';
+fprintf(formatSpec, intensityPrint, szFinalPrint);
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -202,8 +203,8 @@ f = coeffvalues(fit(x,realG1Pos','exp1','startpoint',[1,-1]));
 linewidth = -f(2)/pi;
 gammac = rabi^2/kappa*transitTime;
 ratio_gc = linewidth/gammac;
-printWords = ['The linewidth is ', num2str(linewidth,'%.4f'),...
-    ' transitTime inverse or ', num2str(ratio_gc,'%.4f'),' gammac.'];
+printWords = ['The linewidth is ', num2str(linewidth,'%.2f'),...
+    ' transitTime inverse or ', num2str(ratio_gc,'%.2f'),' gammac.'];
 disp(printWords);
 
 %Method 2: plot the spectra
@@ -259,6 +260,6 @@ q2p2 = sum(qMatrix(:,nStore).^2.*pMatrix(:,nStore).^2)/nTrajectory;
 q2 = sum(qMatrix(:,nStore).^2)/nTrajectory;
 p2 = sum(pMatrix(:,nStore).^2)/nTrajectory;
 g2=(q4+p4+2*q2p2-8*(q2+p2)+8)/(q2+p2-2)^2;
-formatSpec = 'The g2(0) value is %.2f \n';
+formatSpec = 'The g2(0) value is %f \n';
 fprintf(formatSpec, g2);
 fprintf('Program paused. Press enter to continue.\n');
