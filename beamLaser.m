@@ -51,7 +51,7 @@ set(gca,'FontSize',20);
 subplot(3,1,1);
 hold on;
 plot(linspace(0,tmax,nStore)/transitTime, mean(qMatrix,1));
-plot(linspace(0,tmax,nStore)/transitTime, mean(qAEMatrix,1));
+plot(linspace(0,tmax,nStore)/transitTime, mean(-JyMatrix/kappa,1));
 hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('q');
@@ -62,13 +62,13 @@ Deltat=0;
 subplot(3,1,2);
 hold on;
 plot(linspace(0,tmax,nStore)/transitTime, mean(qMatrix.^2,1));
-plot(linspace(0,tmax,nStore)/transitTime, mean(qAEMatrix.^2,1));%+4/kappa/Deltat);
+plot(linspace(0,tmax,nStore)/transitTime, mean((-JyMatrix/kappa).^2,1));%+4/kappa/Deltat);
 hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('q^2');
 
 subplot(3,1,3);
-JySq = mean((qAEMatrix*kappa/rabi).^2,1);
+JySq = mean((JyMatrix).^2,1);
 plot(linspace(0,tmax,nStore)/transitTime, JySq);
 xlabel('t/T','FontSize', 20);
 ylabel('q^2');
@@ -133,16 +133,16 @@ pause;
 % Plot spinSpinCorAve.
 figure(6);
 set(gca,'FontSize',20);
-subplot(2,1,1);
+% subplot(2,1,1);
 plot(linspace(0,tmax,nStore)/transitTime,spinSpinCorAve_re);
 axis([0 inf 0 0.15]);
 xlabel('t/T','FontSize', 20);
 ylabel('Re[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
 
-subplot(2,1,2);
-plot(linspace(0,tmax,nStore)/transitTime, spinSpinCorAve_im);
-xlabel('t/T','FontSize', 20);
-ylabel('Im[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
+% subplot(2,1,2);
+% plot(linspace(0,tmax,nStore)/transitTime, spinSpinCorAve_im);
+% xlabel('t/T','FontSize', 20);
+% ylabel('Im[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
 
 ssCorRePrint = mean(spinSpinCorAve_re(n0:end));
 formatSpec = 'The steady-state ssCorRe is %4.4f.\n';
@@ -153,18 +153,18 @@ pause;
 % Plot spinSpinCor.
 figure(7);
 set(gca,'FontSize',20);
-subplot(2,1,1);
+% subplot(2,1,1);
 s_re = reshape(spinSpinCor_re,nBin,nBin,[]);
 [X, Y] = meshgrid(1:nBin, 1:nBin);
 surf(X, Y, s_re(:,:,end),s_re(:,:,end));
 colorbar;
 rotate3d on;
 
-subplot(2,1,2);
-s_im = reshape(spinSpinCor_im,nBin,nBin,[]);
-surf(X, Y, s_im(:,:,end),s_im(:,:,end));
-colorbar;
-rotate3d on;
+% subplot(2,1,2);
+% s_im = reshape(spinSpinCor_im,nBin,nBin,[]);
+% surf(X, Y, s_im(:,:,end),s_im(:,:,end));
+% colorbar;
+% rotate3d on;
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
@@ -197,6 +197,30 @@ subplot(2,1,2);
 plot(linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2)),imagG1Pos);
 xlabel('t/T','FontSize', 20);
 ylabel('Im[g^{(1)}(t)]');
+
+fprintf('Program paused. Press enter to continue.\n');
+pause;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%check <jz q q(0)> = <jz><q q(0)> 
+
+jz = JzMatrix(:,n0:nStore);
+left = mean(jz.*q.*q(:,1),1);
+right = mean(jz,1).*mean(q(:,1).*q,1)+mean(q,1).*mean(q(:,1).*jz,1)...
+    +mean(q(:,1),1).*mean(jz.*q)-2*mean(jz,1).*mean(q,1).*mean(q(:,1),1);
+
+leftSave = [linspace(0,(tmax-t0)/transitTime,size(left,2));left]';
+save left.dat leftSave -ascii;
+
+figure(13);
+subplot(2,1,1);
+hold on;
+plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),left);
+plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),right);
+hold off;
+xlabel('t/T','FontSize', 20);
+subplot(2,1,2);
+plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),(left-right)./left);
+xlabel('t/T','FontSize', 20);
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;

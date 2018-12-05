@@ -64,7 +64,7 @@ typedef struct
   MatrixXd p;        //p = - I (a^dagger - a). Dim: nTrajectory*(nTimeStep+1)
   // MatrixXd Jx;      //Jx = \sum \cos{kz_j}s_j^x Dim: nTrajectory*(nTimeStep+1)
   MatrixXd Jy;      //Jy = \sum \cos{kz_j}s_j^y Dim: nTrajectory*(nTimeStep+1)
-  // MatrixXd Jz;      //Jz = \sum \cos{kz_j}s_j^z Dim: nTrajectory*(nTimeStep+1)
+  MatrixXd Jz;      //Jz = \sum \cos{kz_j}s_j^z Dim: nTrajectory*(nTimeStep+1)
 } Cavity;
 
 //Ensemble of the system
@@ -142,7 +142,7 @@ typedef struct Observables
   MatrixXd pMatrix;
   // MatrixXd JxMatrix;
   MatrixXd JyMatrix;
-  // MatrixXd JzMatrix;
+  MatrixXd JzMatrix;
   // MatrixXd sxMatrix;
   // MatrixXd syMatrix;
   MatrixXd szMatrix;
@@ -160,7 +160,7 @@ typedef struct Observables
     pMatrix = MatrixXd(nTrajectory, nStore);
     // JxMatrix = MatrixXd(nTrajectory, nStore);
     JyMatrix = MatrixXd(nTrajectory, nStore);
-    // JzMatrix = MatrixXd(nTrajectory, nStore);
+    JzMatrix = MatrixXd(nTrajectory, nStore);
     // sxMatrix = MatrixXd(nBin, nStore);
     // syMatrix = MatrixXd(nBin, nStore);
     szMatrix = MatrixXd(nBin, nStore);
@@ -201,7 +201,7 @@ typedef struct ObservableFiles
                 pMatrix,
                 // JxMatrix, 
                 JyMatrix,
-                // JzMatrix,
+                JzMatrix,
                 spinSpinCorAve_re, 
                 // spinSpinCorAve_im,
                 spinSpinCor_re, 
@@ -221,7 +221,7 @@ typedef struct ObservableFiles
                       pMatrix("pMatrix.dat"),
                       // JxMatrix("JxMatrix.dat"),
                       JyMatrix("JyMatrix.dat"),
-                      // JzMatrix("JzMatrix.dat"),
+                      JzMatrix("JzMatrix.dat"),
                       spinSpinCorAve_re("spinSpinCorAve_re.dat"),
                       // spinSpinCorAve_im("spinSpinCorAve_im.dat"),
                       spinSpinCor_re("spinSpinCor_re.dat"),
@@ -244,7 +244,7 @@ typedef struct ObservableFiles
     pMatrix.close();
     // JxMatrix.close();
     JyMatrix.close();
-    // JzMatrix.close();
+    JzMatrix.close();
     spinSpinCorAve_re.close();
     // spinSpinCorAve_im.close();
     spinSpinCor_re.close();

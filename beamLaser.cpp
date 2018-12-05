@@ -65,7 +65,7 @@ void generateInitialField(Ensemble& ensemble, const Param& param)
   ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
   // ensemble.cavity.Jx.setZero(param.nTrajectory, nTimeStep+1);
   ensemble.cavity.Jy.setZero(param.nTrajectory, nTimeStep+1);
-  // ensemble.cavity.Jz.setZero(param.nTrajectory, nTimeStep+1);
+  ensemble.cavity.Jz.setZero(param.nTrajectory, nTimeStep+1);
 
   //initilize q(t=0) = p(t=0) = 1
   // ensemble.cavity.q.col(0).fill(1.0);
@@ -300,7 +300,7 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
       ensemble.atoms[i].internal.sz[n] = sVar[NVAR*i+2];
       // ensemble.cavity.Jx(n,nStep+1) += rabiEff[i]*sVar[NVAR*i];
       ensemble.cavity.Jy(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+1];
-      // ensemble.cavity.Jz(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+2];
+      ensemble.cavity.Jz(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+2];
     }
     ensemble.cavity.q(n,nStep+1) = sVar[NVAR*nAtom];
     ensemble.cavity.p(n,nStep+1) = sVar[NVAR*nAtom+1];
@@ -347,7 +347,7 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   //JxMatrix, JyMatrix, and JzMatrix
   // observables.JxMatrix.col(s) = ensemble.cavity.Jx.col(nStep);
   observables.JyMatrix.col(s) = ensemble.cavity.Jy.col(nStep);
-  // observables.JzMatrix.col(s) = ensemble.cavity.Jz.col(nStep);
+  observables.JzMatrix.col(s) = ensemble.cavity.Jz.col(nStep);
   
   //Atomic observables//////////////////////////////////////////////////////////////////////////////////
 
@@ -482,7 +482,7 @@ void writeObservables(ObservableFiles& observableFiles,
   observableFiles.pMatrix << observables.pMatrix << std::endl;
   // observableFiles.JxMatrix << observables.JxMatrix << std::endl;
   observableFiles.JyMatrix << observables.JyMatrix << std::endl;
-  // observableFiles.JzMatrix << observables.JzMatrix << std::endl;
+  observableFiles.JzMatrix << observables.JzMatrix << std::endl;
   observableFiles.spinSpinCorAve_re << observables.spinSpinCorAve_re << std::endl;
   // observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
   observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;
