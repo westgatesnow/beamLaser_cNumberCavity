@@ -2,7 +2,7 @@
 
 %Take steadyMultiplier*transitTime as the steady state time. 
 %This is empirical for now. Improve later?
-steadyMultiplier = 15;
+steadyMultiplier = 5;
 
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/tmax*nStore);
@@ -68,10 +68,14 @@ xlabel('t/T','FontSize', 20);
 ylabel('q^2');
 
 subplot(3,1,3);
-plot(linspace(0,tmax,nStore)/transitTime, mean((qAEMatrix*kappa/rabi).^2,1));
+JySq = mean((qAEMatrix*kappa/rabi).^2,1);
+plot(linspace(0,tmax,nStore)/transitTime, JySq);
 xlabel('t/T','FontSize', 20);
 ylabel('q^2');
 
+JySqPrint = mean(JySq(n0:end));
+formatSpec = 'The steady-state JySq is %4.4f. \n';
+fprintf(formatSpec, JySqPrint);
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -140,6 +144,9 @@ plot(linspace(0,tmax,nStore)/transitTime, spinSpinCorAve_im);
 xlabel('t/T','FontSize', 20);
 ylabel('Im[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
 
+ssCorRePrint = mean(spinSpinCorAve_re(n0:end));
+formatSpec = 'The steady-state ssCorRe is %4.4f.\n';
+fprintf(formatSpec, ssCorRePrint);
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

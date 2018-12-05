@@ -62,8 +62,9 @@ typedef struct
 {
   MatrixXd q;        //q = a^dagger + a. Dim: nTrajectory*(nTimeStep+1)
   MatrixXd p;        //p = - I (a^dagger - a). Dim: nTrajectory*(nTimeStep+1)
-  MatrixXd qAE;      //qAE = the expcted adiabatic eliminated value of q = -\sum{g_j/k \sigma_j^y}
-  MatrixXd pAE;      //pAE = the expcted adiabatic eliminated value of p = \sum{g_j/k \sigma_j^y}
+  // MatrixXd Jx;      //Jx = \sum \cos{kz_j}s_j^x Dim: nTrajectory*(nTimeStep+1)
+  MatrixXd Jy;      //Jy = \sum \cos{kz_j}s_j^y Dim: nTrajectory*(nTimeStep+1)
+  // MatrixXd Jz;      //Jz = \sum \cos{kz_j}s_j^z Dim: nTrajectory*(nTimeStep+1)
 } Cavity;
 
 //Ensemble of the system
@@ -139,15 +140,16 @@ typedef struct Observables
   VectorXd inversionAve;
   MatrixXd qMatrix;
   MatrixXd pMatrix;
-  MatrixXd qAEMatrix;
-  MatrixXd pAEMatrix;
-  MatrixXd sxMatrix;
-  MatrixXd syMatrix;
+  // MatrixXd JxMatrix;
+  MatrixXd JyMatrix;
+  // MatrixXd JzMatrix;
+  // MatrixXd sxMatrix;
+  // MatrixXd syMatrix;
   MatrixXd szMatrix;
   VectorXd spinSpinCorAve_re;
-  VectorXd spinSpinCorAve_im;
+  // VectorXd spinSpinCorAve_im;
   MatrixXd spinSpinCor_re;
-  MatrixXd spinSpinCor_im;
+  // MatrixXd spinSpinCor_im;
 
   Observables(const int nStore, const int nTrajectory, const int nBin)
   {
@@ -156,16 +158,17 @@ typedef struct Observables
     inversionAve = VectorXd(nStore);
     qMatrix = MatrixXd(nTrajectory, nStore);
     pMatrix = MatrixXd(nTrajectory, nStore);
-    qAEMatrix = MatrixXd(nTrajectory, nStore);
-    pAEMatrix = MatrixXd(nTrajectory, nStore);
-    sxMatrix = MatrixXd(nBin, nStore);
-    syMatrix = MatrixXd(nBin, nStore);
+    // JxMatrix = MatrixXd(nTrajectory, nStore);
+    JyMatrix = MatrixXd(nTrajectory, nStore);
+    // JzMatrix = MatrixXd(nTrajectory, nStore);
+    // sxMatrix = MatrixXd(nBin, nStore);
+    // syMatrix = MatrixXd(nBin, nStore);
     szMatrix = MatrixXd(nBin, nStore);
     spinSpinCorAve_re = VectorXd(nStore);
-    spinSpinCorAve_im = VectorXd(nStore);
+    // spinSpinCorAve_im = VectorXd(nStore);
     int nBinSquare = nBin * nBin;
     spinSpinCor_re = MatrixXd(nBinSquare, nStore);
-    spinSpinCor_im = MatrixXd(nBinSquare, nStore);
+    // spinSpinCor_im = MatrixXd(nBinSquare, nStore);
   } 
 
 } Observables;
@@ -174,15 +177,15 @@ typedef struct SpinVariables
 {
   //Definition
   //Definition for the average values of sx, sy, and sz as each atom leaves the cavity
-  VectorXd sxFinal;
-  VectorXd syFinal;
+  // VectorXd sxFinal;
+  // VectorXd syFinal;
   VectorXd szFinal;
 
   //Constructor
   SpinVariables(const int m)                                      
   { 
-    sxFinal = VectorXd(m);
-    syFinal = VectorXd(m);
+    // sxFinal = VectorXd(m);
+    // syFinal = VectorXd(m);
     szFinal = VectorXd(m);
   }
 
@@ -196,17 +199,18 @@ typedef struct ObservableFiles
                 inversionAve, 
                 qMatrix, 
                 pMatrix,
-                qAEMatrix, 
-                pAEMatrix,
+                // JxMatrix, 
+                JyMatrix,
+                // JzMatrix,
                 spinSpinCorAve_re, 
-                spinSpinCorAve_im,
+                // spinSpinCorAve_im,
                 spinSpinCor_re, 
-                spinSpinCor_im,
-                sxMatrix,
-                syMatrix,
+                // spinSpinCor_im,
+                // sxMatrix,
+                // syMatrix,
                 szMatrix,
-                sxFinal, 
-                syFinal, 
+                // sxFinal, 
+                // syFinal, 
                 szFinal;
 
   //Constructor              
@@ -215,17 +219,18 @@ typedef struct ObservableFiles
                       inversionAve("inversionAve.dat"),
                       qMatrix("qMatrix.dat"),
                       pMatrix("pMatrix.dat"),
-                      qAEMatrix("qAEMatrix.dat"),
-                      pAEMatrix("pAEMatrix.dat"),
+                      // JxMatrix("JxMatrix.dat"),
+                      JyMatrix("JyMatrix.dat"),
+                      // JzMatrix("JzMatrix.dat"),
                       spinSpinCorAve_re("spinSpinCorAve_re.dat"),
-                      spinSpinCorAve_im("spinSpinCorAve_im.dat"),
+                      // spinSpinCorAve_im("spinSpinCorAve_im.dat"),
                       spinSpinCor_re("spinSpinCor_re.dat"),
-                      spinSpinCor_im("spinSpinCor_im.dat"),
-                      sxMatrix("sxMatrix.dat"),
-                      syMatrix("syMatrix.dat"),
+                      // spinSpinCor_im("spinSpinCor_im.dat"),
+                      // sxMatrix("sxMatrix.dat"),
+                      // syMatrix("syMatrix.dat"),
                       szMatrix("szMatrix.dat"),
-                      sxFinal("sxFinal.dat"),
-                      syFinal("syFinal.dat"),
+                      // sxFinal("sxFinal.dat"),
+                      // syFinal("syFinal.dat"),
                       szFinal("szFinal.dat")
   {}
   
@@ -237,17 +242,18 @@ typedef struct ObservableFiles
     inversionAve.close();
     qMatrix.close();
     pMatrix.close();
-    qAEMatrix.close();
-    pAEMatrix.close();
+    // JxMatrix.close();
+    JyMatrix.close();
+    // JzMatrix.close();
     spinSpinCorAve_re.close();
-    spinSpinCorAve_im.close();
+    // spinSpinCorAve_im.close();
     spinSpinCor_re.close();
-    spinSpinCor_im.close();
-    sxMatrix.close();
-    syMatrix.close();
+    // spinSpinCor_im.close();
+    // sxMatrix.close();
+    // syMatrix.close();
     szMatrix.close();
-    sxFinal.close();
-    syFinal.close();
+    // sxFinal.close();
+    // syFinal.close();
     szFinal.close();
   }
   

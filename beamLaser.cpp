@@ -63,8 +63,10 @@ void generateInitialField(Ensemble& ensemble, const Param& param)
   int nTimeStep = param.tmax/param.dt+0.5;
   ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
   ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
-  ensemble.cavity.qAE.setZero(param.nTrajectory, nTimeStep+1);
-  ensemble.cavity.pAE.setZero(param.nTrajectory, nTimeStep+1);
+  // ensemble.cavity.Jx.setZero(param.nTrajectory, nTimeStep+1);
+  ensemble.cavity.Jy.setZero(param.nTrajectory, nTimeStep+1);
+  // ensemble.cavity.Jz.setZero(param.nTrajectory, nTimeStep+1);
+
   //initilize q(t=0) = p(t=0) = 1
   // ensemble.cavity.q.col(0).fill(1.0);
   // ensemble.cavity.p.col(0).fill(1.0);
@@ -176,8 +178,8 @@ void removeAtomsAtWalls(Ensemble& ensemble, const Param& param, Vector3d& spinVa
     } 
     else {
       nLeaving += 1;
-      spinVar(0) += a->internal.sx.sum();
-      spinVar(1) += a->internal.sy.sum();
+      // spinVar(0) += a->internal.sx.sum();
+      // spinVar(1) += a->internal.sy.sum();
       spinVar(2) += a->internal.sz.sum();
     }
   }
@@ -225,7 +227,7 @@ void getDriftVector(const VectorXd& sVar, VectorXd& drift, const VectorXd& rabiE
     //Get jxEff and jyEff
     jxEff += sVar[NVAR*j]*rabi;
     jyEff += sVar[NVAR*j+1]*rabi;
-    //
+    //Drift terms
     drift[NVAR*j] = rabi/2*sVar[NVAR*nAtom+1]*sVar[NVAR*j+2] - invT2*sVar[NVAR*j];
     drift[NVAR*j+1] = - rabi/2*sVar[NVAR*nAtom]*sVar[NVAR*j+2] - invT2*sVar[NVAR*j+1];
     drift[NVAR*j+2] = rabi/2*(sVar[NVAR*nAtom]*sVar[NVAR*j+1]
@@ -268,7 +270,7 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
   for (int n = 0; n < nTrajectory; n++) {
 
     //Y_n. Notations see "Beam laser/11.1" on ipad pro.
-    VectorXd sVar = VectorXd::Zero(size);;//a vector of spins for all the atoms
+    VectorXd sVar = VectorXd::Zero(size);//a vector of spins for all the atoms
     //effective rabi
     VectorXd rabiEff = VectorXd::Zero(nAtom);
     //get sVar and rabiEff in one loop
@@ -296,8 +298,9 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
       ensemble.atoms[i].internal.sx[n] = sVar[NVAR*i];
       ensemble.atoms[i].internal.sy[n] = sVar[NVAR*i+1];
       ensemble.atoms[i].internal.sz[n] = sVar[NVAR*i+2];
-      ensemble.cavity.qAE(n,nStep+1) -= rabiEff[i]*sVar[NVAR*i+1]/kappa;
-      ensemble.cavity.pAE(n,nStep+1) += rabiEff[i]*sVar[NVAR*i]/kappa;
+      // ensemble.cavity.Jx(n,nStep+1) += rabiEff[i]*sVar[NVAR*i];
+      ensemble.cavity.Jy(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+1];
+      // ensemble.cavity.Jz(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+2];
     }
     ensemble.cavity.q(n,nStep+1) = sVar[NVAR*nAtom];
     ensemble.cavity.p(n,nStep+1) = sVar[NVAR*nAtom+1];
@@ -340,8 +343,11 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   //qMatrix and pMatrix
   observables.qMatrix.col(s) = ensemble.cavity.q.col(nStep);
   observables.pMatrix.col(s) = ensemble.cavity.p.col(nStep);
-  observables.qAEMatrix.col(s) = ensemble.cavity.qAE.col(nStep);
-  observables.pAEMatrix.col(s) = ensemble.cavity.pAE.col(nStep);
+
+  //JxMatrix, JyMatrix, and JzMatrix
+  // observables.JxMatrix.col(s) = ensemble.cavity.Jx.col(nStep);
+  observables.JyMatrix.col(s) = ensemble.cavity.Jy.col(nStep);
+  // observables.JzMatrix.col(s) = ensemble.cavity.Jz.col(nStep);
   
   //Atomic observables//////////////////////////////////////////////////////////////////////////////////
 
@@ -349,9 +355,10 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   observables.nAtom(s) = nAtom;
   
 
-  //For quick runs, COMMENT THESE OUT///////////////////////////////////////////////////////////////////////////////////////
+  //For quick runs, COMMENT THESE OUT////////////////////////////////////////////////////////////////////
   //internal matrices and bin indices
-  MatrixXd SX, SY, SZ; //Note: cannot do Matrix SX, SY, SZ = MatrixXd::Zero(nAtom, nTrajectory); have to be this way
+  MatrixXd SX, SY, SZ;
+  //Note: cannot do Matrix SX, SY, SZ = MatrixXd::Zero(nAtom, nTrajectory); have to be this way
   SX = MatrixXd::Zero(nAtom, nTrajectory);
   SY = MatrixXd::Zero(nAtom, nTrajectory);
   SZ = MatrixXd::Zero(nAtom, nTrajectory);
@@ -360,7 +367,8 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   double binSize = param.yWall*2/nBin;
   for (int i = 0; i < nAtom; i++) {
     //internal indices
-    SX.row(nAtom-i-1) = ensemble.atoms[i].internal.sx;//Put atoms in SX in such order that new atoms are in the top rows.
+    //Put atoms in SX in such order that new atoms are in the top rows.
+    SX.row(nAtom-i-1) = ensemble.atoms[i].internal.sx;
     SY.row(nAtom-i-1) = ensemble.atoms[i].internal.sy;
     SZ.row(nAtom-i-1) = ensemble.atoms[i].internal.sz;
     //bin indices
@@ -378,8 +386,8 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   
   //sxMatrix, syMatrix, szMatrix
   for (int i = 0; i < nBin; i++) {
-    observables.sxMatrix(i, s) = SX.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
-    observables.syMatrix(i, s) = SY.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    // observables.sxMatrix(i, s) = SX.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    // observables.syMatrix(i, s) = SY.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
     observables.szMatrix(i, s) = SZ.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
   }
 
@@ -387,12 +395,12 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   MatrixXd SX2, SY2, SXSY, SYSX = MatrixXd::Zero(nAtom, nAtom);
   SX2 = SX*SX.transpose();
   SY2 = SY*SY.transpose();
-  SXSY = SX*SY.transpose();
-  SYSX = SY*SX.transpose();
+  // SXSY = SX*SY.transpose();
+  // SYSX = SY*SX.transpose();
   observables.spinSpinCorAve_re(s) = 
     0.25*((SX2.sum()-SX2.diagonal().sum())+(SY2.sum()-SY2.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
-  observables.spinSpinCorAve_im(s) = 
-    0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
+  // observables.spinSpinCorAve_im(s) = 
+  //   0.25*((SYSX.sum()-SYSX.diagonal().sum())-(SXSY.sum()-SXSY.diagonal().sum()))/nAtom/(nAtom-1)/nTrajectory;
 
   //spinSpinCor between y = y1 and y = y2
   for (int i = 0; i < nBin; i++) { //Can be optimized to half diagonal, but testing on symmetry first???
@@ -403,35 +411,37 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
     MatrixXd SX_1sq, SY_1sq, SY_1_SX_1, SX_1_SY_1;
     SX_1sq = SX_1*SX_1.transpose();
     SY_1sq = SY_1*SY_1.transpose();
-    SY_1_SX_1 = SY_1*SX_1.transpose();
-    SX_1_SY_1 = SX_1*SY_1.transpose();
+    // SY_1_SX_1 = SY_1*SX_1.transpose();
+    // SX_1_SY_1 = SX_1*SY_1.transpose();
     observables.spinSpinCor_re(i*nBin+i, s) = 
       0.25*((SX_1sq.sum()-SX_1sq.diagonal().sum())
            +(SY_1sq.sum()-SY_1sq.diagonal().sum()))/binIndex[i]/(binIndex[i]-1)/nTrajectory;
-    observables.spinSpinCor_im(i*nBin+i, s) = 
-      0.25*((SY_1_SX_1.sum()-SY_1_SX_1.diagonal().sum())
-           +(SX_1_SY_1.sum()-SX_1_SY_1.diagonal().sum()))/binIndex[i]/(binIndex[i]-1)/nTrajectory;
+    // observables.spinSpinCor_im(i*nBin+i, s) = 
+    //   0.25*((SY_1_SX_1.sum()-SY_1_SX_1.diagonal().sum())
+    //        +(SX_1_SY_1.sum()-SX_1_SY_1.diagonal().sum()))/binIndex[i]/(binIndex[i]-1)/nTrajectory;
     //off-diagonal terms
     for (int j = i+1; j < nBin; j++) {
       SX_2 = SX.middleRows(binSum[j], binIndex[j]);
       SY_2 = SY.middleRows(binSum[j], binIndex[j]);
       observables.spinSpinCor_re(i*nBin+j, s) = 
-                    0.25*((SX_1*SX_2.transpose()).sum()+(SY_1*SY_2.transpose()).sum())/binIndex[i]/binIndex[j]/nTrajectory;
-      observables.spinSpinCor_im(i*nBin+j, s) = 
-                    0.25*((SY_1*SX_2.transpose()).sum()-(SX_1*SY_2.transpose()).sum())/binIndex[i]/binIndex[j]/nTrajectory;
+                    0.25*((SX_1*SX_2.transpose()).sum()+(SY_1*SY_2.transpose()).sum())
+                    /binIndex[i]/binIndex[j]/nTrajectory;
+      // observables.spinSpinCor_im(i*nBin+j, s) = 
+      //               0.25*((SY_1*SX_2.transpose()).sum()-(SX_1*SY_2.transpose()).sum())
+      //               /binIndex[i]/binIndex[j]/nTrajectory;
       //The other half diagonal terms
       observables.spinSpinCor_re(j*nBin+i, s) = observables.spinSpinCor_re(i*nBin+j, s);
-      observables.spinSpinCor_im(j*nBin+i, s) = observables.spinSpinCor_im(i*nBin+j, s);
+      // observables.spinSpinCor_im(j*nBin+i, s) = observables.spinSpinCor_im(i*nBin+j, s);
     }
   }
-  //For quick runs, COMMENT THESE OUT///////////////////////////////////////////////////////////////////////////////////////
+  //For quick runs, COMMENT THESE OUT/////////////////////////////////////////////////////////////////////
 }
 
 void storeSpinVariables(SpinVariables& spinVariables, const Ensemble& ensemble, 
   const Param& param, int n, Vector3d& spinVar)
 {
-  spinVariables.sxFinal(n) = spinVar(0);
-  spinVariables.syFinal(n) = spinVar(1);
+  // spinVariables.sxFinal(n) = spinVar(0);
+  // spinVariables.syFinal(n) = spinVar(1);
   spinVariables.szFinal(n) = spinVar(2);
 }
 
@@ -470,17 +480,18 @@ void writeObservables(ObservableFiles& observableFiles,
   observableFiles.inversionAve << observables.inversionAve << std::endl;
   observableFiles.qMatrix << observables.qMatrix << std::endl;
   observableFiles.pMatrix << observables.pMatrix << std::endl;
-  observableFiles.qAEMatrix << observables.qAEMatrix << std::endl;
-  observableFiles.pAEMatrix << observables.pAEMatrix << std::endl;
+  // observableFiles.JxMatrix << observables.JxMatrix << std::endl;
+  observableFiles.JyMatrix << observables.JyMatrix << std::endl;
+  // observableFiles.JzMatrix << observables.JzMatrix << std::endl;
   observableFiles.spinSpinCorAve_re << observables.spinSpinCorAve_re << std::endl;
-  observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
+  // observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
   observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;
-  observableFiles.spinSpinCor_im << observables.spinSpinCor_im << std::endl;
-  observableFiles.sxMatrix << observables.sxMatrix << std::endl;
-  observableFiles.syMatrix << observables.syMatrix << std::endl;
+  // observableFiles.spinSpinCor_im << observables.spinSpinCor_im << std::endl;
+  // observableFiles.sxMatrix << observables.sxMatrix << std::endl;
+  // observableFiles.syMatrix << observables.syMatrix << std::endl;
   observableFiles.szMatrix << observables.szMatrix << std::endl;   
-  observableFiles.sxFinal << spinVariables.sxFinal << std::endl;
-  observableFiles.syFinal << spinVariables.syFinal << std::endl;
+  // observableFiles.sxFinal << spinVariables.sxFinal << std::endl;
+  // observableFiles.syFinal << spinVariables.syFinal << std::endl;
   observableFiles.szFinal << spinVariables.szFinal << std::endl;  
 }
 

@@ -2,14 +2,14 @@
 #for the beam laser using cNumberCavity theory.
 
 iFile=input.txt
-nMax=8
-init=21
-interval=10
+nMax=100
+init=1.0
+interval=1.0
 
 for ((i=0; i<nMax; i+=1)) 
 do
 
-kappa=$(($init+$i*$interval))
+kappa=$(echo "$init + $interval * $i" | bc -l)
 
 #$(echo "10+$i*10" | bc -l);
 
@@ -25,10 +25,10 @@ deltaPz 0
 transitTime 1.0
 density 100
 rabi 3
-kappa 1.0
+kappa 0.0
 invT2 0
 controlType k
-name dt0.02_dZ0_dPz0_tau1.0__nBin20_dens100_g3_k${kappa}" > $iFile
+name dt0.01_dZ0_dPz0_tau1.0_nBin20_dens100_g3_k${kappa}" > $iFile
 
 ./beamLaser -f $iFile
 
