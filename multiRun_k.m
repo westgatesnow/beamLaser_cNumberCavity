@@ -150,6 +150,12 @@ ylabel('\Delta \nu/\Gamma_c','FontSize', 20);
 %for 3-D plots
 %figure(13)
 
+%plot linewidth v.s. jzAve
+figure(14);
+set(gca,'FontSize',20);
+h14 = plot(inversionAveSS_mean, linewidth);
+set(get(h14,'Parent'), 'YScale', 'log');
+
 fprintf('Linewidth shown. Press enter to see next.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

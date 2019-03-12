@@ -5,7 +5,7 @@
 %PREPARATIONS
 
 %set the steadyMultiplier
-steadyMultiplier = 4;%This value can be varied if needed. 5 is empirical.
+steadyMultiplier = 5;%This value can be varied if needed. 5 is empirical.
 t0 = steadyMultiplier*transitTime;
 n0_nStore = ceil(t0/tmax*nStore);
 n0_nTimeStep = ceil(t0/tmax*nTimeStep);
@@ -210,19 +210,16 @@ h31 = errorbar(tauList, inversionAveSS_mean_want, inversionAveSS_std_want);
 hold on;
 %used to logplot with xbar
 % set(get(h31,'Parent'), 'XScale', 'log');
-ida = sqrt(intensitySS_mean_want');
-plot(tauList, sinc(ida.*tauList));
+ida = rabi
+plot(tauList, sinc(
 xlabel('\tau/\Gamma_c^{-1}','FontSize', 20);
 ylabel('\langle j^z \rangle_e');
 hold off;
 subplot(2,1,2);
 h32 = errorbar(tauList, szFinalSS_mean_want, szFinalSS_std_want);
-hold on;
 % set(get(h32,'Parent'), 'XScale', 'log');
-plot(tauList,cos(ida.*tauList).*exp(-fMatrix_want'/2.*tauList));
 xlabel('\tau/\Gamma_c^{-1}','FontSize', 20);
 ylabel('\langle j^z_{out} \rangle_e');
-hold off;
 
 fprintf('Press enter to see next.\n');
 pause;
@@ -234,7 +231,6 @@ plot(tauList,fMatrix_want);
 hold on;
 % semilogx(tauList,fMatrix_want);
 plot(tauList,nAtomAve_want*inversionAveSS_mean_want/2);
-plot(tauList,ida.*cot(ida.*tauList/2));
 xlabel('\tau/\Gamma_c^{-1}','FontSize', 20);
 ylabel('\Delta \nu/\Gamma_c','FontSize', 20);
 hold off;

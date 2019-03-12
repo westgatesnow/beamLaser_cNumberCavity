@@ -14,7 +14,7 @@ nTimeStep = tmax/dt;
 
 %kappa
 %kappaList1 = 0.0 ~ 100.0;
-nMaxKappa = 30;%
+nMaxKappa = 40;%
 initKappa = -1.0;%
 intervalKappa = 0.1;
 kappaList = (10.^(initKappa+(0:nMaxKappa-1)*intervalKappa))';

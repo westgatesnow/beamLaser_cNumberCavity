@@ -5,11 +5,11 @@
 #using cNumberCavity theory.
 
 iFile=input.txt
-nMax1=10
-nMax2=10
-init_tau=0.1
-interval_tau=0.1
-init_nAtom=50
+nMax1=21
+nMax2=1
+init_tau=0.9
+interval_tau=0.01
+init_nAtom=100
 interval_nAtom=50
 
 for ((i=0; i<nMax1; i+=1)) do 
@@ -26,15 +26,15 @@ for ((i=0; i<nMax1; i+=1)) do
       nBin 20
       yWall 1.0
       lambda 1.0
-      deltaZ 0.5
-      deltaPz 1.0
+      deltaZ 0
+      deltaPz 0
       transitTime $tau
       density $dens
       rabi 3
       kappa 90
       invT2 0
-      controlType contour_dpz1.0
-      name pois_dt0.005_dZ0.5_dPz1.0_tau0${tau}_nBin20_nAtom${nAtom}_g3_k90_yWall1.0" > $iFile
+      controlType contour_dpz0
+      name pois_dt0.005_dZ0_dPz0_tau0${tau}_nBin20_nAtom${nAtom}_g3_k90_yWall1.0" > $iFile
     else
       printf "dt 0.005
       tmax 20
@@ -43,15 +43,15 @@ for ((i=0; i<nMax1; i+=1)) do
       nBin 20
       yWall 1.0
       lambda 1.0
-      deltaZ 0.5
-      deltaPz 1.0
+      deltaZ 0
+      deltaPz 0
       transitTime $tau
       density $dens
       rabi 3
       kappa 90
       invT2 0
-      controlType contour_dpz1.0
-      name pois_dt0.005_dZ0.5_dPz1.0_tau${tau}_nBin20_nAtom${nAtom}_g3_k90_yWall1.0" > $iFile
+      controlType contour_dpz0
+      name pois_dt0.005_dZ0_dPz0_tau${tau}_nBin20_nAtom${nAtom}_g3_k90_yWall1.0" > $iFile
     fi
     ./beamLaser -f $iFile
   done

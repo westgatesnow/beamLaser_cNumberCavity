@@ -128,6 +128,7 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, int& m)
   ///////////////////////////////////////////////////////////////////////////
   // Uniform atom generation
   ///////////////////////////////////////////////////////////////////////////
+  // std::cout << "Uniform generation turned ON." << std::endl << std::endl;
   if (dN >= 1) {
     nAtom = dN;     
 
@@ -151,13 +152,14 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, int& m)
     m++;
   }
   else {
-    std::cout << "Bad dN in input file" << std::endl;
+    std::cout << "Bad dN in input file." << std::endl;
     exit(-1);
   }
 
   ///////////////////////////////////////////////////////////////////////////
   //Poissonian atom generation
   ///////////////////////////////////////////////////////////////////////////
+  //// std::cout << "Poissionian generation turned ON." << std::endl << std::endl;
   // nAtom = rng.get_poissonian_int(dN);
   // for (int n = 0; n < nAtom; n++) {
   //     Atom newAtom; //Create a new atom

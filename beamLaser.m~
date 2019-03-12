@@ -1,16 +1,26 @@
 %cNumberCavity
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%PREPARATIONS
+nTimeStep = tmax/dt;
+tList = linspace(0,tmax,nStore)/transitTime;%in units of transitTime
+tScatterList = linspace(0,tmax,nTimeStep)/transitTime;%in units of transitTime
+
 %Take steadyMultiplier*transitTime as the steady state time. 
 %This is empirical for now. Improve later?
 steadyMultiplier = 5;
 
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/tmax*nStore);
+
+%Solve the analytical solution
+aValue = getAValue(transitTime,kappa,rabi,density);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Plot nAtom.
 figure(1);
 set(gca,'FontSize',20);
-plot(linspace(0,tmax,nStore)/transitTime, nAtom);
+plot(tList, nAtom);
 xlabel('t/T','FontSize', 20);
 ylabel('N(t)');
 
@@ -24,14 +34,17 @@ pause;
 figure(2);
 set(gca,'FontSize',20);
 subplot(2,1,1);
-plot(linspace(0,tmax,nStore)/transitTime, intensity);
+hold on;
+plot(tList, intensity);
+plot(tList, kappa*aValue^2*ones(1,nStore));
 xlabel('t/T','FontSize', 20);
 ylabel('\kappa \langle a^+(t) a(t) \rangle');
 
 subplot(2,1,2);
 hold on;
-scatter(linspace(0,tmax,nTimeStep)/transitTime, szFinal, 5, 'filled');
-plot(linspace(0,tmax,nStore)/transitTime, 1-2*intensity/density);
+scatter(tScatterList, szFinal, 5, 'filled');
+plot(tList, 1-2*intensity/density);
+plot(tList, 1-2*kappa*aValue^2*ones(1,nStore)/density);
 hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('\langle j^z(t) \rangle_o');
@@ -48,7 +61,7 @@ figure(12);
 %q and qAE
 
 set(gca,'FontSize',20);
-subplot(3,1,1);
+subplot(2,1,1);
 hold on;
 plot(linspace(0,tmax,nStore)/transitTime, mean(qMatrix,1));
 plot(linspace(0,tmax,nStore)/transitTime, mean(-JyMatrix/kappa,1));
@@ -59,7 +72,7 @@ ylabel('q');
 Deltat=0;
 %Deltat defined above is impirical and used to acount for the right Delta t
 %that should used for the adiabatic elimination
-subplot(3,1,2);
+subplot(2,1,2);
 hold on;
 plot(linspace(0,tmax,nStore)/transitTime, mean(qMatrix.^2,1));
 plot(linspace(0,tmax,nStore)/transitTime, mean((-JyMatrix/kappa).^2,1));%+4/kappa/Deltat);
@@ -67,26 +80,26 @@ hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('q^2');
 
-subplot(3,1,3);
-JySq = mean((JyMatrix).^2,1);
-plot(linspace(0,tmax,nStore)/transitTime, JySq);
-xlabel('t/T','FontSize', 20);
-ylabel('q^2');
+% subplot(3,1,3);
+% JySq = mean((JyMatrix).^2,1);
+% plot(linspace(0,tmax,nStore)/transitTime, JySq);
+% xlabel('t/T','FontSize', 20);
+% ylabel('q^2');
+% JySqPrint = mean(JySq(n0:end));
+% formatSpec = 'The steady-state JySq is %4.4f. \n';
+% fprintf(formatSpec, JySqPrint);
 
-JySqPrint = mean(JySq(n0:end));
-formatSpec = 'The steady-state JySq is %4.4f. \n';
-fprintf(formatSpec, JySqPrint);
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Plot sx and sy final.
+% % Plot sx and sy final.
 % figure(3);
 % 
 % subplot(2,1,1);
 % scatter(linspace(0,tmax,nTimeStep)/transitTime, sxFinal, 5, 'filled');
 % xlabel('t/T','FontSize', 20);
 % ylabel('\langle j^x(t)\rangle');
-% 
+%
 % subplot(2,1,2);
 % scatter(linspace(0,tmax,nTimeStep)/transitTime, syFinal, 5, 'filled');
 % xlabel('t/T','FontSize', 20);
@@ -99,12 +112,17 @@ pause;
 figure(4);
 
 subplot(2,1,1);
-scatter(linspace(0,tmax,nStore)/transitTime, inversionAve, 5, 'filled');
+hold on;
+plot(tList, inversionAve);%, 5, 'filled');
+plot(tList, sinc(rabi*aValue*transitTime/pi)*ones(1,nStore));%sinc has pi
+hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('\langle j^z(t)\rangle');
 
 subplot(2,1,2);
+hold on;
 plot(1:nBin, szMatrix(:,end));%, 5, 'filled');
+plot(1:nBin, cos(rabi*aValue*transitTime*(1:nBin)/nBin));
 xlabel('nBin','FontSize', 20);
 ylabel('\langle j^z(t) \rangle');
 
@@ -134,7 +152,9 @@ pause;
 figure(6);
 set(gca,'FontSize',20);
 % subplot(2,1,1);
-plot(linspace(0,tmax,nStore)/transitTime,spinSpinCorAve_re);
+hold on;
+plot(tList,spinSpinCorAve_re);
+plot(tList,1/4*sinc(rabi*transitTime*aValue/pi/2)^2*ones(1,nStore));
 axis([0 inf 0 0.15]);
 xlabel('t/T','FontSize', 20);
 ylabel('Re[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
@@ -153,8 +173,15 @@ pause;
 % Plot spinSpinCor.
 figure(7);
 set(gca,'FontSize',20);
-% subplot(2,1,1);
+subplot(2,1,1);
 s_re = reshape(spinSpinCor_re,nBin,nBin,[]);
+[X, Y] = meshgrid(1:nBin, 1:nBin);
+surf(X, Y, s_re(:,:,end),s_re(:,:,end));
+colorbar;
+rotate3d on;
+
+subplot(2,1,2);
+s_re_anaytical = 1/4*sin(rabi*aValue*tau*X/nBin)*sin(rabi*aValue*Y);
 [X, Y] = meshgrid(1:nBin, 1:nBin);
 surf(X, Y, s_re(:,:,end),s_re(:,:,end));
 colorbar;
@@ -201,7 +228,7 @@ ylabel('Im[g^{(1)}(t)]');
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%check <jzjyjy(0)> = <jz><jyjy(0)> 
+%check <jz q q(0)> = <jz><q q(0)> 
 
 jz = JzMatrix(:,n0:nStore);
 left = mean(jz.*q.*q(:,1),1);

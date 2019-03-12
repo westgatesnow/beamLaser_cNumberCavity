@@ -31,8 +31,6 @@ szFinal = load('szFinal.dat');
 % syMatrix = load('syMatrix.dat');
 szMatrix = load('szMatrix.dat');
 
-nTimeStep = tmax/dt;
-
 %Add the previous directory into path
 addpath ~/Desktop/codes/beamLaser_Proj/cNumberCavity/;
 addpath ~/Desktop/codes/beamLaser_Proj/common/;
