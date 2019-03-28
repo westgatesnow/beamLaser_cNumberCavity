@@ -8,7 +8,7 @@ tScatterList = linspace(0,tmax,nTimeStep)/transitTime;%in units of transitTime
 
 %Take steadyMultiplier*transitTime as the steady state time. 
 %This is empirical for now. Improve later?
-steadyMultiplier = 5;
+steadyMultiplier = 10;
 
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/tmax*nStore);
@@ -20,7 +20,10 @@ aValue = getAValue(transitTime,kappa,rabi,density);
 %Plot nAtom.
 figure(1);
 set(gca,'FontSize',20);
+hold on;
 plot(tList, nAtom);
+plot(tList, density*transitTime*ones(1,nStore));
+hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('N(t)');
 
@@ -37,6 +40,7 @@ subplot(2,1,1);
 hold on;
 plot(tList, intensity);
 plot(tList, kappa*aValue^2*ones(1,nStore));
+hold off;
 xlabel('t/T','FontSize', 20);
 ylabel('\kappa \langle a^+(t) a(t) \rangle');
 
@@ -123,6 +127,7 @@ subplot(2,1,2);
 hold on;
 plot(1:nBin, szMatrix(:,end));%, 5, 'filled');
 plot(1:nBin, cos(rabi*aValue*transitTime*(1:nBin)/nBin));
+hold off;
 xlabel('nBin','FontSize', 20);
 ylabel('\langle j^z(t) \rangle');
 
@@ -155,6 +160,7 @@ set(gca,'FontSize',20);
 hold on;
 plot(tList,spinSpinCorAve_re);
 plot(tList,1/4*sinc(rabi*transitTime*aValue/pi/2)^2*ones(1,nStore));
+hold off;
 axis([0 inf 0 0.15]);
 xlabel('t/T','FontSize', 20);
 ylabel('Re[\langle \sigma^+_i(t) \sigma^-_j(t) \rangle]');
@@ -204,6 +210,37 @@ pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %g(1)function.
 
+% step = 50;
+% nStep = (nStore-n0)/step;
+% realG1Pos = zeros(1,step+1);
+% imagG1Pos = zeros(1,step+1);
+% left = zeros(1,step+1);
+% right = zeros(1,step+1);
+% ratioLeft = zeros(1,step+1);
+% ratioRight = zeros(1,step+1);
+% for i=1:nStep
+%     q = qMatrix(:,n0+step*(i-1):n0+step*i);
+%     p = pMatrix(:,n0+step*(i-1):n0+step*i);
+%     %dim of g1 function vector
+%     m = size(q,2);
+%     realG1Pos = realG1Pos + (q(:,1)'*q+p(:,1)'*p)/nTrajectory/4;
+%     imagG1Pos = imagG1Pos + (p(:,1)'*q-q(:,1)'*p)/nTrajectory/4;
+%     
+%     jz = JzMatrix(:,n0+step*(i-1):n0+step*i);
+%     left = left + mean(jz.*q.*q(:,1),1);
+%     right = right + mean(jz,1).*mean(q(:,1).*q,1)+mean(q,1).*mean(q(:,1).*jz,1)...
+%         +mean(q(:,1),1).*mean(jz.*q)-2*mean(jz,1).*mean(q,1).*mean(q(:,1),1);
+% 
+%     ratioLeft = ratioLeft + mean(jz.*q.*q(:,1),1)./(mean(q(:,1).*q,1));
+%     ratioRight = ratioRight + (nAtomPrint-1)/nAtomPrint*mean(jz,1)-1;
+% end
+% realG1Pos = realG1Pos/nStep;
+% imagG1Pos = imagG1Pos/nStep;
+% left = left/nStep;
+% right = right/nStep;
+% ratioLeft = ratioLeft/nStep;
+% ratioRight = ratioRight/nStep;
+
 q = qMatrix(:,n0:nStore);
 p = pMatrix(:,n0:nStore);
 
@@ -218,37 +255,45 @@ save realG1.dat realG1 -ascii;
 
 figure(8);
 subplot(2,1,1);
-plot(linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2)),realG1Pos);
+plot(linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2)),realG1Pos)
+% plot(linspace(0,tmax/nStore*step/transitTime,size(realG1Pos,2)),realG1Pos);
 xlabel('t/T','FontSize', 20);
 ylabel('Re[g^{(1)}(t)]');
 subplot(2,1,2);
-plot(linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2)),imagG1Pos);
+plot(linspace(0,(tmax-t0)/transitTime,size(realG1Pos,2)),imagG1Pos)
+% plot(linspace(0,tmax/nStore*step/transitTime,size(realG1Pos,2)),imagG1Pos);
 xlabel('t/T','FontSize', 20);
 ylabel('Im[g^{(1)}(t)]');
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%check <jz q q(0)> = <jz><q q(0)> 
-
+% check <jz q q(0)> = <jz><q q(0)> 
+% 
 jz = JzMatrix(:,n0:nStore);
 left = mean(jz.*q.*q(:,1),1);
 right = mean(jz,1).*mean(q(:,1).*q,1)+mean(q,1).*mean(q(:,1).*jz,1)...
     +mean(q(:,1),1).*mean(jz.*q)-2*mean(jz,1).*mean(q,1).*mean(q(:,1),1);
 
+ratioLeft = left./(mean(q(:,1).*q,1));
+ratioRight = (nAtomPrint-1)/nAtomPrint*mean(jz,1)-1;
+
 leftSave = [linspace(0,(tmax-t0)/transitTime,size(left,2));left]';
 save left.dat leftSave -ascii;
 
-figure(13);
-subplot(2,1,1);
-hold on;
-plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),left);
-plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),right);
-hold off;
-xlabel('t/T','FontSize', 20);
-subplot(2,1,2);
-plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),(left-right)./left);
-xlabel('t/T','FontSize', 20);
+% figure(13);
+% subplot(2,1,1);
+% hold on;
+% plot(linspace(0,tmax/nStore*step/transitTime,size(left,2)),left);
+% plot(linspace(0,tmax/nStore*step/transitTime,size(left,2)),right);
+% hold off;
+% xlabel('t/T','FontSize', 20);
+% subplot(2,1,2);
+% hold on;
+% plot(linspace(0,tmax/nStore*step/transitTime,size(left,2)),ratioLeft);
+% plot(linspace(0,tmax/nStore*step/transitTime,size(left,2)),ratioRight);
+% hold off;
+% xlabel('t/T','FontSize', 20);
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;

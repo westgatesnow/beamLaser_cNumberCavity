@@ -30,9 +30,9 @@ gc = rabi^2/kappa;
 % tauList = [tauList1,tauList2];
 %Can use uniform distri in log scale??????
 
-nMaxTau = 20;%
-initTau = 0.1;%
-intervalTau = 0.1;
+nMaxTau = 21;%
+initTau = 0.9;%
+intervalTau = 0.01;
 tauList = ((initTau+(0:nMaxTau-1)*intervalTau)*gc);%dim = 1*nMaxTau
 
 %nAtomAve
@@ -63,7 +63,7 @@ for j = 1:nMaxNAtom
         tau = initTau+intervalTau*(i-1);
         nAtomAve = initNAtom+intervalNAtom*(j-1);
         filename = ['pois_dt0.005_dZ0_dPz0_tau', ...
-            num2str(tau,'%.1f'), '_nBin20_nAtom',num2str(nAtomAve),'_g3_k90_yWall1.0', ];
+            num2str(tau,'%.2f'), '_nBin20_nAtom',num2str(nAtomAve),'_g3_k90_yWall1.0', ];
         cd(filename);
         %Load data.
         nAtom(i,j,:) = load('nAtom.dat');

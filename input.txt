@@ -1,16 +1,17 @@
 dt 0.005
-      tmax 20
-      nStore 1000
-      nTrajectory 1000
-      nBin 20
-      yWall 1.0
-      lambda 1.0
-      deltaZ 0
-      deltaPz 0
-      transitTime .1
-      density 1000.00000000000000000000
-      rabi 3
-      kappa 90
-      invT2 0
-      controlType contour_dpz0
-      name pois_dt0.005_dZ0.5_dPz1.0_tau0.1_nBin20_nAtom100_g3_k90_yWall1.0
+tmax 20
+nStore 1000
+nTrajectory 1000
+nBin 50
+yWall 1.0
+lambda 1.0
+deltaZ 0
+deltaPz 0
+transitTime 1.0
+density 100
+rabi 3
+kappa 90
+invT2 0
+pois no
+controlType dens100
+name dt0.005_dZ0_dPz0_tau1.0_nBin50_dens100_g3_k90_yWall1.0

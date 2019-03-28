@@ -46,6 +46,8 @@ void getParam(const char* filename, Param *param)
       configInput >> param->kappa;
     else if (dummy.compare("invT2") == 0)
       configInput >> param->invT2;
+    else if (dummy.compare("pois") == 0)
+      configInput >> param->pois;    
     else if (dummy.compare("controlType") == 0)
       configInput >> param->controlType;    
     else if (dummy.compare("name") == 0)
@@ -120,7 +122,7 @@ void generateInternalState(Atom& newAtom, const Param& param)
   newAtom.internal = newInternal;
 }
 
-void addAtomsFromSource(Ensemble& ensemble, const Param& param, int& m)
+void addAtomsFromVanillaSource(Ensemble& ensemble, const Param& param, int& m)
 {
   int nAtom;
   const double dN = param.density*param.dt;
@@ -155,20 +157,24 @@ void addAtomsFromSource(Ensemble& ensemble, const Param& param, int& m)
     std::cout << "Bad dN in input file." << std::endl;
     exit(-1);
   }
-
-  ///////////////////////////////////////////////////////////////////////////
+}
+  
+void addAtomsFromPoissonianSource(Ensemble& ensemble, const Param& param, int& m)
+{
+  int nAtom;
+  const double dN = param.density*param.dt;
+///////////////////////////////////////////////////////////////////////////
   //Poissonian atom generation
   ///////////////////////////////////////////////////////////////////////////
   //// std::cout << "Poissionian generation turned ON." << std::endl << std::endl;
-  // nAtom = rng.get_poissonian_int(dN);
-  // for (int n = 0; n < nAtom; n++) {
-  //     Atom newAtom; //Create a new atom
-  //     generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
-  //     generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
-  //     ensemble.atoms.push_back(newAtom);
-  // }
+  nAtom = rng.get_poissonian_int(dN);
+  for (int n = 0; n < nAtom; n++) {
+      Atom newAtom; //Create a new atom
+      generateExternalState(newAtom, param);    //For each atom, generate its own x and p;
+      generateInternalState(newAtom, param);           //For each atom, generate its sx, sy, and sz vectors
+      ensemble.atoms.push_back(newAtom);
+  }
 }
-  
  
 void removeAtomsAtWalls(Ensemble& ensemble, const Param& param, Vector3d& spinVar) 
 {
@@ -320,9 +326,16 @@ void advanceInterval(Ensemble& ensemble, const Param& param, const int nStep, in
 {
   //Newly added atoms are in the tail of the "atoms" vector, so the first atoms 
   //  in the "atoms" vector will be the first to be removed.
-  addAtomsFromSource(ensemble, param, m);
-  removeAtomsAtWalls(ensemble, param, spinVar);
-  advanceAtomsOneTimeStep(ensemble, param, nStep);
+  if (param.pois == "no") {
+    addAtomsFromVanillaSource(ensemble, param, m);
+    removeAtomsAtWalls(ensemble, param, spinVar);
+    advanceAtomsOneTimeStep(ensemble, param, nStep);
+  }
+  if (param.pois == "yes") {
+    addAtomsFromPoissonianSource(ensemble, param, m);
+    removeAtomsAtWalls(ensemble, param, spinVar);
+    advanceAtomsOneTimeStep(ensemble, param, nStep);
+  }
 }
 
 void storeObservables(Observables& observables, int s, Ensemble& ensemble, 
