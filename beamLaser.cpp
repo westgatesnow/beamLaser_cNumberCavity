@@ -326,12 +326,12 @@ void advanceInterval(Ensemble& ensemble, const Param& param, const int nStep, in
 {
   //Newly added atoms are in the tail of the "atoms" vector, so the first atoms 
   //  in the "atoms" vector will be the first to be removed.
-  if (param.pois == "no") {
+  if (param.pois == 0) {
     addAtomsFromVanillaSource(ensemble, param, m);
     removeAtomsAtWalls(ensemble, param, spinVar);
     advanceAtomsOneTimeStep(ensemble, param, nStep);
   }
-  if (param.pois == "yes") {
+  if (param.pois == 1) {
     addAtomsFromPoissonianSource(ensemble, param, m);
     removeAtomsAtWalls(ensemble, param, spinVar);
     advanceAtomsOneTimeStep(ensemble, param, nStep);

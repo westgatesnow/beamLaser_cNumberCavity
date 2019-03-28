@@ -1,4 +1,4 @@
-dt 0.005
+dt 0.001
 tmax 20
 nStore 1000
 nTrajectory 1000
@@ -12,6 +12,6 @@ density 100
 rabi 3
 kappa 90
 invT2 0
-pois no
+pois 0
 controlType dens100
-name dt0.005_dZ0_dPz0_tau1.0_nBin50_dens100_g3_k90_yWall1.0
+name pois0_dt0.005_dZ0_dPz0_tau1.0_nBin50_dens100_g3_k90
