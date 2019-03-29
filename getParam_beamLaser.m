@@ -21,6 +21,7 @@ kappa = str2double(dataVariables{13,2});
 invT2 = str2double(dataVariables{14,2});
 controlType = dataVariables{15,2};
 name = dataVariables{16,2};
+% pois = dataVariables{17,2};
 
 
 

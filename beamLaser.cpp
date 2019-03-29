@@ -46,12 +46,12 @@ void getParam(const char* filename, Param *param)
       configInput >> param->kappa;
     else if (dummy.compare("invT2") == 0)
       configInput >> param->invT2;
-    else if (dummy.compare("pois") == 0)
-      configInput >> param->pois;    
     else if (dummy.compare("controlType") == 0)
       configInput >> param->controlType;    
     else if (dummy.compare("name") == 0)
       configInput >> param->name;
+    else if (dummy.compare("pois") == 0)
+      configInput >> param->pois;    
     else {
       std::cout << "Error: invalid label " << dummy << " in "
           << filename << std::endl;

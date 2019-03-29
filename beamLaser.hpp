@@ -98,9 +98,9 @@ typedef struct Param
   double kappa;   //caivty decay rate. Condition of bad cavity: dt>>1/kappa.
   //Other parameters
   double invT2;  //The T2 dephasing time inverse
-  int pois; //If the Poissonian noise is included; 0 = no, 1 = yes
   std::string controlType; //name of the parent directory for a certain controlle variable
   std::string name; //name of the directory to store results
+  int pois; //If the Poissonian noise is included; 0 = no, 1 = yes
 
   //Constructor; initial values
   Param() : dt(0.01), tmax(10), 
@@ -109,7 +109,7 @@ typedef struct Param
             deltaZ(0.0), deltaPz(0.0), 
             transitTime(1.0), density(1.0), 
             rabi(10.0), kappa(1000.0), invT2(0),
-            pois(0), controlType("test"), name("aProgramHasNoName")
+            controlType("test"), name("aProgramHasNoName"), pois(0),
   {}
 
 } Param;

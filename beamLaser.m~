@@ -8,7 +8,7 @@ tScatterList = linspace(0,tmax,nTimeStep)/transitTime;%in units of transitTime
 
 %Take steadyMultiplier*transitTime as the steady state time. 
 %This is empirical for now. Improve later?
-steadyMultiplier = 5;
+steadyMultiplier = 10;
 
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/tmax*nStore);
@@ -337,7 +337,7 @@ spectra = [f*transitTime; s]';
 
 %Save spectrum up to k transitTime^-1
 k = 100;
-effectivePosition = abs(spectra(:,1)) < k;
+effectivePosition = find(abs(spectra(:,1)) < k);
 effectiveSpectra = spectra(effectivePosition,:);
 save spectra.dat effectiveSpectra -ascii;
 
@@ -353,7 +353,7 @@ pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %multi-point g(1) function.
 
-step = 100;
+step = 50;
 nStep = (nStore-n0)/step;
 mulRealG1Pos = zeros(1,step+1);
 mulImagG1Pos = zeros(1,step+1);
@@ -419,19 +419,19 @@ pause;
 %Method 1: fit the mulRealG1Pos to exponential decay
 mulx = linspace(0,tmax/nStore*step,step+1)';
 mulf = coeffvalues(fit(mulx,mulRealG1Pos','exp1','startpoint',[1,-1])); 
-mulLinewidth1 = -mulf(2)/pi;
+mulLinewidth1 = -f(2)/pi;
 mulRatio_tau1 = mulLinewidth1*transitTime;
 mulRatio_gc1 = mulLinewidth1/gammac;
 
 figure(11);
 hold on;
-mulyCalc1 = mulf(1)*exp(mulf(2).*mulx);%??????
+mulyCalc1 = f(1)*exp(f(2).*mulx);
 plot(mulx,mulRealG1Pos);
 plot(mulx,mulyCalc1,'--')
 hold off;
 
-printWords1 = ['The linewidth is ', num2str(mulRatio_tau1,'%.4f'),...
-    ' transitTime inverse or ', num2str(mulRatio_gc1,'%.4f'),' gammac.'];
+printWords1 = ['The linewidth is ', num2str(ratio_tau1,'%.4f'),...
+    ' transitTime inverse or ', num2str(ratio_gc1,'%.4f'),' gammac.'];
 disp(printWords1);
 fprintf('Program paused. Press enter to continue.\n');
 pause;
@@ -440,7 +440,7 @@ mulx2 = [ones(step+1,1) mulx];
 muly2 = real(log(mulRealG1Pos'));
 mulb = mulx2\muly2;
 
-figure(110);
+figure(9);
 hold on;
 mulyCalc2 = mulx2*mulb;
 plot(mulx, log(mulRealG1Pos))
@@ -491,7 +491,7 @@ effectiveSpectra = spectra(effectivePosition,:);
 save spectra.dat effectiveSpectra -ascii;
 
 %plot the spectrum
-figure(111);
+figure(11);
 plot(effectiveSpectra(:,1),effectiveSpectra(:,2));
 set(gca,'FontSize',20);
 title('Spectrum of the Beam Laser','FontSize',20);
