@@ -303,10 +303,6 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
     stochasticIntegration(sVar, drift, rabiEff, dW, param);
     //Put back
     for (int i = 0; i < nAtom; i++) {
-      if (sVar[NVAR*i+2] > 1)
-        sVar[NVAR*i+2] = 1;
-      if (sVar[NVAR*i+2] < -1)
-        sVar[NVAR*i+2] = -1;
       ensemble.atoms[i].internal.sx[n] = sVar[NVAR*i];
       ensemble.atoms[i].internal.sy[n] = sVar[NVAR*i+1];
       ensemble.atoms[i].internal.sz[n] = sVar[NVAR*i+2];
