@@ -8,7 +8,7 @@ tScatterList = linspace(0,tmax,nTimeStep)/transitTime;%in units of transitTime
 
 %Take steadyMultiplier*transitTime as the steady state time. 
 %This is empirical for now. Improve later?
-steadyMultiplier = 5;
+steadyMultiplier = 10;
 
 t0 = steadyMultiplier*transitTime;
 n0 = ceil(t0/tmax*nStore);
@@ -61,28 +61,28 @@ fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %comparison to adiabatic elimination
-figure(22);
-%q and qAE
-
-set(gca,'FontSize',20);
-subplot(2,1,1);
-hold on;
-plot(tList, mean(qMatrix,1));
-plot(tList, mean(-JyMatrix/kappa,1));
-hold off;
-xlabel('t/T','FontSize', 20);
-ylabel('q');
-
-Deltat=0;
-%Deltat defined above is impirical and used to acount for the right Delta t
-%that should used for the adiabatic elimination
-subplot(2,1,2);
-hold on;
-plot(tList, mean(qMatrix.^2,1));
-plot(tList, mean((-JyMatrix/kappa).^2,1));%+4/kappa/Deltat);
-hold off;
-xlabel('t/T','FontSize', 20);
-ylabel('q^2');
+% figure(22);
+% %q and qAE
+% 
+% set(gca,'FontSize',20);
+% subplot(2,1,1);
+% hold on;
+% plot(tList, mean(qMatrix,1));
+% plot(tList, mean(-JyMatrix/kappa,1));
+% hold off;
+% xlabel('t/T','FontSize', 20);
+% ylabel('q');
+% 
+% Deltat=0;
+% %Deltat defined above is impirical and used to acount for the right Delta t
+% %that should used for the adiabatic elimination
+% subplot(2,1,2);
+% hold on;
+% plot(tList, mean(qMatrix.^2,1));
+% plot(tList, mean((-JyMatrix/kappa).^2,1));%+4/kappa/Deltat);
+% hold off;
+% xlabel('t/T','FontSize', 20);
+% ylabel('q^2');
 
 % subplot(3,1,3);
 % JySq = mean((JyMatrix).^2,1);
@@ -219,6 +219,9 @@ m = size(q,2);
 realG1Pos = (q(:,1)'*q+p(:,1)'*p)/nTrajectory/4;
 imagG1Pos = (p(:,1)'*q-q(:,1)'*p)/nTrajectory/4;
 
+%Normalize realG1Pos
+realG1Pos = realG1Pos./max(realG1Pos);
+
 realG1 = [linspace(0,(tmax-t0)/transitTime,m);realG1Pos]';
 save realG1.dat realG1 -ascii;
 
@@ -236,30 +239,30 @@ fprintf('Program paused. Press enter to continue.\n');
 pause;
 
 % check <jz q q(0)> = <jz><q q(0)> 
-jz = JzMatrix(:,n0:nStore);
-left = mean(jz.*q.*q(:,1),1);
-right = mean(jz,1).*mean(q(:,1).*q,1)+mean(q,1).*mean(q(:,1).*jz,1)...
-    +mean(q(:,1),1).*mean(jz.*q)-2*mean(jz,1).*mean(q,1).*mean(q(:,1),1);
-
-ratioLeft = left./(mean(q(:,1).*q,1));
-ratioRight = (nAtomPrint-1)/nAtomPrint*mean(jz,1)-1;
-
-leftSave = [linspace(0,(tmax-t0)/transitTime,size(left,2));left]';
-save left.dat leftSave -ascii;
-
-figure(81);
-subplot(2,1,1);
-hold on;
-plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),left);
-plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),right);
-hold off;
-xlabel('t/T','FontSize', 20);
-subplot(2,1,2);
-hold on;
-plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),ratioLeft);
-plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),ratioRight);
-hold off;
-xlabel('t/T','FontSize', 20);
+% jz = JzMatrix(:,n0:nStore);
+% left = mean(jz.*q.*q(:,1),1);
+% right = mean(jz,1).*mean(q(:,1).*q,1)+mean(q,1).*mean(q(:,1).*jz,1)...
+%     +mean(q(:,1),1).*mean(jz.*q)-2*mean(jz,1).*mean(q,1).*mean(q(:,1),1);
+% 
+% ratioLeft = left./(mean(q(:,1).*q,1));
+% ratioRight = (nAtomPrint-1)/nAtomPrint*mean(jz,1)-1;
+% 
+% leftSave = [linspace(0,(tmax-t0)/transitTime,size(left,2));left]';
+% save left.dat leftSave -ascii;
+% 
+% figure(81);
+% subplot(2,1,1);
+% hold on;
+% plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),left);
+% plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),right);
+% hold off;
+% xlabel('t/T','FontSize', 20);
+% subplot(2,1,2);
+% hold on;
+% plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),ratioLeft);
+% plot(linspace(0,(tmax-t0)/transitTime,size(left,2)),ratioRight);
+% hold off;
+% xlabel('t/T','FontSize', 20);
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
@@ -268,7 +271,7 @@ pause;
 
 %Method 1: fit the realG1Pos to exponential decay
 x = linspace(0,tmax-t0,m)';
-f = coeffvalues(fit(x,realG1Pos','exp1','startpoint',[1,-1])); 
+f = coeffvalues(fit(x,realG1Pos','exp1','startpoint',[1,-0.1])); 
 linewidth1 = -f(2)/pi;
 gammac = rabi^2/kappa;
 ratio_tau1 = linewidth1*transitTime;

@@ -109,7 +109,7 @@ typedef struct Param
             deltaZ(0.0), deltaPz(0.0), 
             transitTime(1.0), density(1.0), 
             rabi(10.0), kappa(1000.0), invT2(0),
-            controlType("test"), name("aProgramHasNoName"), pois(0),
+            controlType("test"), name("aProgramHasNoName"), pois(0)
   {}
 
 } Param;

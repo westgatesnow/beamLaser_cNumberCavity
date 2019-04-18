@@ -5,8 +5,10 @@
 clear; close all; clc;
 addpath ~/Desktop/codes/beamLaser_Proj/cNumberCavity/;
 
-%get parameters from the input.txt in the parent directory
-%all the parameters are universal except for transitTime, density, and name
+%get parameters from the input.txt in the controlType directory
+prompt = "What is the controlType?\n"; 
+controlType = input(prompt,'s');
+cd(controlType);
 getParam_beamLaser;
 nTimeStep = tmax/dt;
 gc = rabi^2/kappa;
@@ -30,40 +32,38 @@ gc = rabi^2/kappa;
 % tauList = [tauList1,tauList2];
 %Can use uniform distri in log scale??????
 
-nMaxTau = 21;%
-initTau = 0.9;%
+nMaxTau = 1;%
+initTau = 0.50;%
 intervalTau = 0.01;
-tauList = ((initTau+(0:nMaxTau-1)*intervalTau)*gc);%dim = 1*nMaxTau
+tauList = (initTau+(0:nMaxTau-1)*intervalTau);%dim = 1*nMaxTau
 
-%nAtomAve
-nMaxNAtom = 1;%
-initNAtom = 100;
-intervalNAtom = 50;
-nAtomAveList =(initNAtom+(0:nMaxNAtom-1)*intervalNAtom);%dim = 1*nAtomAveList
+%dens
+nMaxDens = 20;%
+initDens = 100;
+intervalDens = 100;
+densList =(initDens+(0:nMaxDens-1)*intervalDens);%dim = 1*densList
 
 %define empty data structure for variables
-nAtom = zeros(nMaxTau,nMaxNAtom,nStore);
-intensity = zeros(nMaxTau,nMaxNAtom,nStore);
-inversionAve = zeros(nMaxTau,nMaxNAtom,nStore);
-spinSpinCorAve = zeros(nMaxTau,nMaxNAtom,nStore);
-szFinal = zeros(nMaxTau,nMaxNAtom,nTimeStep);
-qMatrix = zeros(nMaxTau,nMaxNAtom,nTrajectory,nStore);
-pMatrix = zeros(nMaxTau,nMaxNAtom,nTrajectory,nStore);
+nAtom = zeros(nMaxTau,nMaxDens,nStore);
+intensity = zeros(nMaxTau,nMaxDens,nStore);
+inversionAve = zeros(nMaxTau,nMaxDens,nStore);
+spinSpinCorAve = zeros(nMaxTau,nMaxDens,nStore);
+szFinal = zeros(nMaxTau,nMaxDens,nTimeStep);
+qMatrix = zeros(nMaxTau,nMaxDens,nTrajectory,nStore);
+pMatrix = zeros(nMaxTau,nMaxDens,nTrajectory,nStore);
 
 %load all the data needed
-projectdir1 = controlType;
-cd(projectdir1);
-timeRequired = 3.2*nMaxTau*nMaxNAtom;
+timeRequired = 3.2*nMaxTau*nMaxDens;
 printWords1 = ['Begin loading. Time required: ' , num2str(timeRequired), ' seconds.'];
 disp(printWords1);
 tic;
-for j = 1:nMaxNAtom
+for j = 1:nMaxDens
     for i = 1:nMaxTau
         %define the name of the directory
         tau = initTau+intervalTau*(i-1);
-        nAtomAve = initNAtom+intervalNAtom*(j-1);
-        filename = ['pois_dt0.005_dZ0_dPz0_tau', ...
-            num2str(tau,'%.2f'), '_nBin20_nAtom',num2str(nAtomAve),'_g3_k90_yWall1.0', ];
+        dens = initDens+intervalDens*(j-1);
+        filename = ['pois0_dt0.01_dZ0_dPz0_tau', ...
+            num2str(tau,'%.1f'), '_nBin20_dens',num2str(dens),'_g3_k90', ];
         cd(filename);
         %Load data.
         nAtom(i,j,:) = load('nAtom.dat');
@@ -80,15 +80,15 @@ for j = 1:nMaxNAtom
         %spinSpinCor_im = load('spinSpinCor_im.dat');  
         cd ..;
             %Print out info
-        percentage = (i+(j-1)*nMaxTau)/nMaxTau/nMaxNAtom*100;
+        percentage = (i+(j-1)*nMaxTau)/nMaxTau/nMaxDens*100;
         printWords2 = ['Finish loading ', num2str(percentage,'%.1f'),'%...'];
         disp(printWords2);
     end
 %     for i = 1:nMaxTau2
 %         %define the name of the directory
 %         tau2 = initTau2+intervalTau2*(i-1);
-%         nAtomAve = initNAtom+intervalNAtom*(j-1);
-%         filename = ['pois_tau', num2str(tau2,'%.1f'), '_g2_k40_N', num2str(nAtomAve)];
+%         dens = initDens+intervalDens*(j-1);
+%         filename = ['pois_tau', num2str(tau2,'%.1f'), '_g2_k40_N', num2str(dens)];
 %         cd(filename);
 %         %Load data.
 %         nAtom(i+nMaxTau1,j,:) = load('nAtom.dat');
@@ -105,7 +105,7 @@ for j = 1:nMaxNAtom
 %         %spinSpinCor_im = load('spinSpinCor_im.dat');  
 %         cd ..;
 %             %Print out info
-%         percentage = (i+nMaxTau1+(j-1)*nMaxTau)/nMaxTau/nMaxNAtom*100;
+%         percentage = (i+nMaxTau1+(j-1)*nMaxTau)/nMaxTau/nMaxDens*100;
 %         printWords2 = ['Finish loading ', num2str(percentage,'%.1f'),'%...'];
 %         disp(printWords2);
 %     end

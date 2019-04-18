@@ -91,9 +91,9 @@ void generateExternalState(Atom& newAtom, const Param& param)
   //no doppler(vz)
   //Vector3d P (0, meanP, 0);
   //doppler
-  Vector3d P (0, meanP, rng.get_gaussian_rn(param.deltaPz));
+  // Vector3d P (0, meanP, rng.get_gaussian_rn(param.deltaPz));
   //fixed doppler
-  // Vector3d P (0, meanP, param.deltaPz);
+  Vector3d P (0, meanP, param.deltaPz);
   
   //Complete initiation
   External newExternal = {X,P};
@@ -112,10 +112,10 @@ void generateInternalState(Atom& newAtom, const Param& param)
   newSz = VectorXd::Ones(nTrajectory);
   
   //Random initialization for sx and sy.
-  for (int j = 0; j < nTrajectory; j++) 
-    newSx[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
-  for (int j = 0; j < nTrajectory; j++) 
-    newSy[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
+  // for (int j = 0; j < nTrajectory; j++) 
+  //   newSx[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
+  // for (int j = 0; j < nTrajectory; j++) 
+  //   newSy[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
 
   //Complete initiation
   Internal newInternal = {newSx, newSy, newSz};
@@ -303,6 +303,10 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
     stochasticIntegration(sVar, drift, rabiEff, dW, param);
     //Put back
     for (int i = 0; i < nAtom; i++) {
+      if (sVar[NVAR*i+2] > 1)
+        sVar[NVAR*i+2] = 1;
+      if (sVar[NVAR*i+2] < -1)
+        sVar[NVAR*i+2] = -1;
       ensemble.atoms[i].internal.sx[n] = sVar[NVAR*i];
       ensemble.atoms[i].internal.sy[n] = sVar[NVAR*i+1];
       ensemble.atoms[i].internal.sz[n] = sVar[NVAR*i+2];

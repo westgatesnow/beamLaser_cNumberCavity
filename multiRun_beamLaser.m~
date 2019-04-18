@@ -25,7 +25,7 @@ nAtomSS_mean = mean(nAtomSS, 3);
 nAtomSS_std = std(nAtomSS, 0, 3);
 
 %intensitySS
-intensitySS = intensity(:,:,n0_nStore:nStore);%in units of gc
+intensitySS = intensity(:,:,n0_nStore:nStore)/gc;%in units of gc
 intensitySS_mean = mean(intensitySS, 3);
 intensitySS_std = std(intensitySS, 0, 3);
 
@@ -61,7 +61,7 @@ for j = 1:nMaxDens
         x = linspace(0,(tmax-t0),size(realG1Pos,2))';
         %x = linspace(0,(tmax-t0)*gc/tau,size(realG1Pos,2))';for tau^-1unit
         %x = linspace(0,(tmax-t0),size(realG1Pos,2))';for gc unit
-        f = coeffvalues(fit(x,realG1Pos','exp1','startpoint',[1,-0.5])); 
+        f = coeffvalues(fit(x,realG1Pos','exp1','startpoint',[1,-0.1])); 
         fMatrix(i,j) = -f(2)/pi;
     end
 end
@@ -310,10 +310,10 @@ errorbar(densList/gc, intensitySS_mean_want/gc, intensitySS_std_want/gc, 'o-');
 % %used to logplot with xbar
 % h12 = errorbar(densList/gc, intensitySS_mean_want/gc, intensitySS_std_want/gc, 'o-');
 % set(get(h12,'Parent'), 'XScale', 'log');
-plot(densList/gc, kappa/gc*aValueList.^2);
+plot(densList/gc, kappa*aValueList.^2);
 % semilogx(densList, iValueList/gc);
 % loglog(densList, iValueList/gc);
-plot(densList/gc, densList/gc);
+plot(densList/gc. densList/gc);
 xlabel('Density/\Gamma_c','FontSize', 20);
 ylabel('I/\Gamma_c');%in units of gc
 pause;
@@ -338,43 +338,19 @@ errorbar(densList/gc, szFinalSS_mean_want, szFinalSS_std_want);
 % %used to logplot with xbar
 % h132 = errorbar(densList/gc, szFinalSS_mean_want, szFinalSS_std_want);
 % set(get(h132,'Parent'), 'XScale', 'log');
-plot(densList/gc, cos(aValueList*rabi*tau_want));
+plot(densList/gc, cos(sqrt(iValueList*gc)*tau_want));
 % semilogx(densList/gc, cos(sqrt(iValueList*gc)*tau_want));
 xlabel('Density/\Gamma_c','FontSize', 20);
 ylabel('\langle j^z_{out} \rangle_e');
 hold off;
 pause;
 
-%spinSpinCorAve
-figure(14);
-hold on;
-h12 = errorbar(densList/gc, spinSpinCorAveSS_mean_want, ...
-     spinSpinCorAveSS_std_want, 'o-');
-%used to logplot with xbar
-% h12 = errorbar(densList, spinSpinCorAveSS_mean_want/gc, ...
-%     spinSpinCorAveSS_std_want/gc, 'o-');
-% set(get(h12,'Parent'), 'XScale', 'log');
-plot(densList/gc, sinc(aValueList*rabi*tau_want/2/pi).^2/4);
-% semilogx(densList/gc, sinc(sqrt(iValueList*gc)*tau_want/2/pi)^2/4);
-% loglog(densList/gc, iValueList/gc);
-xlabel('Density/\Gamma_c','FontSize', 20);
-ylabel('ssCor/\Gamma_c');%in units of gc
-pause;
-
 %linewidth
-figure(15);
+figure(14);
 set(gca,'FontSize',20);
-subplot(2,1,1);
-% semilogy(densList, fMatrix_want/gc,'-+');%in units of gc
-loglog(densList/gc, fMatrix_want/gc,'-+');%in units of tau^-1
-xlabel('Density/\Gamma_c','FontSize', 20);
+semilogx(nAtomAveList,fMatrix_want);
+xlabel('Mean Atom Number','FontSize', 20);
 ylabel('\Delta \nu/\Gamma_c','FontSize', 20);
-subplot(2,1,2);
-% semilogy(densList, fMatrix_want*tau_want,'-+');%in units of tau^-1
-% semilogx(densList,fMatrix_want);
-loglog(densList/gc, fMatrix_want*tau_want,'-+');%in units of tau^-1
-xlabel('Density/\Gamma_c','FontSize', 20);
-ylabel('\Delta \nu/\tau^{-1}','FontSize', 20);
 
 fprintf('2-D plots v.s. nAtomAve shown. Press enter to see next.\n');
 pause;
