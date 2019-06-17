@@ -4,6 +4,7 @@
 //  --using the cNumber method 
 //  --with the cavity variables
 //  --using the individual variables.
+//  --with detuning
 
 //Include Eigen package
 //Work in Eigen namespace
@@ -96,8 +97,10 @@ typedef struct Param
   double density;   //the mean number of atoms per unit time;
   double rabi;    //single-atom rabi frequency
   double kappa;   //caivty decay rate. Condition of bad cavity: dt>>1/kappa.
-  //Other parameters
   double invT2;  //The T2 dephasing time inverse
+  double detuning; //omegaa-omegac
+
+  //Other parameters
   std::string controlType; //name of the parent directory for a certain controlle variable
   std::string name; //name of the directory to store results
   int pois; //If the Poissonian noise is included; 0 = no, 1 = yes
@@ -108,7 +111,7 @@ typedef struct Param
             yWall(10.0), lambda(1.0),
             deltaZ(0.0), deltaPz(0.0), 
             transitTime(1.0), density(1.0), 
-            rabi(10.0), kappa(1000.0), invT2(0),
+            rabi(10.0), kappa(1000.0), invT2(0), detuning(0), 
             controlType("test"), name("aProgramHasNoName"), pois(0)
   {}
 
@@ -129,7 +132,8 @@ std::ostream& operator<< (std::ostream& o, const Param& s)
   o << s.density << std::endl;
   o << s.rabi << std::endl;
   o << s.kappa << std::endl;
-  o << s.invT2 << std::endl;    
+  o << s.invT2 << std::endl;
+  o << s.detuning << std::endl;           
   return o;
 }
 
@@ -142,10 +146,10 @@ typedef struct Observables
   MatrixXd qMatrix;
   MatrixXd pMatrix;
   // MatrixXd JxMatrix;
-  MatrixXd JyMatrix;
-  MatrixXd JzMatrix;
-  // MatrixXd sxMatrix;
-  // MatrixXd syMatrix;
+  // MatrixXd JyMatrix;
+  // MatrixXd JzMatrix;
+  MatrixXd sxMatrix;
+  MatrixXd syMatrix;
   MatrixXd szMatrix;
   VectorXd spinSpinCorAve_re;
   // VectorXd spinSpinCorAve_im;
@@ -160,10 +164,10 @@ typedef struct Observables
     qMatrix = MatrixXd(nTrajectory, nStore);
     pMatrix = MatrixXd(nTrajectory, nStore);
     // JxMatrix = MatrixXd(nTrajectory, nStore);
-    JyMatrix = MatrixXd(nTrajectory, nStore);
-    JzMatrix = MatrixXd(nTrajectory, nStore);
-    // sxMatrix = MatrixXd(nBin, nStore);
-    // syMatrix = MatrixXd(nBin, nStore);
+    // JyMatrix = MatrixXd(nTrajectory, nStore);
+    // JzMatrix = MatrixXd(nTrajectory, nStore);
+    sxMatrix = MatrixXd(nBin, nStore);
+    syMatrix = MatrixXd(nBin, nStore);
     szMatrix = MatrixXd(nBin, nStore);
     spinSpinCorAve_re = VectorXd(nStore);
     // spinSpinCorAve_im = VectorXd(nStore);
@@ -201,14 +205,14 @@ typedef struct ObservableFiles
                 qMatrix, 
                 pMatrix,
                 // JxMatrix, 
-                JyMatrix,
-                JzMatrix,
+                // JyMatrix,
+                // JzMatrix,
                 spinSpinCorAve_re, 
                 // spinSpinCorAve_im,
                 spinSpinCor_re, 
                 // spinSpinCor_im,
-                // sxMatrix,
-                // syMatrix,
+                sxMatrix,
+                syMatrix,
                 szMatrix,
                 // sxFinal, 
                 // syFinal, 
@@ -221,14 +225,14 @@ typedef struct ObservableFiles
                       qMatrix("qMatrix.dat"),
                       pMatrix("pMatrix.dat"),
                       // JxMatrix("JxMatrix.dat"),
-                      JyMatrix("JyMatrix.dat"),
-                      JzMatrix("JzMatrix.dat"),
+                      // JyMatrix("JyMatrix.dat"),
+                      // JzMatrix("JzMatrix.dat"),
                       spinSpinCorAve_re("spinSpinCorAve_re.dat"),
                       // spinSpinCorAve_im("spinSpinCorAve_im.dat"),
                       spinSpinCor_re("spinSpinCor_re.dat"),
                       // spinSpinCor_im("spinSpinCor_im.dat"),
-                      // sxMatrix("sxMatrix.dat"),
-                      // syMatrix("syMatrix.dat"),
+                      sxMatrix("sxMatrix.dat"),
+                      syMatrix("syMatrix.dat"),
                       szMatrix("szMatrix.dat"),
                       // sxFinal("sxFinal.dat"),
                       // syFinal("syFinal.dat"),
@@ -244,14 +248,14 @@ typedef struct ObservableFiles
     qMatrix.close();
     pMatrix.close();
     // JxMatrix.close();
-    JyMatrix.close();
-    JzMatrix.close();
+    // JyMatrix.close();
+    // JzMatrix.close();
     spinSpinCorAve_re.close();
     // spinSpinCorAve_im.close();
     spinSpinCor_re.close();
     // spinSpinCor_im.close();
-    // sxMatrix.close();
-    // syMatrix.close();
+    sxMatrix.close();
+    syMatrix.close();
     szMatrix.close();
     // sxFinal.close();
     // syFinal.close();

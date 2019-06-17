@@ -32,15 +32,15 @@ gc = rabi^2/kappa;
 % tauList = [tauList1,tauList2];
 %Can use uniform distri in log scale??????
 
-nMaxTau = 1;%
-initTau = 0.50;%
-intervalTau = 0.01;
+nMaxTau = 10;%
+initTau = 0.1;%
+intervalTau = 0.1;
 tauList = (initTau+(0:nMaxTau-1)*intervalTau);%dim = 1*nMaxTau
 
 %dens
-nMaxDens = 20;%
-initDens = 100;
-intervalDens = 100;
+nMaxDens = 10;%
+initDens = 50;
+intervalDens = 50;
 densList =(initDens+(0:nMaxDens-1)*intervalDens);%dim = 1*densList
 
 %define empty data structure for variables
@@ -62,8 +62,8 @@ for j = 1:nMaxDens
         %define the name of the directory
         tau = initTau+intervalTau*(i-1);
         dens = initDens+intervalDens*(j-1);
-        filename = ['pois0_dt0.01_dZ0_dPz0_tau', ...
-            num2str(tau,'%.1f'), '_nBin20_dens',num2str(dens),'_g3_k90', ];
+        filename = ['pois_dt0.005_dZ0.5_dPz1.0_tau', ...
+            num2str(tau,'%.1f'), '_nBin20_nAtom',num2str(dens),'_g3_k90_yWall1.0', ];
         cd(filename);
         %Load data.
         nAtom(i,j,:) = load('nAtom.dat');

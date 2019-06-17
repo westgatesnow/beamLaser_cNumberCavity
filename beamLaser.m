@@ -64,34 +64,34 @@ pause;
 % figure(22);
 % %q and qAE
 % 
-% set(gca,'FontSize',20);
-% subplot(2,1,1);
-% hold on;
-% plot(tList, mean(qMatrix,1));
+set(gca,'FontSize',20);
+subplot(2,1,1);
+hold on;
+plot(tList, mean(qMatrix,1));
 % plot(tList, mean(-JyMatrix/kappa,1));
-% hold off;
-% xlabel('t/T','FontSize', 20);
-% ylabel('q');
-% 
-% Deltat=0;
-% %Deltat defined above is impirical and used to acount for the right Delta t
-% %that should used for the adiabatic elimination
-% subplot(2,1,2);
-% hold on;
-% plot(tList, mean(qMatrix.^2,1));
-% plot(tList, mean((-JyMatrix/kappa).^2,1));%+4/kappa/Deltat);
-% hold off;
-% xlabel('t/T','FontSize', 20);
-% ylabel('q^2');
+hold off;
+xlabel('t/T','FontSize', 20);
+ylabel('q');
 
-% subplot(3,1,3);
-% JySq = mean((JyMatrix).^2,1);
-% plot(linspace(0,tmax,nStore)/transitTime, JySq);
-% xlabel('t/T','FontSize', 20);
-% ylabel('q^2');
-% JySqPrint = mean(JySq(n0:end));
-% formatSpec = 'The steady-state JySq is %4.4f. \n';
-% fprintf(formatSpec, JySqPrint);
+Deltat=0;
+%Deltat defined above is impirical and used to acount for the right Delta t
+%that should used for the adiabatic elimination
+subplot(2,1,2);
+hold on;
+plot(tList, mean(qMatrix.^2,1));
+% plot(tList, mean((-JyMatrix/kappa).^2,1));%+4/kappa/Deltat);
+hold off;
+xlabel('t/T','FontSize', 20);
+ylabel('q^2');
+
+subplot(3,1,3);
+JySq = mean((JyMatrix).^2,1);
+plot(linspace(0,tmax,nStore)/transitTime, JySq);
+xlabel('t/T','FontSize', 20);
+ylabel('q^2');
+JySqPrint = mean(JySq(n0:end));
+formatSpec = 'The steady-state JySq is %4.4f. \n';
+fprintf(formatSpec, JySqPrint);
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
@@ -138,20 +138,20 @@ fprintf('Program paused. Press enter to continue.\n');
 pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot sxMatrix and syMatrix.
-% figure(5);
-% 
-% subplot(2,1,1);
-% scatter(1:nBin, sxMatrix(:,end), 20, 'filled');
-% xlabel('nBin','FontSize', 20);
-% ylabel('\langle j^x(t) \rangle');
-% 
-% subplot(2,1,2);
-% scatter(1:nBin, syMatrix(:,end), 20, 'filled');
-% xlabel('nBin','FontSize', 20);
-% ylabel('\langle j^y(t) \rangle');
-% 
-% fprintf('Program paused. Press enter to continue.\n');
-% pause;
+figure(5);
+
+subplot(2,1,1);
+scatter(1:nBin, mean(sxMatrix(:,n0:nStore),2), 20, 'filled');
+xlabel('nBin','FontSize', 20);
+ylabel('\langle j^x(t) \rangle');
+
+subplot(2,1,2);
+scatter(1:nBin, mean(syMatrix(:,n0:nStore),2), 20, 'filled');
+xlabel('nBin','FontSize', 20);
+ylabel('\langle j^y(t) \rangle');
+
+fprintf('Program paused. Press enter to continue.\n');
+pause;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot spinSpinCorAve.
 figure(6);
@@ -219,9 +219,6 @@ m = size(q,2);
 realG1Pos = (q(:,1)'*q+p(:,1)'*p)/nTrajectory/4;
 imagG1Pos = (p(:,1)'*q-q(:,1)'*p)/nTrajectory/4;
 
-%Normalize realG1Pos
-realG1Pos = realG1Pos./max(realG1Pos);
-
 realG1 = [linspace(0,(tmax-t0)/transitTime,m);realG1Pos]';
 save realG1.dat realG1 -ascii;
 
@@ -271,7 +268,11 @@ pause;
 
 %Method 1: fit the realG1Pos to exponential decay
 x = linspace(0,tmax-t0,m)';
-f = coeffvalues(fit(x,realG1Pos','exp1','startpoint',[1,-0.1])); 
+
+%Normalize realG1Pos
+realG1PosNorm = realG1Pos./max(realG1Pos);
+
+f = coeffvalues(fit(x,realG1PosNorm','exp1','startpoint',[1,-0.1])); 
 linewidth1 = -f(2)/pi;
 gammac = rabi^2/kappa;
 ratio_tau1 = linewidth1*transitTime;
@@ -280,7 +281,7 @@ ratio_gc1 = linewidth1/gammac;
 figure(9);
 hold on;
 yCalc1 = f(1)*exp(f(2).*x);
-plot(x,realG1Pos);
+plot(x,realG1PosNorm);
 plot(x,yCalc1,'--')
 hold off;
 
@@ -421,7 +422,8 @@ pause;
 
 %Method 1: fit the mulRealG1Pos to exponential decay
 mulx = linspace(0,tmax/nStore*step,step+1)';
-mulf = coeffvalues(fit(mulx,mulRealG1Pos','exp1','startpoint',[1,-1])); 
+mulRealG1PosNorm = mulRealG1Pos/max(mulRealG1Pos);
+mulf = coeffvalues(fit(mulx,mulRealG1PosNorm','exp1','startpoint',[1,-1])); 
 mulLinewidth1 = -mulf(2)/pi;
 mulRatio_tau1 = mulLinewidth1*transitTime;
 mulRatio_gc1 = mulLinewidth1/gammac;
@@ -429,7 +431,7 @@ mulRatio_gc1 = mulLinewidth1/gammac;
 figure(11);
 hold on;
 mulyCalc1 = mulf(1)*exp(mulf(2).*mulx);%??????
-plot(mulx,mulRealG1Pos);
+plot(mulx,mulRealG1PosNorm);
 plot(mulx,mulyCalc1,'--')
 hold off;
 

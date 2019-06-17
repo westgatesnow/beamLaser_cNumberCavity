@@ -2,6 +2,7 @@
 //  --using the cNumber method 
 //  --with the cavity variables
 //  --using the individual variables.
+//  --with detuning
 #include "beamLaser.hpp"
 #include "config.hpp"
 
@@ -46,6 +47,8 @@ void getParam(const char* filename, Param *param)
       configInput >> param->kappa;
     else if (dummy.compare("invT2") == 0)
       configInput >> param->invT2;
+    else if (dummy.compare("detuning") == 0)
+      configInput >> param->detuning;
     else if (dummy.compare("controlType") == 0)
       configInput >> param->controlType;    
     else if (dummy.compare("name") == 0)
@@ -66,8 +69,8 @@ void generateInitialField(Ensemble& ensemble, const Param& param)
   ensemble.cavity.q.setZero(param.nTrajectory, nTimeStep+1);
   ensemble.cavity.p.setZero(param.nTrajectory, nTimeStep+1);
   // ensemble.cavity.Jx.setZero(param.nTrajectory, nTimeStep+1);
-  ensemble.cavity.Jy.setZero(param.nTrajectory, nTimeStep+1);
-  ensemble.cavity.Jz.setZero(param.nTrajectory, nTimeStep+1);
+  // ensemble.cavity.Jy.setZero(param.nTrajectory, nTimeStep+1);
+  // ensemble.cavity.Jz.setZero(param.nTrajectory, nTimeStep+1);
 
   //initilize q(t=0) = p(t=0) = 1
   // ensemble.cavity.q.col(0).fill(1.0);
@@ -91,9 +94,9 @@ void generateExternalState(Atom& newAtom, const Param& param)
   //no doppler(vz)
   //Vector3d P (0, meanP, 0);
   //doppler
-  // Vector3d P (0, meanP, rng.get_gaussian_rn(param.deltaPz));
+  Vector3d P (0, meanP, rng.get_gaussian_rn(param.deltaPz));
   //fixed doppler
-  Vector3d P (0, meanP, param.deltaPz);
+  // Vector3d P (0, meanP, param.deltaPz);
   
   //Complete initiation
   External newExternal = {X,P};
@@ -112,10 +115,10 @@ void generateInternalState(Atom& newAtom, const Param& param)
   newSz = VectorXd::Ones(nTrajectory);
   
   //Random initialization for sx and sy.
-  // for (int j = 0; j < nTrajectory; j++) 
-  //   newSx[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
-  // for (int j = 0; j < nTrajectory; j++) 
-  //   newSy[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
+  for (int j = 0; j < nTrajectory; j++) 
+    newSx[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
+  for (int j = 0; j < nTrajectory; j++) 
+    newSy[j] = double(rng.get_binomial_int(0.5, 1)) * 2 - 1; //50percent giving 1 or -1
 
   //Complete initiation
   Internal newInternal = {newSx, newSy, newSz};
@@ -225,6 +228,7 @@ void getDriftVector(const VectorXd& sVar, VectorXd& drift, const VectorXd& rabiE
   const double invT2 = param.invT2;
   const int size = sVar.size();
   const int nAtom = (size-2)/NVAR;
+  const double detuning = param.detuning;
 
   //Definition of JxEff = sum of rabiEff*sx and JyEff;
   double jxEff = 0, jyEff = 0;
@@ -236,8 +240,8 @@ void getDriftVector(const VectorXd& sVar, VectorXd& drift, const VectorXd& rabiE
     jxEff += sVar[NVAR*j]*rabi;
     jyEff += sVar[NVAR*j+1]*rabi;
     //Drift terms
-    drift[NVAR*j] = rabi/2*sVar[NVAR*nAtom+1]*sVar[NVAR*j+2] - invT2*sVar[NVAR*j];
-    drift[NVAR*j+1] = - rabi/2*sVar[NVAR*nAtom]*sVar[NVAR*j+2] - invT2*sVar[NVAR*j+1];
+    drift[NVAR*j] = - detuning*sVar[NVAR*j+1] + rabi/2*sVar[NVAR*nAtom+1]*sVar[NVAR*j+2] - invT2*sVar[NVAR*j];
+    drift[NVAR*j+1] = detuning*sVar[NVAR*j] - rabi/2*sVar[NVAR*nAtom]*sVar[NVAR*j+2] - invT2*sVar[NVAR*j+1];
     drift[NVAR*j+2] = rabi/2*(sVar[NVAR*nAtom]*sVar[NVAR*j+1]
                       - sVar[NVAR*nAtom+1]*sVar[NVAR*j]);
   }
@@ -307,8 +311,8 @@ void advanceInternalStateOneTimeStep(Ensemble& ensemble, const Param& param, con
       ensemble.atoms[i].internal.sy[n] = sVar[NVAR*i+1];
       ensemble.atoms[i].internal.sz[n] = sVar[NVAR*i+2];
       // ensemble.cavity.Jx(n,nStep+1) += rabiEff[i]*sVar[NVAR*i];
-      ensemble.cavity.Jy(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+1];
-      ensemble.cavity.Jz(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+2];
+      // ensemble.cavity.Jy(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+1];
+      // ensemble.cavity.Jz(n,nStep+1) += rabiEff[i]*sVar[NVAR*i+2];
     }
     ensemble.cavity.q(n,nStep+1) = sVar[NVAR*nAtom];
     ensemble.cavity.p(n,nStep+1) = sVar[NVAR*nAtom+1];
@@ -361,8 +365,8 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
 
   //JxMatrix, JyMatrix, and JzMatrix
   // observables.JxMatrix.col(s) = ensemble.cavity.Jx.col(nStep);
-  observables.JyMatrix.col(s) = ensemble.cavity.Jy.col(nStep);
-  observables.JzMatrix.col(s) = ensemble.cavity.Jz.col(nStep);
+  // observables.JyMatrix.col(s) = ensemble.cavity.Jy.col(nStep);
+  // observables.JzMatrix.col(s) = ensemble.cavity.Jz.col(nStep);
   
   //Atomic observables//////////////////////////////////////////////////////////////////////////////////
 
@@ -401,8 +405,8 @@ void storeObservables(Observables& observables, int s, Ensemble& ensemble,
   
   //sxMatrix, syMatrix, szMatrix
   for (int i = 0; i < nBin; i++) {
-    // observables.sxMatrix(i, s) = SX.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
-    // observables.syMatrix(i, s) = SY.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    observables.sxMatrix(i, s) = SX.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
+    observables.syMatrix(i, s) = SY.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
     observables.szMatrix(i, s) = SZ.middleRows(binSum[i], binIndex[i]).sum()/binIndex[i]/nTrajectory;
   }
 
@@ -496,14 +500,14 @@ void writeObservables(ObservableFiles& observableFiles,
   observableFiles.qMatrix << observables.qMatrix << std::endl;
   observableFiles.pMatrix << observables.pMatrix << std::endl;
   // observableFiles.JxMatrix << observables.JxMatrix << std::endl;
-  observableFiles.JyMatrix << observables.JyMatrix << std::endl;
-  observableFiles.JzMatrix << observables.JzMatrix << std::endl;
+  // observableFiles.JyMatrix << observables.JyMatrix << std::endl;
+  // observableFiles.JzMatrix << observables.JzMatrix << std::endl;
   observableFiles.spinSpinCorAve_re << observables.spinSpinCorAve_re << std::endl;
   // observableFiles.spinSpinCorAve_im << observables.spinSpinCorAve_im << std::endl;
   observableFiles.spinSpinCor_re << observables.spinSpinCor_re << std::endl;
   // observableFiles.spinSpinCor_im << observables.spinSpinCor_im << std::endl;
-  // observableFiles.sxMatrix << observables.sxMatrix << std::endl;
-  // observableFiles.syMatrix << observables.syMatrix << std::endl;
+  observableFiles.sxMatrix << observables.sxMatrix << std::endl;
+  observableFiles.syMatrix << observables.syMatrix << std::endl;
   observableFiles.szMatrix << observables.szMatrix << std::endl;   
   // observableFiles.sxFinal << spinVariables.sxFinal << std::endl;
   // observableFiles.syFinal << spinVariables.syFinal << std::endl;
